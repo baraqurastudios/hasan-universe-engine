@@ -1,46 +1,54 @@
 import streamlit as st
-import json
 import datetime
 
-# --- CONFIGURATION ---
-st.set_page_config(page_title="BaraQura Empire Dashboard", layout="wide")
-st.title("👑 BaraQura Empire: Mobile Command Center v125.0")
+# --- ১. সিকিউরিটি গেট (দরজায় তালা) ---
+def check_password():
+    if "authenticated" not in st.session_state:
+        st.markdown("<h2 style='text-align: center;'>👑 BaraQura Admin Gate</h2>", unsafe_input=True)
+        pwd = st.text_input("পাসওয়ার্ড দিন", type="password")
+        if st.button("প্রবেশ করুন"):
+            if pwd == "bq2026": # আপনার সিক্রেট পাসওয়ার্ড
+                st.session_state["authenticated"] = True
+                st.rerun()
+            else:
+                st.error("ভুল পাসওয়ার্ড! আপনি কি সত্যিই সাকিবুল হাসান?")
+        return False
+    return True
 
-# --- SIDEBAR: PRODUCTION CONTROL ---
-st.sidebar.header("🚀 Production Controller")
-shorts_count = st.sidebar.slider("Daily Shorts Goal", 0, 20, 5)
-long_video_count = st.sidebar.slider("Daily Long Video Goal", 0, 5, 1)
-apply_prod = st.sidebar.button("Set Production Goal")
+if check_password():
+    # --- ২. ইঞ্জিনের ডিজাইন ও স্টাইল ---
+    st.set_page_config(page_title="BaraQura Empire", page_icon="👑")
+    
+    st.title("🎬 BaraQura Empire: Command Center")
+    st.markdown(f"**আজকের তারিখ:** {datetime.date.today()}")
 
-# --- SECTION 1: YOUTUBE ANALYTICS (WAR ROOM) ---
-st.header("📊 YouTube Analytics & AI Insights")
-col1, col2, col3 = st.columns(3)
-col1.metric("Total Views", "125.4K", "+12%")
-col2.metric("Watch Time", "4.2K hrs", "+5%")
-col3.metric("Avg. Retention", "65%", "-2%")
+    # --- ৩. ক্যারেক্টার বাইবেল (হাসান ও লিজা) ---
+    st.sidebar.header("👤 ক্যারেক্টার ডাটাবেজ")
+    st.sidebar.info("**প্রধান চরিত্র:** হাসান (৭ বছর)")
+    st.sidebar.info("**মা:** লিজা (সাপোর্টিভ ও বুদ্ধিমতী)")
+    st.sidebar.write("---")
+    st.sidebar.success("মিশন: একজন ভালো মানুষ হওয়া।")
 
-st.info("💡 AI Insight: Retention drops at 5:02. Reason: Slow pacing. Solution: Add a hook.")
-if st.button("✅ Apply AI Auto-Fix"):
-    st.success("Patch applied to next video scripts!")
+    # --- ৪. পাবলিশিং শিডিউল (জ্যান্ত ট্র্যাকার) ---
+    st.subheader("📅 পাবলিশিং ক্যালেন্ডার")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.write("📌 **সোমবার ও শুক্রবার (৫:৩০ PM)**")
+        st.button("✅ ২টা শর্টস ভিডিও রেডি")
+        
+    with col2:
+        st.write("📌 **মাসে ১টি বড় ভিডিও**")
+        st.button("⏳ হাসান সিরিজের স্ক্রিপ্টিং")
 
-# --- SECTION 2: APPROVAL GATE (GATEKEEPER) ---
-st.header("⚖️ Pending Story Approvals")
-pending_stories = [
-    {"id": 1, "title": "হাসানের রমজান প্রস্তুতি", "type": "Shorts"},
-    {"id": 2, "title": "লিজার নতুন স্কুল ব্যাগ", "type": "Long Video"}
-]
+    # --- ৫. ওরাকল গেট (আমার সাথে আপনার সরাসরি কানেকশন) ---
+    st.divider()
+    st.subheader("🔮 ওরাকল গেট (Gemini Patch)")
+    user_input = st.text_area("নতুন কোনো ক্যারেক্টার বা স্টোরি আইডিয়া এখানে লিখুন...")
+    if st.button("ইঞ্জিনে সেভ করুন"):
+        st.snow()
+        st.success("সাকিবুল ভাই, আপনার আইডিয়া 'BaraQura Engine'-এ সাফল্যের সাথে সেভ হয়েছে!")
 
-for story in pending_stories:
-    col_a, col_b = st.columns([3, 1])
-    col_a.write(f"**{story['title']}** ({story['type']})")
-    if col_b.button(f"Approve #{story['id']}"):
-        st.write(f"✅ Story {story['id']} sent to Production Queue!")
-
-# --- SECTION 3: ORACLE UPDATE GATE ---
-st.header("🔮 Oracle Update Gate")
-patch_code = st.text_area("Paste Gemini Patch Code Here", placeholder="update_baraqura...")
-if st.button("Apply Oracle Patch"):
-    st.warning("Injecting code into Engine Core... Done! ✅")
-
-st.write("---")
-st.caption(f"Last Synced: {datetime.datetime.now()}")
+    # --- ৬. প্রোডাকশন স্ট্যাটাস ---
+    st.divider()
+    st.progress(85, text="৩ এপ্রিল ধামাকার প্রস্তুতি চলছে...")
