@@ -1,54 +1,38 @@
 import streamlit as st
 import datetime
 
-# --- ১. সিকিউরিটি গেট (দরজায় তালা) ---
+# --- ১. সিকিউরিটি গেট ---
 def check_password():
     if "authenticated" not in st.session_state:
-        st.markdown("<h2 style='text-align: center;'>👑 BaraQura Admin Gate</h2>", unsafe_input=True)
+        st.markdown("<h2 style='text-align: center;'>👑 BaraQura Admin Gate</h2>", unsafe_allow_html=True)
         pwd = st.text_input("পাসওয়ার্ড দিন", type="password")
         if st.button("প্রবেশ করুন"):
-            if pwd == "bq2026": # আপনার সিক্রেট পাসওয়ার্ড
+            if pwd == "bq2026": 
                 st.session_state["authenticated"] = True
                 st.rerun()
             else:
-                st.error("ভুল পাসওয়ার্ড! আপনি কি সত্যিই সাকিবুল হাসান?")
+                st.error("ভুল পাসওয়ার্ড!")
         return False
     return True
 
 if check_password():
-    # --- ২. ইঞ্জিনের ডিজাইন ও স্টাইল ---
+    # --- ২. মেইন ড্যাশবোর্ড ---
     st.set_page_config(page_title="BaraQura Empire", page_icon="👑")
-    
     st.title("🎬 BaraQura Empire: Command Center")
-    st.markdown(f"**আজকের তারিখ:** {datetime.date.today()}")
+    st.write(f"**আজকের তারিখ:** {datetime.date.today()}")
 
-    # --- ৩. ক্যারেক্টার বাইবেল (হাসান ও লিজা) ---
+    # ক্যারেক্টার ও শিডিউল আপডেট
     st.sidebar.header("👤 ক্যারেক্টার ডাটাবেজ")
     st.sidebar.info("**প্রধান চরিত্র:** হাসান (৭ বছর)")
-    st.sidebar.info("**মা:** লিজা (সাপোর্টিভ ও বুদ্ধিমতী)")
-    st.sidebar.write("---")
-    st.sidebar.success("মিশন: একজন ভালো মানুষ হওয়া।")
-
-    # --- ৪. পাবলিশিং শিডিউল (জ্যান্ত ট্র্যাকার) ---
-    st.subheader("📅 পাবলিশিং ক্যালেন্ডার")
-    col1, col2 = st.columns(2)
+    st.sidebar.info("**মা:** লিজা")
     
-    with col1:
-        st.write("📌 **সোমবার ও শুক্রবার (৫:৩০ PM)**")
-        st.button("✅ ২টা শর্টস ভিডিও রেডি")
-        
-    with col2:
-        st.write("📌 **মাসে ১টি বড় ভিডিও**")
-        st.button("⏳ হাসান সিরিজের স্ক্রিপ্টিং")
+    st.subheader("📅 পাবলিশিং শিডিউল")
+    st.info("সোমবার ও শুক্রবার: ৫:৩০ PM (Shorts) | মাসে ১টি বড় ভিডিও")
 
-    # --- ৫. ওরাকল গেট (আমার সাথে আপনার সরাসরি কানেকশন) ---
+    # আপডেট গেট
     st.divider()
-    st.subheader("🔮 ওরাকল গেট (Gemini Patch)")
-    user_input = st.text_area("নতুন কোনো ক্যারেক্টার বা স্টোরি আইডিয়া এখানে লিখুন...")
+    st.subheader("🔮 ওরাকল গেট")
+    user_input = st.text_area("নতুন আইডিয়া বা স্ক্রিপ্ট এখানে লিখুন...")
     if st.button("ইঞ্জিনে সেভ করুন"):
-        st.snow()
-        st.success("সাকিবুল ভাই, আপনার আইডিয়া 'BaraQura Engine'-এ সাফল্যের সাথে সেভ হয়েছে!")
-
-    # --- ৬. প্রোডাকশন স্ট্যাটাস ---
-    st.divider()
-    st.progress(85, text="৩ এপ্রিল ধামাকার প্রস্তুতি চলছে...")
+        st.balloons()
+        st.success("সাকিবুল ভাই, আপনার আইডিয়া সেভ হয়েছে!")
