@@ -1,27 +1,20 @@
-"""
-====================================================
-🚀 AI GOD SYSTEM — COMPLETE SINGLE PYTHON FILE
-====================================================
-"""
-
 import random
 import time
 import uuid
 
 # =========================
-# GLOBAL SYSTEM STATE
+# STATE
 # =========================
 STATE = {
     "users": 1000,
     "revenue": 50000,
     "capital": 1000000,
-    "status": "ACTIVE"
 }
 
 LOGS = []
 
 # =========================
-# EVENT LOGGER
+# LOG SYSTEM
 # =========================
 def log(event, data=None):
     LOGS.append({
@@ -32,174 +25,141 @@ def log(event, data=None):
     })
 
 # =========================
-# AUTH SYSTEM
+# AUTH
 # =========================
 def login(email):
-    token = str(uuid.uuid4())
-    log("login", {"email": email})
-    return token
+    log("login", email)
+    return str(uuid.uuid4())
 
 # =========================
-# PAYMENT SYSTEM
+# PAYMENT
 # =========================
 def payment(user, amount):
     STATE["revenue"] += amount
     log("payment", {"user": user, "amount": amount})
-    return {"status": "success"}
 
 # =========================
-# DEPLOY SYSTEM
+# DEPLOY
 # =========================
 def deploy():
-    log("deploy", {})
-    return "DEPLOYED SUCCESSFULLY"
+    log("deploy")
 
 # =========================
-# AI WORKERS SYSTEM
+# AI WORKERS
 # =========================
-class AIWorker:
+class AI:
     def __init__(self, role):
         self.role = role
 
-    def execute(self, task):
+    def run(self, task):
         log("task", {"role": self.role, "task": task})
-        return f"{self.role.upper()} executed: {task}"
+        return self.role + ":" + task
 
-AI = {
-    "developer": AIWorker("developer"),
-    "marketing": AIWorker("marketing"),
-    "sales": AIWorker("sales"),
-    "analyst": AIWorker("analyst")
+AI_SYSTEM = {
+    "dev": AI("developer"),
+    "mkt": AI("marketing"),
+    "sales": AI("sales"),
+    "ana": AI("analyst")
 }
 
 # =========================
-# ECONOMY ENGINE
+# ECONOMY
 # =========================
-def economy_engine():
+def economy():
     return {
-        "gdp": round(random.uniform(50, 200), 2),
-        "inflation": round(random.uniform(1, 10), 2),
-        "growth": round(random.uniform(-3, 8), 2)
+        "gdp": random.randint(50, 200),
+        "inflation": random.random() * 10
     }
 
 # =========================
-# CENTRAL BANK AI
+# BANK
 # =========================
-def central_bank():
-    rate = round(random.uniform(0, 10), 2)
+def bank():
+    rate = random.random() * 10
     return {
-        "interest_rate": rate,
+        "rate": rate,
         "policy": "EASE" if rate < 5 else "TIGHT"
     }
 
 # =========================
-# STOCK MARKET AI
+# STOCK
 # =========================
-def stock_market():
-    stocks = ["AAPL", "TSLA", "GOOG", "AMZN", "MSFT"]
+def stocks():
     return [
-        {
-            "stock": s,
-            "action": random.choice(["BUY", "SELL"]),
-            "profit": round(random.uniform(0, 20), 2)
-        }
-        for s in stocks
+        {"s": i, "p": random.random() * 20}
+        for i in ["AAPL", "TSLA", "GOOG"]
     ]
 
 # =========================
-# HEDGE FUND AI
+# HEDGE FUND
 # =========================
-def hedge_fund():
-    trades = stock_market()
-    profit = sum(t["profit"] for t in trades)
-
+def hedge():
+    s = stocks()
+    profit = sum(x["p"] for x in s)
     STATE["capital"] += profit * 100
-
-    return {
-        "profit": round(profit, 2),
-        "capital": STATE["capital"]
-    }
+    return profit
 
 # =========================
-# GLOBAL ECONOMY BRAIN
+# UNIVERSE
 # =========================
-def global_brain():
-    return {
-        "central_bank": central_bank(),
-        "economy": economy_engine(),
-        "hedge_fund": hedge_fund()
-    }
-
-# =========================
-# UNIVERSE ENGINE
-# =========================
-def create_universe(seed):
+def universe(seed):
     return {
         "seed": seed,
         "worlds": [
-            {
-                "id": f"world-{seed}-{i}",
-                "energy": random.random() * 1000,
-                "life": random.random()
-            }
+            {"id": seed+i, "life": random.random()}
             for i in range(3)
         ]
     }
 
-def evolve_civilization(universe):
-    return [
-        {
-            "world_id": w["id"],
-            "tech_level": random.uniform(0, 100),
-            "status": random.choice(["ALIVE", "DEAD", "EVOLVING"])
-        }
-        for w in universe["worlds"]
-    ]
+# =========================
+# EVOLUTION
+# =========================
+def evolve(u):
+    return [{"id": w["id"], "status": random.choice(["ALIVE","DEAD"])} for w in u["worlds"]]
 
-def universe_brain(seed):
-    u = create_universe(seed)
+# =========================
+# COMPANY
+# =========================
+def company():
     return {
-        "universe": u,
-        "civilization": evolve_civilization(u)
+        "dev": AI_SYSTEM["dev"].run("build"),
+        "mkt": AI_SYSTEM["mkt"].run("ads"),
+        "sales": AI_SYSTEM["sales"].run("sell"),
+        "ana": AI_SYSTEM["ana"].run("data")
     }
 
 # =========================
-# AI COMPANY SYSTEM
+# GLOBAL BRAIN
 # =========================
-def company_cycle():
+def global_brain():
     return {
-        "dev": AI["developer"].execute("build AI system"),
-        "marketing": AI["marketing"].execute("run ads"),
-        "sales": AI["sales"].execute("sell product"),
-        "analyst": AI["analyst"].execute("analyze data")
+        "bank": bank(),
+        "economy": economy(),
+        "hedge": hedge()
     }
 
 # =========================
-# MAIN SYSTEM LOOP
+# LOOP
 # =========================
-def run_system():
-    print("🚀 AI GOD SYSTEM ONLINE")
-
+def run():
     login("admin@ai.com")
     deploy()
-    payment("user_1", 100)
+    payment("u1", 100)
 
     seed = 0
 
     while True:
-        print("\n==============================")
-        print("🏢 COMPANY:", company_cycle())
-        print("💰 GLOBAL:", global_brain())
-        print("🌌 UNIVERSE:", universe_brain(seed))
-        print("📊 STATE:", STATE)
-        print("📦 LOGS:", len(LOGS))
-        print("==============================")
+        print(company())
+        print(global_brain())
+        print(evolve(universe(seed)))
+        print("STATE:", STATE)
+        print("LOGS:", len(LOGS))
+        print("----------------------")
 
         seed += 1
         time.sleep(3)
 
 # =========================
-# BOOT
+# START
 # =========================
-if __name__ == "__main__":
-    run_system()
+run()
