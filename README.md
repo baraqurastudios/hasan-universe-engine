@@ -2,11 +2,15 @@ import json, time, uuid, hashlib
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # =========================
-# STORAGE
+# CORE STORAGE
 # =========================
 class DB:
-    users, tenants, projects = {}, {}, {}
-    logs, files, plugins = {}, {}, {}
+    users = {}
+    tenants = {}
+    projects = {}
+    logs = {}
+    files = {}
+    plugins = {}
 
 class Cache:
     store = {}
@@ -18,16 +22,16 @@ class Cache:
 # =========================
 # UTIL
 # =========================
-uid = lambda: str(uuid.uuid4())
-hashv = lambda x: hashlib.sha256(x.encode()).hexdigest()
+def uid(): return str(uuid.uuid4())
+def hashv(x): return hashlib.sha256(x.encode()).hexdigest()
 
 # =========================
-# AUTH (JWT SIM)
+# AUTH
 # =========================
 class Auth:
     sessions = {}
     @staticmethod
-    def token(user):
+    def create(user):
         t = hashv(user+str(time.time()))
         Auth.sessions[t] = user
         return t
@@ -35,32 +39,31 @@ class Auth:
     def verify(t): return Auth.sessions.get(t)
 
 # =========================
-# OAUTH (SIMULATION)
-# =========================
-def oauth_login(provider, email):
-    # fake google/github login
-    if email not in DB.users:
-        tid = list(DB.tenants.keys())[0] if DB.tenants else create_tenant("default")
-        create_user(tid, email, "oauth")
-    return {"token": Auth.token(email), "provider": provider}
-
-# =========================
 # SAAS CORE
 # =========================
 def create_tenant(name):
-    tid = uid()
-    DB.tenants[tid] = {"id":tid,"name":name}
+    tid=uid()
+    DB.tenants[tid]={"id":tid,"name":name}
     return tid
 
 def create_user(tid,email,password):
-    DB.users[email] = {"tenant":tid,"password":hashv(password)}
+    DB.users[email]={"tenant":tid,"password":hashv(password)}
     return DB.users[email]
 
 def login(email,password):
     u=DB.users.get(email)
     if not u or u["password"]!=hashv(password):
         return {"error":"login failed"}
-    return {"token":Auth.token(email)}
+    return {"token":Auth.create(email)}
+
+# =========================
+# OAUTH (SIMULATION)
+# =========================
+def oauth(provider,email):
+    if email not in DB.users:
+        tid = list(DB.tenants.keys())[0] if DB.tenants else create_tenant("default")
+        create_user(tid,email,"oauth")
+    return {"token":Auth.create(email),"provider":provider}
 
 # =========================
 # PROJECT
@@ -108,7 +111,7 @@ def upload(n,c):
 def deploy(app): return {"app":app,"status":"running"}
 
 # =========================
-# API
+# API CORE
 # =========================
 class API:
     routes={}
@@ -135,7 +138,7 @@ def user(d,u): return create_user(d["tenant"],d["email"],d["password"])
 def login_api(d,u): return login(d["email"],d["password"])
 
 @API.route("/oauth")
-def oauth_api(d,u): return oauth_login(d["provider"],d["email"])
+def oauth_api(d,u): return oauth(d["provider"],d["email"])
 
 @API.route("/project")
 def project(d,u):
@@ -185,7 +188,7 @@ class Handler(BaseHTTPRequestHandler):
 # BOOT
 # =========================
 def boot():
-    print("🚀 SYSTEM RUNNING")
+    print("🚀 V24 SYSTEM READY")
 
     tid=create_tenant("GLOBAL")
     create_user(tid,"admin","1234")
