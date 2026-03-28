@@ -2,30 +2,31 @@
 BARAQURA AI: THE PURIFIED UNICORN (ULTIMATE VERSION)
 High-Performance | Zero-Latency | 100% Autonomous Business Engine
 """
-import random
 import time
+import random
 
 # --- 1. VIRTUAL AI WORKFORCE ---
 class AIEmployee:
     def __init__(self, role, core_objective):
         self.role = role
         self.objective = core_objective
-        self.efficiency = 0
+        self.performance = 0
 
-    def execute_task(self, task):
-        boost = random.randint(5, 15)
-        self.efficiency += boost
+    def work(self, task):
+        # Efficiency calculation
+        impact = random.randint(5, 15)
+        self.performance += impact
         return {
             "agent": self.role,
             "status": "COMPLETED",
-            "impact": f"{self.efficiency}% growth synergy"
+            "impact": f"{impact}% growth synergy",
+            "current_performance": self.performance
         }
 
-# Initialize Workforce
 workforce = {
-    "marketing": AIEmployee("Growth Hacker", "User Acquisition Loop"),
-    "sales": AIEmployee("Revenue Closer", "Enterprise Subscription Scaling"),
-    "devops": AIEmployee("Stability Bot", "Self-Healing Infrastructure")
+    "marketing": AIEmployee("Growth Hacker", "User Acquisition"),
+    "sales": AIEmployee("Revenue Closer", "Enterprise Scaling"),
+    "devops": AIEmployee("Stability Bot", "Self-Healing Infra")
 }
 
 # --- 2. STRATEGIC GROWTH BRAIN ---
@@ -46,13 +47,14 @@ class BusinessBrain:
     def self_heal(system_status):
         cpu = system_status.get('cpu', 40)
         if cpu > 85:
-            return "Scaling Kubernetes Nodes..."
-        return "System Optimal ✅"
+            return "Scaling Kubernetes Nodes"
+        return "System Optimal"
 
 # --- 3. UNICORN ORCHESTRATOR ---
 def run_unicorn_cycle(state):
-    marketing_task = workforce["marketing"].execute_task("Viral Loop Automation")
-    sales_task = workforce["sales"].execute_task("B2B Lead Conversion")
+    marketing_task = workforce["marketing"].work("Viral Campaign")
+    sales_task = workforce["sales"].work("Lead Optimization")
+    devops_task = workforce["devops"].work("Infra Calibration")
 
     strategy = BusinessBrain.optimize_revenue(state)
     health_check = BusinessBrain.self_heal(state.get('telemetry', {}))
@@ -61,19 +63,28 @@ def run_unicorn_cycle(state):
         "cycleId": int(time.time()),
         "strategy": strategy,
         "health": health_check,
-        "reports": [marketing_task, sales_task],
-        "status": "ACTIVE"
+        "reports": [marketing_task, sales_task, devops_task],
+        "status": "ACTIVE_GROWING"
     }
 
-# --- 4. EXECUTION ---
-# Starting state for the factory engine
-initial_state = {
-    "users": 1500,
-    "revenue": 12000,
+# --- 4. EXECUTION LOOP ---
+def start_factory(state):
+    # Simulated current status update
+    report = run_unicorn_cycle(state)
+    
+    # Growth Simulation
+    state['users'] += random.randint(10, 50)
+    state['revenue'] += (state['users'] * report['strategy']['price']) / 100
+    
+    print(f"Business Report Updated ID: {report['cycleId']}")
+    print(f"Current Users: {state['users']} | Revenue: ${state['revenue']:.2f}")
+
+# Initialize State
+current_state = {
+    "users": 100,
+    "revenue": 500,
     "telemetry": {"cpu": 35}
 }
 
-# Execute a single cycle for verification
-report = run_unicorn_cycle(initial_state)
-print(f"Update: Business Report {report['cycleId']} is now Live!")
-print(f"Strategy: {report['strategy']['action']} at ${report['strategy']['price']}")
+# Run one cycle to confirm
+start_factory(current_state)
