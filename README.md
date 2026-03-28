@@ -1,7 +1,7 @@
 """
 ====================================================
-NEXT STEP MASTER PLATFORM CORE
-PURE PYTHON • SINGLE FILE • CLEAN ARCHITECTURE
+NEXT STEP MASTER PLATFORM
+PURE PYTHON • SINGLE FILE • PRODUCTION CORE DESIGN
 ====================================================
 """
 
@@ -10,19 +10,19 @@ import uuid
 from collections import defaultdict
 
 # =========================
-# CORE STATE STORE
+# GLOBAL CORE STATE
 # =========================
-class Database:
+class Store:
     def __init__(self):
         self.users = {}
         self.sessions = {}
         self.projects = {}
         self.deployments = {}
-        self.logs = []
         self.memory = []
+        self.logs = []
         self.analytics = defaultdict(int)
 
-DB = Database()
+DB = Store()
 
 # =========================
 # LOGGER SYSTEM
@@ -40,7 +40,7 @@ def log(event, data=None):
 # =========================
 def create_user(username, password):
     if username in DB.users:
-        return {"error": "User exists"}
+        return {"error": "exists"}
 
     DB.users[username] = {
         "password": password,
@@ -53,7 +53,6 @@ def create_user(username, password):
 
 def login(username, password):
     user = DB.users.get(username)
-
     if not user or user["password"] != password:
         return {"status": "failed"}
 
@@ -85,7 +84,7 @@ def create_project(owner, name):
 def add_file(project_id, filename, content):
     project = DB.projects.get(project_id)
     if not project:
-        return {"error": "not found"}
+        return {"error": "not_found"}
 
     project["files"].append({
         "filename": filename,
@@ -93,14 +92,14 @@ def add_file(project_id, filename, content):
     })
 
     log("file_added", filename)
-    return {"status": "added"}
+    return {"status": "ok"}
 
 # =========================
-# DEPLOYMENT SYSTEM
+# DEPLOYMENT ENGINE
 # =========================
 def deploy(project_id):
     if project_id not in DB.projects:
-        return {"error": "invalid project"}
+        return {"error": "invalid_project"}
 
     deploy_id = str(uuid.uuid4())
 
@@ -115,7 +114,7 @@ def deploy(project_id):
     return {"deployment_id": deploy_id}
 
 # =========================
-# MEMORY SYSTEM (AI CONTEXT)
+# MEMORY ENGINE (AI CONTEXT)
 # =========================
 def memory_add(text):
     DB.memory.append(text)
@@ -135,12 +134,12 @@ class Agent:
     def run(self, task):
         DB.analytics["tasks"] += 1
         log("agent_task", {"role": self.role, "task": task})
-        return f"[{self.role}] -> {task}"
+        return f"{self.role}: {task}"
 
 
 AGENTS = {
     "dev": Agent("developer"),
-    "data": Agent("data"),
+    "data": Agent("data_analyst"),
     "ops": Agent("devops"),
     "ai": Agent("ai_core")
 }
@@ -148,19 +147,18 @@ AGENTS = {
 def run_agent(role, task):
     agent = AGENTS.get(role)
     if not agent:
-        return {"error": "invalid agent"}
-
+        return {"error": "invalid_agent"}
     return agent.run(task)
 
 # =========================
-# AUTONOMOUS AI ENGINE
+# AUTONOMOUS AI LOOP
 # =========================
 def autonomous_cycle():
     tasks = [
         "optimize system",
-        "scan logs",
+        "analyze logs",
         "improve performance",
-        "analyze memory",
+        "scan memory",
         "run diagnostics"
     ]
 
@@ -174,7 +172,7 @@ def analytics():
     return dict(DB.analytics)
 
 # =========================
-# API ROUTER (CORE BACKEND)
+# API CORE ROUTER
 # =========================
 def api(route, payload=None):
     DB.analytics["requests"] += 1
@@ -193,38 +191,39 @@ def api(route, payload=None):
         "analytics": analytics
     }
 
-    if route not in routes:
-        return {"error": "route not found"}
+    fn = routes.get(route)
+    if not fn:
+        return {"error": "route_not_found"}
 
-    return routes[route](**(payload or {}))
+    return fn(**(payload or {}))
 
 # =========================
-# SYSTEM BOOTSTRAP
+# SYSTEM BOOT
 # =========================
 def boot():
-    print("🚀 NEXT STEP MASTER PLATFORM ONLINE")
+    print("🚀 NEXT STEP MASTER PLATFORM RUNNING")
 
     api("user/create", {"username": "admin", "password": "1234"})
-    session = api("user/login", {"username": "admin", "password": "1234"})
+    api("user/login", {"username": "admin", "password": "1234"})
 
-    project = api("project/create", {"owner": "admin", "name": "core"})
+    project = api("project/create", {"owner": "admin", "name": "core-platform"})
     api("project/add_file", {
         "project_id": project["project_id"],
-        "filename": "app.py",
-        "content": "print('hello system')"
+        "filename": "main.py",
+        "content": "print('system online')"
     })
 
     api("deploy", {"project_id": project["project_id"]})
-    api("memory/add", {"text": "system initialized"})
+    api("memory/add", {"text": "system started successfully"})
 
     while True:
-        print("\n====================")
+        print("\n======================")
         print("AI:", autonomous_cycle())
         print("ANALYTICS:", analytics())
         print("MEMORY:", memory_search("system"))
-        print("====================")
+        print("======================")
 
         time.sleep(3)
 
-# START
+# START SYSTEM
 boot()
