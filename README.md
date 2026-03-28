@@ -1,7 +1,7 @@
 """
 ====================================================
 NEXT STEP MASTER PLATFORM CORE
-PURE PYTHON • SINGLE FILE • CLEAN ARCHITECTURE
+PURE PYTHON • SINGLE FILE • PRODUCTION ARCHITECTURE
 ====================================================
 """
 
@@ -10,7 +10,7 @@ import uuid
 from collections import defaultdict
 
 # =========================
-# GLOBAL STATE (IN-MEMORY DB)
+# CORE DATABASE
 # =========================
 class DB:
     users = {}
@@ -22,7 +22,7 @@ class DB:
     analytics = defaultdict(int)
 
 # =========================
-# LOGGER SYSTEM
+# LOGGER
 # =========================
 def log(event, data=None):
     DB.logs.append({
@@ -45,7 +45,7 @@ def create_user(username, password):
     }
 
     log("user_created", username)
-    return {"status": "created", "user": username}
+    return {"status": "ok", "user": username}
 
 
 def login(username, password):
@@ -80,7 +80,6 @@ def create_project(owner, name):
 
 def add_file(project_id, filename, content):
     project = DB.projects.get(project_id)
-
     if not project:
         return {"error": "not_found"}
 
@@ -132,7 +131,7 @@ class Agent:
     def run(self, task):
         DB.analytics["tasks"] += 1
         log("agent_task", {"role": self.role, "task": task})
-        return f"{self.role} -> {task}"
+        return f"{self.role} → {task}"
 
 
 AGENTS = {
@@ -149,7 +148,7 @@ def run_agent(role, task):
     return agent.run(task)
 
 # =========================
-# AUTONOMOUS AI LOOP
+# AUTONOMOUS AI ENGINE
 # =========================
 def autonomous_cycle():
     tasks = [
@@ -170,7 +169,7 @@ def analytics():
     return dict(DB.analytics)
 
 # =========================
-# API ROUTER (CORE BACKEND)
+# API ROUTER (BACKEND CORE)
 # =========================
 def api(route, payload=None):
     DB.analytics["requests"] += 1
@@ -196,7 +195,7 @@ def api(route, payload=None):
     return fn(**(payload or {}))
 
 # =========================
-# SYSTEM BOOTSTRAP
+# SYSTEM BOOT
 # =========================
 def boot():
     print("🚀 NEXT STEP MASTER PLATFORM ONLINE")
@@ -213,16 +212,16 @@ def boot():
     })
 
     api("deploy", {"project_id": project["project_id"]})
-    api("memory/add", {"text": "system initialized"})
+    api("memory/add", {"text": "system initialized successfully"})
 
     while True:
-        print("\n====================")
+        print("\n======================")
         print("AI:", autonomous_cycle())
         print("ANALYTICS:", analytics())
         print("MEMORY:", memory_search("system"))
-        print("====================")
+        print("======================")
 
         time.sleep(3)
 
-# START
+# START SYSTEM
 boot()
