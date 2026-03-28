@@ -1,7 +1,8 @@
 """
-BARAQURA MASTER ENGINE - PURIFIED CORE
-PURE PYTHON - AI + ECONOMY + ANALYTICS
-Fixed: Infinite Loop, Emoji Conflicts, and Syntax Stability
+========================================================
+🚀 NEXT STEP FINAL CONSOLIDATED CORE SYSTEM
+PURE PYTHON • SINGLE SHEET • REAL ARCHITECTURE STYLE
+========================================================
 """
 
 import random
@@ -9,13 +10,13 @@ import time
 import uuid
 
 # =========================
-# GLOBAL SYSTEM STATE
+# GLOBAL STATE ENGINE
 # =========================
-SYSTEM = {
-    "users": 40000,
+STATE = {
+    "users": 50000,
     "sessions": 0,
-    "revenue": 120000000,
-    "capital": 5000000000,
+    "revenue": 250000000,
+    "capital": 10000000000,
     "deployments": 0,
     "tasks": 0,
     "api_calls": 0,
@@ -28,9 +29,9 @@ SERVICES = {}
 WORKSPACE = {}
 
 # =========================
-# EVENT LOGGER
+# LOGGER SYSTEM
 # =========================
-def log_event(event, data=None):
+def log(event, data=None):
     LOGS.append({
         "id": str(uuid.uuid4()),
         "event": event,
@@ -39,23 +40,34 @@ def log_event(event, data=None):
     })
 
 # =========================
-# CORE MODULES (AUTH & BILLING)
+# AUTH SYSTEM
 # =========================
-def register_user(user_email):
-    SYSTEM["users"] += 1
-    log_event("register", {"email": user_email})
+def register(user):
+    STATE["users"] += 1
+    log("register", user)
     return str(uuid.uuid4())
 
-def process_billing(user_id, amount):
-    SYSTEM["revenue"] += amount
-    log_event("billing", {"user": user_id, "amount": amount})
+def login(user):
+    STATE["sessions"] += 1
+    log("login", user)
+    return True
+
+# =========================
+# SAAS BILLING ENGINE
+# =========================
+def billing(user, amount):
+    STATE["revenue"] += amount
+    log("billing", {"user": user, "amount": amount})
     return {"status": "success", "amount": amount}
 
-def deploy_service(service_name):
-    SYSTEM["deployments"] += 1
-    SERVICES[service_name] = "ACTIVE"
-    log_event("deploy", service_name)
-    return f"Service {service_name} is now ACTIVE"
+# =========================
+# CLOUD DEPLOYMENT SYSTEM
+# =========================
+def deploy(service):
+    STATE["deployments"] += 1
+    SERVICES[service] = "ACTIVE"
+    log("deploy", service)
+    return f"{service} ACTIVE"
 
 # =========================
 # AI AGENT SYSTEM
@@ -64,76 +76,167 @@ class Agent:
     def __init__(self, role):
         self.role = role
 
-    def execute_task(self, task):
-        SYSTEM["tasks"] += 1
-        log_event("agent_task", {"role": self.role, "task": task})
-        return f"{self.role} agent executed: {task}"
+    def execute(self, task):
+        STATE["tasks"] += 1
+        log("agent_task", {"role": self.role, "task": task})
+        return f"{self.role} -> {task}"
 
 AGENTS = {
-    "auto": Agent("Autonomous AI"),
-    "dev": Agent("Developer")
+    "dev": Agent("developer"),
+    "market": Agent("marketing"),
+    "data": Agent("data analyst"),
+    "support": Agent("support"),
+    "auto": Agent("autonomous ai")
 }
 
 # =========================
-# ECONOMY & GLOBAL BRAIN
+# MEMORY SYSTEM
 # =========================
-def get_global_intelligence():
-    # Economy Intel
-    gdp = random.randint(20000, 80000)
-    inflation = round(random.uniform(1, 10), 2)
-    
-    # Hedge Fund Logic
-    profit = random.uniform(100, 1000)
-    SYSTEM["capital"] += int(profit * 3000)
-    
+def memory_add(text):
+    MEMORY.append(text)
+    log("memory_add", text)
+
+def memory_search(query):
+    return [m for m in MEMORY if query.lower() in m.lower()]
+
+# =========================
+# WORKSPACE SYSTEM
+# =========================
+def workspace_create(user):
+    WORKSPACE[user] = {
+        "files": [],
+        "notes": [],
+        "history": []
+    }
+    log("workspace_create", user)
+    return WORKSPACE[user]
+
+# =========================
+# API GATEWAY
+# =========================
+def api_call(endpoint):
+    STATE["api_calls"] += 1
+    log("api_call", endpoint)
+    return {"endpoint": endpoint, "status": "ok"}
+
+# =========================
+# ECONOMY ENGINE
+# =========================
+def economy():
     return {
-        "economy": {"gdp": gdp, "inflation": inflation},
-        "market": {"daily_profit": round(profit, 2), "new_capital": SYSTEM["capital"]}
+        "gdp": random.randint(30000, 100000),
+        "inflation": round(random.uniform(1, 100), 2),
+        "growth": round(random.uniform(-70, 120), 2)
     }
 
 # =========================
-# ANALYTICS & SIMULATION
+# CENTRAL BANK AI
 # =========================
-def get_analytics():
+def central_bank():
+    rate = round(random.uniform(0, 20), 2)
     return {
-        "stats": {k: v for k, v in SYSTEM.items()},
-        "active_services": list(SERVICES.keys()),
-        "total_logs": len(LOGS)
+        "interest_rate": rate,
+        "policy": "EXPAND" if rate < 4 else "CONTROL"
     }
 
-def run_autonomous_cycle():
-    SYSTEM["ai_cycles"] += 1
-    tasks = ["optimize system", "fix bug", "scale infrastructure", "analyze market"]
-    selected_task = random.choice(tasks)
-    return AGENTS["auto"].execute_task(selected_task)
+# =========================
+# STOCK MARKET SYSTEM
+# =========================
+def stock_market():
+    assets = ["AAPL", "TSLA", "NVDA", "AMZN", "GOOG", "META", "MSFT"]
+    return [
+        {
+            "asset": a,
+            "signal": random.choice(["BUY", "SELL", "HOLD"]),
+            "profit": round(random.uniform(0, 1000), 2)
+        }
+        for a in assets
+    ]
+
+def hedge_fund():
+    trades = stock_market()
+    profit = sum(t["profit"] for t in trades)
+    STATE["capital"] += profit * 5000
+    return {"profit": profit, "capital": STATE["capital"]}
 
 # =========================
-# SYSTEM BOOT (SAFE MODE)
+# GLOBAL INTELLIGENCE CORE
 # =========================
-def boot_system():
-    print("--- BARAQURA NEXT STEP CORE ENGINE ONLINE ---")
-    
-    # Initializing
-    admin_id = register_user("admin@baraqura.studio")
-    process_billing(admin_id, 200000)
-    print(deploy_service("CORE_ORACLE_V133"))
-    
-    # Running Simulation Cycles (Preventing infinite loop for Oracle UI stability)
-    for i in range(3):
-        print(f"\nCycle {i+1} Status:")
-        print(f"AI Task: {run_autonomous_cycle()}")
-        print(f"Intelligence: {get_global_intelligence()}")
-    
-    # Final Analytics Report
-    print("\n--- FINAL SYSTEM ANALYTICS ---")
-    report = get_analytics()
-    for key, value in report["stats"].items():
-        print(f"{key.capitalize()}: {value}")
-    print(f"Logs Recorded: {report['total_logs']}")
-    print("---------------------------------------------")
+def global_brain():
+    return {
+        "central_bank": central_bank(),
+        "economy": economy(),
+        "hedge_fund": hedge_fund()
+    }
 
-if __name__ == "__main__":
-    try:
-        boot_system()
-    except Exception as e:
-        print(f"System Critical Error: {str(e)}")
+# =========================
+# AUTOCODE ENGINE
+# =========================
+def autocode(task):
+    log("autocode", task)
+    return f"# auto_generated_code: {task}"
+
+# =========================
+# AUTONOMOUS AI ENGINE
+# =========================
+def autonomous_ai():
+    STATE["ai_cycles"] += 1
+
+    tasks = [
+        "optimize system",
+        "fix critical issue",
+        "deploy update",
+        "analyze dataset",
+        "scale infrastructure",
+        "improve AI logic"
+    ]
+
+    task = random.choice(tasks)
+    return AGENTS["auto"].execute(task)
+
+# =========================
+# ANALYTICS SYSTEM
+# =========================
+def analytics():
+    return {
+        "users": STATE["users"],
+        "sessions": STATE["sessions"],
+        "revenue": STATE["revenue"],
+        "capital": STATE["capital"],
+        "deployments": STATE["deployments"],
+        "tasks": STATE["tasks"],
+        "api_calls": STATE["api_calls"],
+        "ai_cycles": STATE["ai_cycles"],
+        "logs": len(LOGS),
+        "memory": len(MEMORY),
+        "services": len(SERVICES)
+    }
+
+# =========================
+# SYSTEM BOOT
+# =========================
+def boot():
+    print("🚀 NEXT STEP FINAL CORE SYSTEM ONLINE")
+
+    user = register("admin@system.ai")
+    login("admin@system.ai")
+    billing(user, 500000)
+    deploy("core_system")
+    workspace_create(user)
+    memory_add("system initialized successfully")
+
+    while True:
+        print("\n==============================")
+        print("🤖 AI:", autonomous_ai())
+        print("📊 ANALYTICS:", analytics())
+        print("🌍 GLOBAL:", global_brain())
+        print("🧠 MEMORY:", memory_search("system"))
+        print("⚙️ SERVICES:", SERVICES)
+        print("==============================")
+
+        time.sleep(3)
+
+# =========================
+# START SYSTEM
+# =========================
+boot()
