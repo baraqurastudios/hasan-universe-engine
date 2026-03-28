@@ -1,80 +1,80 @@
 # ==========================================
-# 🧬 BaraQura OS: Ultimate MVP AI Platform v10.0
-# 📅 Date: 28 Mar, 2026 | Mode: Full-Stack Scaffold
+# 🛰️ BARAQURA MASTER ENGINE v128.0 (GOD MODE)
+# Features: AI Agent, Multi-File Control, Cloud Sync
 # ==========================================
 
 import streamlit as st
-import requests
-import base64
-import datetime
+import openai
 import os
-import json
-import difflib
-try:
-    import openai
-except:
-    st.error("Missing libraries: pip install openai requests")
+import datetime
+import base64
 
-# --- ১. কোর কনফিগারেশন ও মেমোরি সিস্টেম ---
-U, R = "baraqurastudios", "hasan-universe-engine"
-st.set_page_config(page_title="BaraQura MVP Platform", layout="wide", page_icon="🚀")
+# --- ১. মেমোরি ও কনফিগারেশন ---
+if "analytics" not in st.session_state:
+    st.session_state.analytics = {"deploys": 0, "ai_tasks": 0}
 
-# সেলফ-লার্নিং মেমোরি ইনিশিয়ালাইজেশন
-if 'memory' not in st.session_state:
-    st.session_state['memory'] = {"user_preferences": {}, "task_history": [], "analytics": {"ai_calls": 0, "deploys": 0}}
-
-# --- ২. সিকিউরিটি ও এক্সেস কন্ট্রোল (GitHub OAuth Simulation) ---
-st.sidebar.title("🔐 BaraQura Cloud Auth")
-user_token = st.sidebar.text_input("GitHub Access Token:", type="password", key="v10_token")
-
-# রোল ডিটেকশন
-ADMIN_KEY = os.getenv("ADMIN_TOKEN", "bq_admin_2026")
+st.set_page_config(page_title="BaraQura Cloud OS", layout="wide")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# --- ৩. কোর ইঞ্জিন (GitHub & Cloud Sync) ---
-def call_github(method, endpoint, data=None, token=None):
-    url = f"https://api.github.com/repos/{U}/{R}/contents/{endpoint}"
-    headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+# --- ২. অটোনোমাস এজেন্ট লজিক ---
+def ai_agent_executor(task, file_path):
+    """এটি আপনার ফাইল রিড করবে এবং AI দিয়ে আপডেট করবে।"""
     try:
-        if method == "GET": res = requests.get(url, headers=headers, timeout=15)
-        else: res = requests.put(url, headers=headers, json=data, timeout=15)
-        return res.json(), res.status_code
-    except: return {"message": "Cloud Connection Error"}, 500
+        if os.path.exists(file_path):
+            with open(file_path, "r") as f:
+                content = f.read()
+        else:
+            content = "# New File Created"
 
-# --- ৪. অটোনোমাস এজেন্ট (Task to Code) ---
-def autonomous_agent(task_description):
-    try:
-        # এটি ইউজারের মেমোরি থেকে ডাটা রিকল করে কোড জেনারেট করবে
-        memory_context = str(st.session_state['memory']['user_preferences'])
-        res = openai.ChatCompletion.create(
+        prompt = f"Task: {task}\nCurrent Code:\n{content}\n\nReturn ONLY the updated code."
+        response = openai.ChatCompletion.create(
             model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": f"Autonomous Developer Agent. Context: {memory_context}"},
-                {"role": "user", "content": f"Task: {task_description}. Generate and deploy code."}
-            ]
+            messages=[{"role": "user", "content": prompt}]
         )
-        return res['choices'][0]['message']['content']
-    except:
-        return f"# Agent Simulation: {task_description}\ndef auto_task():\n    pass"
+        updated_code = response.choices[0].message.content
+        
+        with open(file_path, "w") as f:
+            f.write(updated_code)
+        
+        st.session_state.analytics["ai_tasks"] += 1
+        return updated_code
+    except Exception as e:
+        return f"Error: {str(e)}"
 
-# --- ৫. মেইন ড্যাশবোর্ড ---
-st.title("🛰️ BaraQura MVP AI Platform")
+# --- ৩. মেইন ড্যাশবোর্ড UI ---
+st.title("🛰️ BaraQura AI Cloud IDE")
 
-if not user_token:
-    st.info("👋 Welcome! Please login via GitHub Token in the sidebar to access your workspace.")
-    st.stop()
+tab1, tab2, tab3 = st.tabs(["🤖 Autonomous Agent", "📝 Editor", "📊 Analytics"])
 
-# ৫.১ ফাইল ও ফোল্ডার এক্সপ্লোরার (Cloud Mode)
-if 'path' not in st.session_state: st.session_state['path'] = ""
-files_data = call_github("GET", st.session_state['path'], token=user_token)[0]
+with tab1:
+    st.subheader("🧬 Agent Control")
+    col1, col2 = st.columns(2)
+    with col1:
+        file_to_edit = st.text_input("File Path (e.g., app.py)", "app.py")
+    with col2:
+        task_desc = st.text_input("Task (e.g., Add a login function)")
+    
+    if st.button("Deploy AI Agent 🚀"):
+        result = ai_agent_executor(task_desc, file_to_edit)
+        st.code(result, language="python")
+        st.success(f"Successfully updated {file_to_edit}")
 
-if isinstance(files_data, list):
-    st.sidebar.divider()
-    selected_file = st.sidebar.selectbox("📂 Cloud Files", [f['name'] for f in files_data if f['type'] == 'file'])
-    active_path = f"{st.session_state['path']}/{selected_file}".strip("/") if selected_file else "app.py"
+with tab2:
+    st.subheader("📝 Manual Code Push (The Oracle Editor)")
+    code_input = st.text_area("Final Code to Push", height=300, placeholder="Python কোড এখানে দিন...")
+    
+    if st.button("Execute Safe Update 🚀"):
+        try:
+            # সিনট্যাক্স চেক
+            compile(code_input, "<string>", "exec")
+            with open("app.py", "w") as f:
+                f.write(code_input)
+            st.session_state.analytics["deploys"] += 1
+            st.balloons()
+            st.success("অভিনন্দন! আপনার সিস্টেম সফলভাবে আপডেট হয়েছে।")
+        except Exception as e:
+            st.error(f"❌ Syntax Error: {str(e)}")
 
-# ৫.২ মেমোরি ও রিয়েলটাইম স্ট্যাটাস
-with st.sidebar.expander("🧠 Learning Memory"):
-    st.write(st.session_state['memory'])
-
-# --- ৬. মেইন ট্যাব সিস্টেম (God Mode
+with tab3:
+    st.subheader("📊 System Metrics")
+    st.json(st.session_state.analytics)
