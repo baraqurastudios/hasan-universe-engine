@@ -5,8 +5,7 @@ import datetime
 import os
 
 # --- ১. মাস্টার সিকিউরিটি ও কনফিগারেশন ---
-# সিকিউরিটি ফিক্স: সরাসরি টোকেন ইনপুট না নিয়ে Streamlit Secrets বা Environment Variable ব্যবহার
-# আপনার Streamlit Cloud-এর Settings > Secrets-এ GITHUB_TOKEN ="your_token" দিয়ে দিন।
+# সিকিউরিটি ফিক্স: Streamlit Secrets বা Environment Variable ব্যবহার করুন
 GITHUB_TOKEN = st.secrets.get("GITHUB_TOKEN") or os.getenv("GITHUB_TOKEN")
 REPO_NAME = "BaraQuraStudios/master-engine"
 
@@ -34,17 +33,14 @@ else:
 
 st.sidebar.divider()
 target_file = st.sidebar.text_input("📁 Target File Path", value="app.py")
-st.sidebar.info(f"System: {REPO_NAME}")
 
 # --- ৫. মেইন ড্যাশবোর্ড (Tabs) ---
 tab1, tab2, tab3, tab4 = st.tabs(["🔮 AI Oracle", "⏪ Rollback", "⚡ Console", "📜 Logs"])
 
-# --- ট্যাব ১: AI Oracle (Manual & Auto Integration) ---
+# --- ট্যাব ১: AI Oracle ---
 with tab1:
     st.subheader("🌀 The Oracle Update Portal")
     mode = st.radio("Update Mode:", ["Smart Inject (Append)", "Full Overwrite"], horizontal=True)
-    
-    # AI Integration Idea: এখান থেকে জেমিনি বা অন্য এআই-কে কল করার ফ্রেমওয়ার্ক রাখা হয়েছে
     patch_code = st.text_area("Paste Code or AI Generated Script...", height=300)
     
     if st.button("Execute System Update 🚀"):
@@ -56,53 +52,69 @@ with tab1:
                 if status == 200:
                     sha = data['sha']
                     old_content = base64.b64decode(data['content']).decode('utf-8')
-                    
-                    # অটো ব্যাকআপ (সেশন স্টেটে রাখা হচ্ছে রোলব্যাক এর জন্য)
                     st.session_state['last_stable_code'] = old_content
                     
-                    final_code = f"{old_content}\n\n# --- Patch: {datetime.datetime.now()} ---\n{patch_code}" if mode == "Smart Inject (Append)" else patch_code
+                    if mode == "Smart Inject (Append)":
+                        final_code = f"{old_content}\n\n# --- Patch: {datetime.datetime.now()} ---\n{patch_code}"
+                    else:
+                        final_code = patch_code
                     
-                    update_data = {"message": f"Update {target_file}", "content": base64.b64encode(final_code.encode()).decode(), "sha": sha}
+                    update_data = {
+                        "message": f"Update {target_file}",
+                        "content": base64.b64encode(final_code.encode()).decode(),
+                        "sha": sha
+                    }
                     _, up_status = github_request("PUT", target_file, data=update_data, token=user_token)
                     
                     if up_status == 200:
-                        st.balloons(); st.success(f"Alhamdulillah! {target_file} updated.")
-                    else: st.error("Update failed. Check permissions.")
-                else: st.error("File not found or connection error.")
+                        st.balloons()
+                        st.success(f"Alhamdulillah! {target_file} updated.")
+                    else:
+                        st.error("Update failed. Check permissions.")
+                else:
+                    st.error("File not found or connection error.")
 
 # --- ট্যাব ২: Rollback System ---
 with tab2:
     st.subheader("⏪ System Rollback (Undo)")
-    st.warning("সিস্টেম ডেড হওয়া থেকে বাঁচাতে এখান থেকে আগের স্টেবল ভার্সনে ফিরে যান।")
     if 'last_stable_code' in st.session_state:
         if st.button("Restore Last Stable Version 🛡️"):
             data, _ = github_request("GET", target_file, token=user_token)
-            update_data = {"message": "Rollback to stable", "content": base64.b64encode(st.session_state['last_stable_code'].encode()).decode(), "sha": data['sha']}
+            update_data = {
+                "message": "Rollback to stable",
+                "content": base64.b64encode(st.session_state['last_stable_code'].encode()).decode(),
+                "sha": data['sha']
+            }
             _, res_status = github_request("PUT", target_file, data=update_data, token=user_token)
-            if res_status == 200: st.success("System Restored!"); st.rerun()
+            if res_status == 200:
+                st.success("System Restored!")
+                st.rerun()
     else:
         st.info("No backup found in current session.")
 
-# --- ট্যাব ৩: Command Console (New Commands) ---
+# --- ট্যাব ৩: Command Console ---
 with tab3:
     st.subheader("⚡ Command Console")
-    cmd = st.text_input("Enter Command (e.g. /rollback, /status)")
+    cmd = st.text_input("Enter Command")
     if st.button("Run"):
-        if cmd == "/rollback":
-            st.write("Redirecting to Rollback Tab...")
-        elif cmd == "/status":
-            st.json({"file": target_file, "repo": REPO_NAME, "token_status": "Secure"})
-        else: st.error("Unknown Command")
+        if cmd == "/status":
+            st.json({"file": target_file, "token_status": "Loaded"})
+        else:
+            st.error("Unknown Command")
 
+# --- ট্যাব ৪: Logs (ইন্ডেন্টেশন এরর এখানেই ছিল, ফিক্স করা হয়েছে) ---
 with tab4:
-    st.subheader("📜 Logs")
-    if st.button("Clear Logs"): st.session_state.system_logs = []
-    for log in st.session_state.get('system_logs', [])[-10:]:
+    st.subheader("📜 System Logs")
+    if "system_logs" not in st.session_state:
+        st.session_state.system_logs = []
+    
+    if st.button("Clear Logs"):
+        st.session_state.system_logs = []
+    
+    for log in st.session_state.system_logs:
         st.code(log)
 
 st.divider()
 st.caption("BaraQura OS v1.2 Pro | Secure Framework | Sakibul Hasan")
-        st.code(log)
-
 st.divider()
 st.caption("BaraQura Studios | v1.0 Master Engine | Admin: Sakibul Hasan")
