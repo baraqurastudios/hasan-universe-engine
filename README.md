@@ -1,7 +1,7 @@
 """
 =========================================================
-NEXT STEP V16 — UNICORN AI CLOUD PLATFORM CORE
-PURE PYTHON FULL SAAS + AI + MULTI-TENANT SYSTEM
+NEXT STEP V17 — REAL SAAS AI CLOUD KERNEL
+PURE PYTHON INDUSTRY-STYLE ARCHITECTURE
 =========================================================
 """
 
@@ -12,30 +12,30 @@ import hashlib
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # =========================================================
-# MULTI-TENANT CORE DB (SAAS LEVEL)
+# CORE SAAS STORAGE (MULTI-TENANT DATABASE)
 # =========================================================
 class DB:
     tenants = {}
     users = {}
-    projects = {}
     sessions = {}
+    projects = {}
     analytics = {}
     memory = []
     plugins = {}
 
 # =========================================================
-# CACHE LAYER (REDIS SIM)
+# CACHE LAYER (REDIS STYLE)
 # =========================================================
 class Cache:
-    store = {}
+    data = {}
 
     @staticmethod
     def set(k, v):
-        Cache.store[k] = (v, time.time())
+        Cache.data[k] = (v, time.time())
 
     @staticmethod
     def get(k):
-        return Cache.store.get(k, (None,))[0]
+        return Cache.data.get(k, (None,))[0]
 
 # =========================================================
 # UTILITIES
@@ -49,11 +49,11 @@ def now():
 def hashv(x):
     return hashlib.sha256(x.encode()).hexdigest()
 
-def token(seed):
+def make_token(seed):
     return hashlib.sha256(f"{seed}-{time.time()}".encode()).hexdigest()
 
 # =========================================================
-# TENANT SYSTEM (MULTI SAAS)
+# TENANT SYSTEM (SAAS CORE)
 # =========================================================
 def create_tenant(name):
     tid = uid()
@@ -64,23 +64,16 @@ def create_tenant(name):
     }
     return tid
 
-def get_tenant(tid):
-    return DB.tenants.get(tid)
-
 # =========================================================
-# AUTH SYSTEM (JWT + OAUTH CORE)
+# AUTH SYSTEM (JWT + OAUTH SIMULATION)
 # =========================================================
 def register(tid, email, password, role="user"):
-    if email in DB.users:
-        return {"error": "exists"}
-
     DB.users[email] = {
         "id": uid(),
         "tenant": tid,
         "password": hashv(password),
         "role": role
     }
-
     DB.tenants[tid]["users"].append(email)
     return {"status": "registered"}
 
@@ -89,20 +82,20 @@ def login(email, password):
     if not u or u["password"] != hashv(password):
         return {"error": "invalid"}
 
-    t = token(email)
+    t = make_token(email)
     DB.sessions[t] = email
     return {"token": t}
 
 def oauth(provider, email):
-    t = token(email + provider)
+    t = make_token(email + provider)
     DB.sessions[t] = email
     return {"token": t}
 
-def verify(t):
-    return DB.sessions.get(t)
+def verify(token):
+    return DB.sessions.get(token)
 
 # =========================================================
-# AI AGENT SYSTEM (UNIFIED BRAIN)
+# AI CORE ENGINE (MULTI-AGENT SYSTEM)
 # =========================================================
 class Agent:
     def __init__(self, name):
@@ -117,23 +110,26 @@ class Agent:
 
 AGENTS = {
     "ai": Agent("AI_CORE"),
-    "dev": Agent("DEV"),
-    "ops": Agent("OPS"),
-    "data": Agent("DATA")
+    "dev": Agent("DEV_ENGINE"),
+    "ops": Agent("OPS_ENGINE"),
+    "data": Agent("DATA_ENGINE")
 }
+
+def run_agent(name, task):
+    return AGENTS[name].run(task)
 
 def autonomous_ai():
     tasks = [
-        "optimize system",
+        "system optimization",
         "security scan",
         "auto scaling",
-        "memory cleanup",
-        "self improvement"
+        "self repair",
+        "performance tuning"
     ]
-    return AGENTS["ai"].run(tasks[now() % len(tasks)])
+    return run_agent("ai", tasks[now() % len(tasks)])
 
 # =========================================================
-# MEMORY ENGINE (AI LONG TERM BRAIN)
+# MEMORY ENGINE (AI BRAIN)
 # =========================================================
 def memory_add(text):
     DB.memory.append({
@@ -155,7 +151,7 @@ def analytics():
     return DB.analytics
 
 # =========================================================
-# DEPLOY ENGINE (CLOUD SIM)
+# DEPLOY ENGINE (CLOUD SIMULATION)
 # =========================================================
 def build_app(name):
     return f"{name}_image_v1"
@@ -186,7 +182,7 @@ def create_project(tid, name, owner):
     return pid
 
 # =========================================================
-# API ENGINE (FASTAPI STYLE CORE)
+# API ROUTER (FASTAPI STYLE CORE)
 # =========================================================
 class API:
     routes = {}
@@ -199,8 +195,8 @@ class API:
         return wrap
 
     @staticmethod
-    def call(path, data=None, t=None):
-        user = verify(t)
+    def call(path, data=None, token=None):
+        user = verify(token)
         fn = API.routes.get(path)
         if not fn:
             return {"error": "404"}
@@ -209,7 +205,7 @@ class API:
 api = API()
 
 # =========================================================
-# ROUTES
+# ROUTES (FULL SAAS API)
 # =========================================================
 @api.route("/tenant/create")
 def r_tenant(data, user):
@@ -220,15 +216,11 @@ def r_tenant(data, user):
 def r_project(data, user):
     if not user:
         return {"error": "unauthorized"}
+
     u = DB.users[user]
     pid = create_project(u["tenant"], data["name"], user)
     track("project_create")
     return {"project_id": pid}
-
-@api.route("/deploy")
-def r_deploy(data, user):
-    image = build_app(data["name"])
-    return run_app(image)
 
 @api.route("/ai")
 def r_ai(data, user):
@@ -243,9 +235,23 @@ def r_mem_add(data, user):
 def r_mem_search(data, user):
     return memory_search(data["query"])
 
+@api.route("/deploy")
+def r_deploy(data, user):
+    img = build_app(data["name"])
+    return run_app(img)
+
 @api.route("/analytics")
 def r_analytics(data, user):
     return analytics()
+
+@api.route("/cache/set")
+def r_cache_set(data, user):
+    Cache.set(data["key"], data["value"])
+    return {"ok": True}
+
+@api.route("/cache/get")
+def r_cache_get(data, user):
+    return {"value": Cache.get(data["key"])}
 
 # =========================================================
 # HTTP SERVER (REAL BACKEND CORE)
@@ -296,19 +302,19 @@ class Handler(BaseHTTPRequestHandler):
         self.send({"error": "invalid route"})
 
 # =========================================================
-# SYSTEM BOOT (UNICORN STARTUP CORE)
+# SYSTEM BOOT (FULL SAAS CORE ONLINE)
 # =========================================================
 def boot():
-    print("🚀 V16 UNICORN AI CLOUD PLATFORM ONLINE")
+    print("🚀 V17 REAL SAAS AI CLOUD KERNEL ONLINE")
 
-    tid = create_tenant("DEFAULT_TENANT")
-
+    tid = create_tenant("DEFAULT")
     register(tid, "admin@ai.com", "1234", "admin")
+
     t = login("admin@ai.com", "1234")["token"]
 
-    pid = create_project(tid, "UNICORN SYSTEM", "admin@ai.com")
+    pid = create_project(tid, "SAAS CORE", "admin@ai.com")
 
-    memory_add("system fully booted")
+    memory_add("system initialized successfully")
     Cache.set("mode", "production")
 
     print("AI:", autonomous_ai())
