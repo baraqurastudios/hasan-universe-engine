@@ -1,7 +1,7 @@
 """
 ====================================================
-NEXT STEP MASTER PLATFORM CORE
-PURE PYTHON • SINGLE FILE • PRODUCTION ARCHITECTURE
+NEXT STEP FULL PLATFORM (ALL FEATURES COMBINED)
+PURE PYTHON • SINGLE FILE • MODULAR SYSTEM
 ====================================================
 """
 
@@ -10,7 +10,7 @@ import uuid
 from collections import defaultdict
 
 # =========================
-# CORE DATABASE
+# IN-MEMORY DATABASE
 # =========================
 class DB:
     users = {}
@@ -22,7 +22,7 @@ class DB:
     analytics = defaultdict(int)
 
 # =========================
-# LOGGER
+# LOGGER CORE
 # =========================
 def log(event, data=None):
     DB.logs.append({
@@ -33,23 +33,24 @@ def log(event, data=None):
     })
 
 # =========================
-# AUTH SYSTEM
+# AUTH MODULE
 # =========================
 def create_user(username, password):
     if username in DB.users:
         return {"error": "user_exists"}
 
     DB.users[username] = {
-        "password": password,
-        "id": str(uuid.uuid4())
+        "id": str(uuid.uuid4()),
+        "password": password
     }
 
     log("user_created", username)
-    return {"status": "ok", "user": username}
+    return {"status": "created", "user": username}
 
 
 def login(username, password):
     user = DB.users.get(username)
+
     if not user or user["password"] != password:
         return {"status": "failed"}
 
@@ -71,7 +72,7 @@ def create_project(owner, name):
         "owner": owner,
         "name": name,
         "files": [],
-        "status": "active"
+        "created": time.time()
     }
 
     log("project_created", name)
@@ -80,11 +81,12 @@ def create_project(owner, name):
 
 def add_file(project_id, filename, content):
     project = DB.projects.get(project_id)
+
     if not project:
         return {"error": "not_found"}
 
     project["files"].append({
-        "filename": filename,
+        "name": filename,
         "content": content
     })
 
@@ -98,51 +100,61 @@ def deploy(project_id):
     if project_id not in DB.projects:
         return {"error": "invalid_project"}
 
-    deployment_id = str(uuid.uuid4())
+    deploy_id = str(uuid.uuid4())
 
-    DB.deployments[deployment_id] = {
-        "project": project_id,
-        "status": "running"
+    DB.deployments[deploy_id] = {
+        "project_id": project_id,
+        "status": "running",
+        "time": time.time()
     }
 
     DB.analytics["deployments"] += 1
     log("deploy", project_id)
 
-    return {"deployment_id": deployment_id}
+    return {"deployment_id": deploy_id}
 
 # =========================
 # MEMORY SYSTEM (AI CONTEXT)
 # =========================
 def memory_add(text):
-    DB.memory.append(text)
+    DB.memory.append({
+        "id": str(uuid.uuid4()),
+        "text": text,
+        "time": time.time()
+    })
+
     log("memory_add", text)
 
 
 def memory_search(keyword):
-    return [m for m in DB.memory if keyword.lower() in m.lower()]
+    return [
+        m for m in DB.memory
+        if keyword.lower() in m["text"].lower()
+    ]
 
 # =========================
 # AI AGENT SYSTEM
 # =========================
 class Agent:
-    def __init__(self, role):
-        self.role = role
+    def __init__(self, name):
+        self.name = name
 
     def run(self, task):
         DB.analytics["tasks"] += 1
-        log("agent_task", {"role": self.role, "task": task})
-        return f"{self.role} → {task}"
+        log("agent_task", {"agent": self.name, "task": task})
+        return f"[{self.name}] executed: {task}"
 
 
 AGENTS = {
     "dev": Agent("developer"),
     "data": Agent("data_analyst"),
-    "ops": Agent("devops"),
+    "ops": Agent("devops_engineer"),
     "ai": Agent("ai_core")
 }
 
-def run_agent(role, task):
-    agent = AGENTS.get(role)
+
+def run_agent(agent_name, task):
+    agent = AGENTS.get(agent_name)
     if not agent:
         return {"error": "invalid_agent"}
     return agent.run(task)
@@ -150,26 +162,26 @@ def run_agent(role, task):
 # =========================
 # AUTONOMOUS AI ENGINE
 # =========================
-def autonomous_cycle():
+def autonomous_ai():
     tasks = [
-        "optimize system",
-        "scan logs",
-        "analyze memory",
-        "improve performance",
-        "run diagnostics"
+        "system optimization",
+        "log analysis",
+        "memory scan",
+        "performance tuning",
+        "security check"
     ]
 
     task = tasks[int(time.time()) % len(tasks)]
     return run_agent("ai", task)
 
 # =========================
-# ANALYTICS SYSTEM
+# ANALYTICS ENGINE
 # =========================
 def analytics():
     return dict(DB.analytics)
 
 # =========================
-# API ROUTER (BACKEND CORE)
+# API ROUTER (CORE ENGINE)
 # =========================
 def api(route, payload=None):
     DB.analytics["requests"] += 1
@@ -184,7 +196,7 @@ def api(route, payload=None):
         "memory/add": memory_add,
         "memory/search": memory_search,
         "agent/run": run_agent,
-        "ai/cycle": autonomous_cycle,
+        "ai/run": autonomous_ai,
         "analytics": analytics
     }
 
@@ -195,31 +207,31 @@ def api(route, payload=None):
     return fn(**(payload or {}))
 
 # =========================
-# SYSTEM BOOT
+# SYSTEM BOOTSTRAP
 # =========================
 def boot():
-    print("🚀 NEXT STEP MASTER PLATFORM ONLINE")
+    print("🚀 NEXT STEP PLATFORM INITIALIZING...")
 
     api("user/create", {"username": "admin", "password": "1234"})
     api("user/login", {"username": "admin", "password": "1234"})
 
-    project = api("project/create", {"owner": "admin", "name": "core-platform"})
+    project = api("project/create", {"owner": "admin", "name": "ai-core-system"})
 
     api("project/add_file", {
         "project_id": project["project_id"],
         "filename": "main.py",
-        "content": "print('system running')"
+        "content": "print('AI system running')"
     })
 
     api("deploy", {"project_id": project["project_id"]})
     api("memory/add", {"text": "system initialized successfully"})
 
     while True:
-        print("\n======================")
-        print("AI:", autonomous_cycle())
+        print("\n==========================")
+        print("AI:", autonomous_ai())
         print("ANALYTICS:", analytics())
         print("MEMORY:", memory_search("system"))
-        print("======================")
+        print("==========================")
 
         time.sleep(3)
 
