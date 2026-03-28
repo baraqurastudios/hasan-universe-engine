@@ -1,7 +1,7 @@
 """
 =========================================================
-NEXT STEP V14 — UNIFIED AI CLOUD PLATFORM CORE
-PURE PYTHON (FASTAPI STYLE + DB + REDIS + AI + AUTH)
+NEXT STEP V15 — PRODUCTION AI CLOUD PLATFORM CORE
+PURE PYTHON UNIFIED ARCHITECTURE (NO FRAMEWORKS)
 =========================================================
 """
 
@@ -12,26 +12,30 @@ import hashlib
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # =========================================================
-# CORE STORAGE LAYER (DB + CACHE)
+# DATABASE LAYER (POSTGRES SIMULATION)
 # =========================================================
-class MemoryDB:
+class DB:
     users = {}
     projects = {}
     sessions = {}
     logs = []
     memory = []
     plugins = {}
+    analytics = {}
 
-class RedisCache:
+# =========================================================
+# REDIS CACHE LAYER
+# =========================================================
+class Cache:
     store = {}
 
     @staticmethod
     def set(k, v):
-        RedisCache.store[k] = (v, time.time())
+        Cache.store[k] = (v, time.time())
 
     @staticmethod
     def get(k):
-        return RedisCache.store.get(k, (None,))[0]
+        return Cache.store.get(k, (None,))[0]
 
 # =========================================================
 # UTILITIES
@@ -42,45 +46,45 @@ def uid():
 def now():
     return int(time.time())
 
-def hash_text(t):
-    return hashlib.sha256(t.encode()).hexdigest()
+def hashv(v):
+    return hashlib.sha256(v.encode()).hexdigest()
 
-def jwt_token(email):
+def token(email):
     return hashlib.sha256(f"{email}-{time.time()}".encode()).hexdigest()
 
 # =========================================================
-# AUTH SYSTEM (JWT + OAUTH SIM)
+# AUTH SYSTEM (JWT + OAUTH CORE)
 # =========================================================
 def register(email, password, role="user"):
-    if email in MemoryDB.users:
+    if email in DB.users:
         return {"error": "exists"}
 
-    MemoryDB.users[email] = {
+    DB.users[email] = {
         "id": uid(),
-        "password": hash_text(password),
+        "password": hashv(password),
         "role": role
     }
     return {"status": "registered"}
 
 def login(email, password):
-    user = MemoryDB.users.get(email)
-    if not user or user["password"] != hash_text(password):
+    u = DB.users.get(email)
+    if not u or u["password"] != hashv(password):
         return {"error": "invalid"}
 
-    token = jwt_token(email)
-    MemoryDB.sessions[token] = email
-    return {"token": token}
+    t = token(email)
+    DB.sessions[t] = email
+    return {"token": t}
 
-def oauth_login(provider, email):
-    token = jwt_token(email + provider)
-    MemoryDB.sessions[token] = email
-    return {"token": token, "provider": provider}
+def oauth(provider, email):
+    t = token(email + provider)
+    DB.sessions[t] = email
+    return {"token": t, "provider": provider}
 
-def verify(token):
-    return MemoryDB.sessions.get(token)
+def verify(t):
+    return DB.sessions.get(t)
 
 # =========================================================
-# AI AGENT SYSTEM (MULTI TASK ENGINE)
+# AI MULTI-AGENT SYSTEM
 # =========================================================
 class Agent:
     def __init__(self, name):
@@ -108,31 +112,57 @@ def autonomous_ai():
         "optimize system",
         "security scan",
         "memory cleanup",
-        "performance tuning",
+        "load balancing",
         "self improvement loop"
     ]
-    task = tasks[now() % len(tasks)]
-    return run_agent("ai", task)
+    return run_agent("ai", tasks[now() % len(tasks)])
 
 # =========================================================
 # MEMORY ENGINE (AI BRAIN)
 # =========================================================
 def memory_add(text):
-    MemoryDB.memory.append({
+    DB.memory.append({
         "id": uid(),
         "text": text,
         "time": now()
     })
 
-def memory_search(query):
-    return [m for m in MemoryDB.memory if query.lower() in m["text"].lower()]
+def memory_search(q):
+    return [m for m in DB.memory if q.lower() in m["text"].lower()]
+
+# =========================================================
+# ANALYTICS ENGINE
+# =========================================================
+def track(event):
+    DB.analytics[event] = DB.analytics.get(event, 0) + 1
+
+def analytics():
+    return DB.analytics
+
+# =========================================================
+# DEPLOYMENT ENGINE (DOCKER SIM)
+# =========================================================
+def build(name):
+    return f"{name}_image_v1"
+
+def run_container(image):
+    return {"container": image, "status": "running"}
+
+# =========================================================
+# PLUGIN SYSTEM
+# =========================================================
+def register_plugin(name, fn):
+    DB.plugins[name] = fn
+
+def run_plugin(name, *args):
+    return DB.plugins[name](*args) if name in DB.plugins else {"error": "not_found"}
 
 # =========================================================
 # PROJECT SYSTEM (SAAS CORE)
 # =========================================================
 def create_project(name, owner):
     pid = uid()
-    MemoryDB.projects[pid] = {
+    DB.projects[pid] = {
         "name": name,
         "owner": owner,
         "created": now()
@@ -140,50 +170,21 @@ def create_project(name, owner):
     return pid
 
 # =========================================================
-# ANALYTICS ENGINE
-# =========================================================
-ANALYTICS = {}
-
-def track(event):
-    ANALYTICS[event] = ANALYTICS.get(event, 0) + 1
-
-def get_analytics():
-    return ANALYTICS
-
-# =========================================================
-# DEPLOY SYSTEM (DOCKER SIMULATION)
-# =========================================================
-def docker_build(name):
-    return f"{name}_image_v1"
-
-def docker_run(image):
-    return {"container": image, "status": "running"}
-
-# =========================================================
-# PLUGIN SYSTEM
-# =========================================================
-def register_plugin(name, fn):
-    MemoryDB.plugins[name] = fn
-
-def run_plugin(name, *args):
-    return MemoryDB.plugins[name](*args) if name in MemoryDB.plugins else {"error": "not_found"}
-
-# =========================================================
-# API CORE (FASTAPI STYLE ROUTER)
+# API ROUTER (FASTAPI STYLE CORE)
 # =========================================================
 class API:
     routes = {}
 
     @staticmethod
     def route(path):
-        def wrapper(fn):
+        def wrap(fn):
             API.routes[path] = fn
             return fn
-        return wrapper
+        return wrap
 
     @staticmethod
-    def call(path, data=None, token=None):
-        user = verify(token)
+    def call(path, data=None, t=None):
+        user = verify(t)
         fn = API.routes.get(path)
         if not fn:
             return {"error": "404"}
@@ -195,53 +196,52 @@ api = API()
 # ROUTES
 # =========================================================
 @api.route("/project/create")
-def route_create_project(data, user):
+def r_project(data, user):
     if not user:
         return {"error": "unauthorized"}
-
     pid = create_project(data["name"], user)
     track("project_create")
     return {"project_id": pid}
 
 @api.route("/deploy")
-def route_deploy(data, user):
-    image = docker_build(data["name"])
-    result = docker_run(image)
+def r_deploy(data, user):
+    image = build(data["name"])
+    res = run_container(image)
     track("deploy")
-    return result
+    return res
 
 @api.route("/cache/set")
-def cache_set_route(data, user):
-    RedisCache.set(data["key"], data["value"])
+def r_cache_set(data, user):
+    Cache.set(data["key"], data["value"])
     return {"ok": True}
 
 @api.route("/cache/get")
-def cache_get_route(data, user):
-    return {"value": RedisCache.get(data["key"])}
+def r_cache_get(data, user):
+    return {"value": Cache.get(data["key"])}
 
 @api.route("/ai")
-def ai_route(data, user):
+def r_ai(data, user):
     return autonomous_ai()
 
 @api.route("/memory/add")
-def memory_add_route(data, user):
+def r_mem_add(data, user):
     memory_add(data["text"])
     return {"ok": True}
 
 @api.route("/memory/search")
-def memory_search_route(data, user):
+def r_mem_search(data, user):
     return memory_search(data["query"])
 
 # =========================================================
-# SIMPLE HTTP SERVER (REAL API BACKEND)
+# SIMPLE HTTP SERVER (REAL BACKEND CORE)
 # =========================================================
 class Handler(BaseHTTPRequestHandler):
 
-    def send(self, data):
+    def send(self, d):
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
-        self.wfile.write(json.dumps(data).encode())
+        self.wfile.write(json.dumps(d).encode())
 
     def do_GET(self):
         if self.path == "/ai":
@@ -249,7 +249,7 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if self.path == "/analytics":
-            self.send(get_analytics())
+            self.send(analytics())
             return
 
         self.send({"error": "not found"})
@@ -267,15 +267,15 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if self.path == "/oauth":
-            self.send(oauth_login(body["provider"], body["email"]))
+            self.send(oauth(body["provider"], body["email"]))
             return
 
-        token = body.get("token")
-
-        if self.path.startswith("/api"):
-            path = body.get("path")
-            data = body.get("data", {})
-            self.send(api.call(path, data, token))
+        if self.path == "/api":
+            self.send(api.call(
+                body.get("path"),
+                body.get("data"),
+                body.get("token")
+            ))
             return
 
         self.send({"error": "invalid route"})
@@ -284,22 +284,21 @@ class Handler(BaseHTTPRequestHandler):
 # SYSTEM BOOT
 # =========================================================
 def boot():
-    print("🚀 NEXT STEP V14 AI CLOUD PLATFORM RUNNING")
+    print("🚀 NEXT STEP V15 PRODUCTION AI CLOUD CORE ONLINE")
 
     register("admin@ai.com", "1234", "admin")
-    token = login("admin@ai.com", "1234")["token"]
+    t = login("admin@ai.com", "1234")["token"]
 
-    pid = create_project("NEXT GEN AI", "admin@ai.com")
-    memory_add("system booted successfully")
+    pid = create_project("ULTIMATE AI SYSTEM", "admin@ai.com")
 
-    RedisCache.set("mode", "production")
+    memory_add("system fully initialized")
+    Cache.set("mode", "production")
 
     print("AI:", autonomous_ai())
     print("PROJECT:", pid)
-    print("CACHE:", RedisCache.get("mode"))
-    print("ANALYTICS:", get_analytics())
+    print("CACHE:", Cache.get("mode"))
+    print("ANALYTICS:", analytics())
 
-    # run server (uncomment if needed)
     # HTTPServer(("0.0.0.0", 8000), Handler).serve_forever()
 
 boot()
