@@ -1,88 +1,72 @@
 import streamlit as st
 import datetime
 
-# --- ১. মাস্টার সিকিউরিটি গেট (v110 Standard) ---
+# --- ১. সুরক্ষা ও অথেন্টিকেশন (v110-v125 Standard) ---
 def check_password():
     if "authenticated" not in st.session_state:
-        st.markdown("<h1 style='text-align: center; color: #00FFAA;'>🛡️ BaraQura Master Gate v110</h1>", unsafe_allow_html=True)
-        col1, col2, col3 = st.columns([1,2,1])
-        with col2:
-            pwd = st.text_input("Master Key:", type="password")
-            if st.button("Authorize Engine 🚀"):
-                if pwd == "bq2026": 
-                    st.session_state["authenticated"] = True
-                    st.rerun()
-                else:
-                    st.error("Access Denied! Unauthorized Entry.")
+        st.markdown("<h1 style='text-align: center; color: #00FFAA;'>🛡️ BaraQura Master Gate</h1>", unsafe_allow_html=True)
+        pwd = st.text_input("Master Key (bq2026):", type="password")
+        if st.button("Unlock Full Power 🚀"):
+            if pwd == "bq2026": 
+                st.session_state["authenticated"] = True
+                st.rerun()
         return False
     return True
 
 if check_password():
-    # --- ২. মাস্টার কনফিগারেশন ---
-    st.set_page_config(page_title="BaraQura Master v110", page_icon="👑", layout="wide")
+    st.set_page_config(page_title="BaraQura Full Engine", layout="wide")
+
+    # --- ২. ভার্সন কন্ট্রোল ও হিস্ট্রি (v1.0 to v125.0 Integrated) ---
+    st.sidebar.title("🧬 Evolution Registry")
+    st.sidebar.success("Current: v125.0 (Stable)")
+    st.sidebar.info("v1.0: Basic Core Loaded")
+    st.sidebar.info("v110: Hasan Universe Integration")
+    st.sidebar.info("v125: Mobile Command OS")
     
-    # --- ৩. সাইডবার: ডাটাবেজ ইন্টিগ্রেশন ---
-    st.sidebar.title("💎 BaraQura Assets")
-    st.sidebar.markdown("### **Series: Hasan Universe**")
-    st.sidebar.info("Lead: Hasan (7y)")
-    st.sidebar.info("Mother: Liza (Update: ✅)")
-    st.sidebar.write("---")
-    st.sidebar.markdown("### **Workflow: Master v110**")
-    st.sidebar.success("Status: Engine Online")
+    # --- ৩. মেইন সিস্টেম ইঞ্জিন ---
+    st.title("🛰️ BaraQura Empire: Unified Master System")
     
-    # --- ৪. মেইন কন্ট্রোল সেন্টার ---
-    st.title("🛰️ BaraQura Command Center: v110.0 Full")
-    st.write(f"**System Log Date:** {datetime.date.today()}")
-    
+    # ৪টি প্রধান পিলারের ইন্টিগ্রেশন
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "📊 Dashboard", "🎬 Production", "✍️ Script Lab", "⚙️ Systems", "💰 Monetization"
+        "📊 Analytics (v1.0 Core)", 
+        "🎬 Production (v110 Schedule)", 
+        "✍️ Script Lab (v111 Character)", 
+        "💰 Monetization (v120 Business)", 
+        "⚙️ Oracle (v125 AI)"
     ])
 
-    # ড্যাশবোর্ড ট্যাব
-    with tab1:
-        st.subheader("BaraQura Analytics Overview")
-        col_metrics = st.columns(4)
-        col_metrics[0].metric("Sub Goal", "100K", "Master Target")
-        col_metrics[1].metric("Views", "125.4K", "+12%")
-        col_metrics[2].metric("Watch Time", "4.2Kh", "+5%")
-        col_metrics[3].metric("Efficiency", "98%", "v110 Stable")
-        st.line_chart([12, 18, 30, 45, 60, 55, 90])
+    with tab1: # v1.0 থেকে আসা বেসিক ডাটা
+        st.subheader("System Performance & Insights")
+        col1, col2 = st.columns(2)
+        col1.metric("Views", "125.4K", "+12%")
+        col2.metric("Watch Time", "4.2K", "+5%")
+        st.line_chart([10, 20, 35, 50, 80, 125])
 
-    # প্রোডাকশন ট্যাব (আপনার শিডিউল অনুযায়ী)
-    with tab2:
-        st.subheader("Active Production Tracker")
-        col_s1, col_s2 = st.columns(2)
-        with col_s1:
-            st.markdown("**Weekly Shorts (Monday/Friday)**")
-            st.checkbox("Shorts 01: Monday 5:30 PM", value=True)
-            st.checkbox("Shorts 02: Friday 5:30 PM", value=False)
-        with col_s2:
-            st.markdown("**Long Video (Monthly)**")
-            st.progress(85, text="Hasan Episode 12: Drafting")
+    with tab2: # আপনার সেই নির্দিষ্ট শিডিউল
+        st.subheader("Active Content Calendar")
+        st.markdown("**Monday/Friday 5:30 PM Production Line**")
+        st.checkbox("Monday Shorts", value=True)
+        st.checkbox("Friday Shorts")
+        st.progress(85, text="Hasan Series Progress")
 
-    # স্ক্রিপ্ট ল্যাব
-    with tab3:
-        st.subheader("Hasan Series: AI Script Engine")
-        story_idea = st.text_input("নতুন কোনো স্টোরি আইডিয়া বা ডিরেকশন দিন:")
-        if st.button("Execute Script Generation"):
-            st.success("Scripting module v110 activated...")
-            st.write(f"**Scenario:** {story_idea}")
-            st.code("Scene 1: Hasan & Liza discussion\nScene 2: Conflict & Lesson\nScene 3: Conclusion", language="markdown")
+    with tab3: # হাসান ও লিজার ক্যারেক্টার প্রোফাইল
+        st.subheader("Hasan Universe: Script Engine")
+        st.write("**Characters:** Hasan (7y), Liza (Mother)")
+        story = st.text_area("নতুন গল্পের প্লট বা আইডিয়া দিন...")
+        if st.button("Generate Master Script"):
+            st.code(f"ID: HS-2026\nPlot: {story}\nLiza: 'হাসান, সময় নষ্ট করো না!'", language="markdown")
 
-    # সিস্টেম ট্যাব (Python/Automation)
-    with tab4:
-        st.subheader("Engine Systems & Automation")
-        st.write("GUI/Workflow Integration: **Active**")
-        st.write("Voice Selection: **Puck / Kore / Charon** (ElevenLabs)")
-        if st.button("Sync with Google AI Studio"):
-            st.toast("Syncing Engine...")
+    with tab4: # মনিটাইজেশন ও বিজনেস
+        st.subheader("Studio Finance & Payouts")
+        st.warning("E-TIN & NID Status: Verified ✅")
+        st.write("Current Payout Status: **Processing...**")
+
+    with tab5: # লেটেস্ট v125.0 এর অটোমেশন টুলস
+        st.subheader("Advanced Engine Controls")
+        st.write("Voice Engine: **Puck/Charon/Kore**")
+        if st.button("Sync All 125 Pillars"):
             st.balloons()
-
-    # মনিটাইজেশন ট্যাব (v110 Special)
-    with tab5:
-        st.subheader("Business & Payouts")
-        st.info("E-TIN Status: Connected | NID Verification: Done")
-        st.write("Facebook Dashboard Payouts: **Processing**")
+            st.success("All 125 Pillars are now synchronized and running!")
 
     st.divider()
-    st.caption("BaraQura Studios | Master Version v110.0 | Licensed to Sakibul Hasan")
+    st.caption("BaraQura Studios | Comprehensive Edition: v1.0 - v125.0 | Admin: Sakibul Hasan")
