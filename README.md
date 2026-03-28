@@ -1,44 +1,51 @@
 # ==============================
-# BARAQURA SCRIPT GENERATOR
+# BARAQURA VOICE ENGINE
 # ==============================
-class ScriptGenerator:
-    topics = ["Moral Education", "Ramadan Preparation", "Family Values", "Science Facts"]
-    characters = ["Hasan (7y)", "Mother (Liza)", "Father (Shakib)"]
+class VoiceEngine:
+    # আপনার স্টুডিওর জন্য এভেইলেবল ভয়েস লিস্ট
+    VOICE_MODELS = {
+        "Puck": {"type": "Child/Playful", "target": "Hasan (7y)"},
+        "Kore": {"type": "Female/Warm", "target": "Mother (Liza)"},
+        "Charon": {"type": "Male/Deep", "target": "Father (Shakib)"}
+    }
 
     @staticmethod
-    def generate_script(topic=None):
-        selected_topic = topic or random.choice(ScriptGenerator.topics)
-        
-        # স্ক্রিপ্ট লজিক
-        script = {
-            "title": f"The Adventure of {selected_topic}",
-            "scene_1": f"Hasan is playing in the garden. {random.choice(ScriptGenerator.characters)} enters.",
-            "dialogue": f"Hasan: Why is {selected_topic} important?\n{random.choice(ScriptGenerator.characters)}: Let me explain, my dear...",
-            "moral": f"Always value {selected_topic} in life."
-        }
-        
-        log_event("script_generated", {"topic": selected_topic})
-        return script
+    def assign_voice(character_name):
+        """চরিত্র অনুযায়ী ভয়েস অটো-অ্যাসাইন করা"""
+        if "Hasan" in character_name:
+            return "Puck"
+        elif "Liza" in character_name or "Mother" in character_name:
+            return "Kore"
+        elif "Shakib" in character_name or "Father" in character_name:
+            return "Charon"
+        return "Default_Narrator"
 
 # ==============================
-# INTEGRATING WITH API
+# UPDATED SCRIPT GENERATOR (WITH VOICE)
 # ==============================
-@API.route("/generate_script")
-def api_script(data, user):
+def generate_script_with_voice(topic=None):
+    # আগের স্ক্রিপ্ট জেনারেটর ব্যবহার করে
+    raw_script = ScriptGenerator.generate_script(topic)
+    
+    # ভয়েস ম্যাপিং করা
+    raw_script["voice_mapping"] = {
+        "Hasan": VoiceEngine.assign_voice("Hasan"),
+        "Mother": VoiceEngine.assign_voice("Liza"),
+        "Father": VoiceEngine.assign_voice("Shakib")
+    }
+    
+    return raw_script
+
+# ==============================
+# API ROUTE FOR VOICE SELECTION
+# ==============================
+@API.route("/voice_config")
+def api_voice_config(data, user):
     if not user:
-        return {"error": "Unauthorized access to AI Studio"}
+        return {"error": "Unauthorized"}
     
-    topic = data.get("topic")
-    return ScriptGenerator.generate_script(topic)
-
-# ==============================
-# UPDATED AI RUN (AUTONOMOUS)
-# ==============================
-def ai_run_enhanced():
-    tasks = ["optimize", "scan", "scale", "fix", "generate_content"]
-    action = tasks[int(time.time()) % len(tasks)]
+    action = data.get("action", "list")
+    if action == "list":
+        return VoiceEngine.VOICE_MODELS
     
-    if action == "generate_content":
-        return {"ai_action": "content_creation", "result": ScriptGenerator.generate_script()}
-    
-    return {"ai_action": action, "status": "executed"}
+    return {"status": "Voice profile updated"}
