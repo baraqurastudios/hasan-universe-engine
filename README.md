@@ -1,7 +1,8 @@
 """
 ====================================================
-NEXT STEP ULTIMATE V3 AI PLATFORM
-PURE PYTHON • ENTERPRISE SAAS CORE
+NEXT STEP MASTER V4
+PURE PYTHON • ENTERPRISE AI SAAS PLATFORM
+FULL ARCHITECTURE SINGLE SHEET
 ====================================================
 """
 
@@ -41,12 +42,12 @@ def emit(event, data):
 # =========================
 # SECURITY LAYER (JWT SIM)
 # =========================
-SECRET = "ULTIMATE_SECRET_KEY"
+SECRET = "MASTER_SECRET_V4"
 
 def hash_pw(pw):
     return hashlib.sha256(pw.encode()).hexdigest()
 
-def create_jwt(user):
+def jwt(user):
     raw = user + SECRET + str(time.time())
     return hashlib.sha256(raw.encode()).hexdigest()
 
@@ -55,7 +56,7 @@ def create_jwt(user):
 # =========================
 def register(username, password, role="user"):
     if username in DB.users:
-        return {"error": "user_exists"}
+        return {"error": "exists"}
 
     DB.users[username] = {
         "id": str(uuid.uuid4()),
@@ -64,14 +65,14 @@ def register(username, password, role="user"):
 
     DB.roles[username] = role
     emit("register", username)
-    return {"status": "registered"}
+    return {"status": "ok"}
 
 def login(username, password):
-    user = DB.users.get(username)
-    if not user or user["password"] != hash_pw(password):
+    u = DB.users.get(username)
+    if not u or u["password"] != hash_pw(password):
         return {"status": "failed"}
 
-    token = create_jwt(username)
+    token = jwt(username)
     DB.sessions[token] = username
 
     DB.analytics["logins"] += 1
@@ -86,16 +87,16 @@ def require_role(user, role):
     return DB.roles.get(user) == role
 
 # =========================
-# REDIS CACHE SYSTEM
+# CACHE SYSTEM (REDIS SIM)
 # =========================
-def cache_set(key, value):
-    DB.redis[key] = {"value": value, "time": time.time()}
+def cache_set(k, v):
+    DB.redis[k] = {"value": v, "time": time.time()}
 
-def cache_get(key):
-    return DB.redis.get(key, {}).get("value")
+def cache_get(k):
+    return DB.redis.get(k, {}).get("value")
 
 # =========================
-# PROJECT SYSTEM (GIT SIM)
+# PROJECT SYSTEM (GIT STYLE)
 # =========================
 def create_project(owner, name):
     pid = str(uuid.uuid4())
@@ -107,7 +108,7 @@ def create_project(owner, name):
         "files": []
     }
 
-    emit("project_created", name)
+    emit("project_create", name)
     return {"project_id": pid}
 
 def add_file(pid, filename, content):
@@ -117,26 +118,26 @@ def add_file(pid, filename, content):
     DB.projects[pid]["files"].append(filename)
     DB.files[filename] = content
 
-    emit("file_added", filename)
+    emit("file_add", filename)
     return {"status": "ok"}
 
 # =========================
 # DEPLOY SYSTEM (CLOUD SIM)
 # =========================
-def deploy(project_id):
-    if project_id not in DB.projects:
-        return {"error": "invalid_project"}
+def deploy(pid):
+    if pid not in DB.projects:
+        return {"error": "invalid"}
 
     did = str(uuid.uuid4())
 
     DB.deployments[did] = {
-        "project": project_id,
+        "project": pid,
         "status": "running",
         "url": f"https://app.fake/{did[:6]}"
     }
 
-    DB.analytics["deployments"] += 1
-    emit("deploy", project_id)
+    DB.analytics["deploys"] += 1
+    emit("deploy", pid)
 
     return {"deployment_id": did}
 
@@ -150,7 +151,7 @@ class Cloud:
         }
 
 # =========================
-# MEMORY ENGINE (AI CONTEXT)
+# MEMORY ENGINE (AI BRAIN)
 # =========================
 def memory_add(text):
     DB.memory.append({
@@ -159,8 +160,8 @@ def memory_add(text):
         "time": time.time()
     })
 
-def memory_search(keyword):
-    return [m for m in DB.memory if keyword.lower() in m["text"].lower()]
+def memory_search(q):
+    return [m for m in DB.memory if q.lower() in m["text"].lower()]
 
 # =========================
 # AI AGENT SYSTEM
@@ -171,8 +172,8 @@ class Agent:
 
     def run(self, task):
         DB.analytics["tasks"] += 1
-        emit("agent_run", {"agent": self.name, "task": task})
-        return f"[{self.name}] executed: {task}"
+        emit("agent", {"name": self.name, "task": task})
+        return f"{self.name} → {task}"
 
 AGENTS = {
     "dev": Agent("developer"),
@@ -182,9 +183,7 @@ AGENTS = {
 }
 
 def run_agent(name, task):
-    if name not in AGENTS:
-        return {"error": "invalid_agent"}
-    return AGENTS[name].run(task)
+    return AGENTS[name].run(task) if name in AGENTS else {"error": "invalid"}
 
 # =========================
 # AUTONOMOUS AI ENGINE
@@ -194,8 +193,8 @@ def autonomous_ai():
         "optimize system",
         "scan logs",
         "memory cleanup",
-        "security audit",
-        "performance boost"
+        "security check",
+        "performance tuning"
     ]
 
     task = tasks[int(time.time()) % len(tasks)]
@@ -208,25 +207,23 @@ PLUGINS = {}
 
 def register_plugin(name, fn):
     PLUGINS[name] = fn
-    emit("plugin_registered", name)
+    emit("plugin", name)
 
 def run_plugin(name, *args):
-    if name not in PLUGINS:
-        return {"error": "plugin_not_found"}
-    return PLUGINS[name](*args)
+    return PLUGINS[name](*args) if name in PLUGINS else {"error": "plugin_not_found"}
 
 # =========================
 # SCHEDULER (CRON SIM)
 # =========================
 def scheduler():
-    jobs = ["backup", "cleanup", "optimize", "scan_logs"]
+    jobs = ["backup", "cleanup", "optimize", "scan"]
     job = jobs[int(time.time()) % len(jobs)]
 
     emit("scheduler", job)
     return run_agent("ops", job)
 
 # =========================
-# ANALYTICS SYSTEM
+# ANALYTICS ENGINE
 # =========================
 def analytics():
     return dict(DB.analytics)
@@ -257,53 +254,46 @@ def api(route, payload=None):
     }
 
     fn = routes.get(route)
-    if not fn:
-        return {"error": "route_not_found"}
-
-    return fn(**(payload or {}))
+    return fn(**(payload or {})) if fn else {"error": "route_not_found"}
 
 # =========================
 # FRONTEND (REACT SIM)
 # =========================
 def frontend():
     return {
-        "framework": "React",
-        "ui": ["dashboard", "projects", "deploy", "ai-console"]
+        "ui": "React Dashboard",
+        "pages": ["login", "dashboard", "projects", "deploy", "ai-console"]
     }
 
 # =========================
-# SYSTEM BOOT
+# SYSTEM BOOT (FULL SAAS START)
 # =========================
 def boot():
-    print("🚀 NEXT STEP ULTIMATE V3 PLATFORM ONLINE")
+    print("🚀 MASTER V4 ENTERPRISE AI PLATFORM ONLINE")
 
-    # create admin
     register("admin", "1234", role="admin")
     token = login("admin", "1234")["token"]
 
-    # project flow
-    project = create_project("admin", "ai-saas-core")
+    project = create_project("admin", "next-gen-ai")
     pid = project["project_id"]
 
-    add_file(pid, "main.py", "print('AI SYSTEM')")
+    add_file(pid, "main.py", "print('AI CORE SYSTEM')")
     deploy(pid)
 
-    # memory init
-    memory_add("system fully initialized")
+    memory_add("system initialized successfully")
 
-    # plugin example
     register_plugin("hello", lambda x: f"hello {x}")
 
     print(frontend())
-    print(Cloud.deploy("ai-saas-core"))
+    print(Cloud.deploy("next-gen-ai"))
 
     while True:
-        print("\n======================")
+        print("\n====================")
         print("AI:", autonomous_ai())
         print("SCHEDULER:", scheduler())
         print("ANALYTICS:", analytics())
         print("MEMORY:", memory_search("system"))
-        print("======================")
+        print("====================")
 
         time.sleep(3)
 
