@@ -1,7 +1,7 @@
 """
 ====================================================
 NEXT STEP MASTER PLATFORM CORE
-PURE PYTHON • SINGLE FILE • PRODUCTION ARCHITECTURE
+PURE PYTHON • SINGLE FILE • CLEAN ARCHITECTURE
 ====================================================
 """
 
@@ -10,7 +10,7 @@ import uuid
 from collections import defaultdict
 
 # =========================
-# DATABASE CORE
+# GLOBAL STATE (IN-MEMORY DB)
 # =========================
 class DB:
     users = {}
@@ -22,7 +22,7 @@ class DB:
     analytics = defaultdict(int)
 
 # =========================
-# LOGGER
+# LOGGER SYSTEM
 # =========================
 def log(event, data=None):
     DB.logs.append({
@@ -132,7 +132,7 @@ class Agent:
     def run(self, task):
         DB.analytics["tasks"] += 1
         log("agent_task", {"role": self.role, "task": task})
-        return f"{self.role}: {task}"
+        return f"{self.role} -> {task}"
 
 
 AGENTS = {
@@ -149,7 +149,7 @@ def run_agent(role, task):
     return agent.run(task)
 
 # =========================
-# AUTONOMOUS AI ENGINE
+# AUTONOMOUS AI LOOP
 # =========================
 def autonomous_cycle():
     tasks = [
@@ -170,7 +170,7 @@ def analytics():
     return dict(DB.analytics)
 
 # =========================
-# API ROUTER (BACKEND CORE)
+# API ROUTER (CORE BACKEND)
 # =========================
 def api(route, payload=None):
     DB.analytics["requests"] += 1
@@ -196,7 +196,7 @@ def api(route, payload=None):
     return fn(**(payload or {}))
 
 # =========================
-# SYSTEM BOOT
+# SYSTEM BOOTSTRAP
 # =========================
 def boot():
     print("🚀 NEXT STEP MASTER PLATFORM ONLINE")
@@ -213,16 +213,16 @@ def boot():
     })
 
     api("deploy", {"project_id": project["project_id"]})
-    api("memory/add", {"text": "system initialized successfully"})
+    api("memory/add", {"text": "system initialized"})
 
     while True:
-        print("\n======================")
+        print("\n====================")
         print("AI:", autonomous_cycle())
         print("ANALYTICS:", analytics())
         print("MEMORY:", memory_search("system"))
-        print("======================")
+        print("====================")
 
         time.sleep(3)
 
-# START SYSTEM
+# START
 boot()
