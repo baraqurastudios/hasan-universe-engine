@@ -3,17 +3,20 @@ import requests
 import base64
 import datetime
 
-# --- ১. প্রাথমিক কনফিগারেশন ---
-REPO_NAME = "BaraQuraStudios/master-engine"
-FILE_PATH = "app.py"
+# --- ১. মাস্টার কনফিগারেশন (GitHub Details) ---
+# আপনার সঠিক ইউজারনেম এবং রিপোজিটরি নাম এখানে দিন
+REPO_NAME = "BaraQuraStudios/master-engine" 
+FILE_PATH = "app.py" 
 
-# --- ২. কোর ফাংশনসমূহ ---
-
+# --- ২. কোর ফাংশনসমূহ (GitHub API Logic) ---
 def get_github_data(token):
     url = f"https://api.github.com/repos/{REPO_NAME}/contents/{FILE_PATH}"
     headers = {"Authorization": f"token {token}"}
-    response = requests.get(url, headers=headers).json()
-    return response
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        return response.json(), True
+    else:
+        return response.json().get('message', 'Unknown Error'), False
 
 def update_github_file(token, new_content, sha, message):
     url = f"https://api.github.com/repos/{REPO_NAME}/contents/{FILE_PATH}"
@@ -23,79 +26,87 @@ def update_github_file(token, new_content, sha, message):
     res = requests.put(url, headers=headers, json=data)
     return res.status_code == 200
 
-# --- ৩. ইউজার ইন্টারফেস ---
-st.set_page_config(page_title="BaraQura Master Engine", layout="wide")
+# --- ৩. সিস্টেম স্টেট ও কনফিগারেশন ---
+st.set_page_config(page_title="BaraQura OS", layout="wide")
 
-# ড্যাশবোর্ড হেডার
-st.markdown("<h1 style='text-align: center; color: #00FFAA;'>💎 BaraQura Studios Master Engine</h1>", unsafe_allow_html=True)
+if "system_logs" not in st.session_state:
+    st.session_state.system_logs = []
 
-# সাইডবারে টোকেন ম্যানেজমেন্ট (একবার দিলেই হবে)
+if "modules" not in st.session_state:
+    st.session_state.modules = {
+        "core": True,
+        "animation_engine": False,
+        "auto_update": True, # এখন এটি সক্রিয়
+        "ai_brain": False
+    }
+
+# --- ৪. ইউজার ইন্টারফেস (Header & Sidebar) ---
+st.markdown("<h1 style='text-align: center; color: #00FFAA;'>🚀 BaraQura Studios Master Engine</h1>", unsafe_allow_html=True)
+
 st.sidebar.title("🔐 Master Access")
-user_token = st.sidebar.text_input("GitHub Token:", type="password", help="আপনার GitHub Personal Access Token এখানে দিন।")
+user_token = st.sidebar.text_input("GitHub Token:", type="password", placeholder="Enter PAT...")
 if user_token:
     st.sidebar.success("✅ Token Connected")
 else:
-    st.sidebar.warning("⚠️ Please enter Token")
+    st.sidebar.warning("⚠️ Token Required")
 
 st.sidebar.divider()
-st.sidebar.title("🧬 System Evolution")
-st.sidebar.info(f"📅 {datetime.datetime.now().strftime('%d %b, %Y')}")
+st.sidebar.title("🧬 System Core")
+st.sidebar.success("Version: v1.0 (Foundation)")
+st.sidebar.info(f"📅 {datetime.datetime.now().strftime('%d %b %Y')}")
 
-# ৪. মেইন কন্ট্রোল ট্যাবসমূহ
-tab1, tab2, tab3 = st.tabs(["🔮 Oracle Portal", "🛡️ Recovery Center", "📊 Studio Status"])
+# --- ৫. মেইন কন্ট্রোল সেন্টার (Tabs) ---
+tab1, tab2, tab3 = st.tabs(["🔮 Oracle Portal", "⚡ Command Console", "📜 System Logs"])
 
 with tab1:
     st.subheader("🌀 The Oracle Update Portal")
-    option = st.radio("আপডেটের ধরন নির্বাচন করুন:", 
-                      ["Smart Inject (নিচে যোগ হবে)", "Full Overwrite (পুরো ফাইল আপডেট)"])
-    
-    patch_code = st.text_area("জেমিনি থেকে পাওয়া কোডটি এখানে দিন...", height=300, placeholder="নতুন সিস্টেমের কোড এখানে পেস্ট করুন...")
+    mode = st.radio("Update Mode:", ["Smart Inject (Append)", "Full Overwrite"])
+    patch_code = st.text_area("Paste code from Gemini...", height=250)
     
     if st.button("Execute System Update 🚀"):
         if not user_token:
-            st.error("❌ টোকেন ছাড়া আপডেট সম্ভব নয়। সাইডবারে টোকেন দিন।")
+            st.error("❌ সাইডবারে টোকেন দিন!")
         elif not patch_code:
-            st.warning("⚠️ কোড এন্ট্রি করুন।")
+            st.warning("⚠️ কোড পেস্ট করুন।")
         else:
-            with st.spinner("GitHub-এর সাথে সিঙ্ক্রোনাইজ হচ্ছে..."):
-                data = get_github_data(user_token)
-                sha = data.get('sha')
-                
-                if not sha:
-                    st.error("❌ রিপোজিটরি কানেকশন এরর। টোকেন বা পাথ চেক করুন।")
-                else:
+            with st.spinner("GitHub-এর সাথে সিঙ্ক হচ্ছে..."):
+                data, success = get_github_data(user_token)
+                if success:
+                    sha = data.get('sha')
                     old_content = base64.b64decode(data['content']).decode('utf-8')
                     st.session_state['last_backup'] = old_content
                     
-                    if option == "Smart Inject (নিচে যোগ হবে)":
-                        final_code = f"{old_content}\n\n# --- New Patch: {datetime.datetime.now()} ---\n{patch_code}"
-                        msg = "Smart injection via Oracle"
+                    if mode == "Smart Inject (Append)":
+                        final_code = f"{old_content}\n\n# --- Patch: {datetime.datetime.now()} ---\n{patch_code}"
                     else:
                         final_code = patch_code
-                        msg = "Full file overwrite via Oracle"
                     
-                    if update_github_file(user_token, final_code, sha, msg):
+                    if update_github_file(user_token, final_code, sha, "OS v1 Update"):
                         st.balloons()
-                        st.success("Alhamdulillah! সিস্টেম আপডেট সফল হয়েছে।")
+                        st.success("Alhamdulillah! System Updated Successfully.")
                     else:
-                        st.error("আপডেট ব্যর্থ হয়েছে। পারমিশন চেক করুন।")
+                        st.error("❌ Update failed. Check token permissions.")
+                else:
+                    st.error(f"❌ Connection Error: {data}")
 
 with tab2:
-    st.subheader("⏪ Recovery / Undo Center")
-    if st.button("Restore Previous Version ⏪"):
-        if 'last_backup' in st.session_state and user_token:
-            data = get_github_data(user_token)
-            if update_github_file(user_token, st.session_state['last_backup'], data['sha'], "Undo last update"):
-                st.success("সফলভাবে রিস্টোর করা হয়েছে!")
-            else:
-                st.error("রিস্টোর ব্যর্থ হয়েছে।")
+    st.subheader("⚡ Command Console")
+    command = st.text_input("Enter Command (e.g. /status, /modules)")
+    
+    if st.button("Run Command"):
+        if command == "/status":
+            res = {"system": "active", "version": "v1.0", "sync": "online"}
+        elif command == "/modules":
+            res = st.session_state.modules
         else:
-            st.info("ব্যাকআপ বা টোকেন পাওয়া যায়নি।")
+            res = {"error": "unknown command"}
+        st.json(res)
+        st.session_state.system_logs.append(f"{datetime.datetime.now().strftime('%H:%M:%S')} - {command}: {res}")
 
 with tab3:
-    st.subheader("📊 Studio Live Status")
-    st.metric(label="Engine Status", value="Active", delta="Smooth Edition")
-    st.write(f"সর্বশেষ সিঙ্ক: {datetime.datetime.now().strftime('%H:%M:%S')}")
+    st.subheader("📜 Recent Activity")
+    for log in st.session_state.system_logs[-10:]:
+        st.code(log)
 
 st.divider()
-st.caption("BaraQura Studios | v110.0 Master Engine | Admin: Sakibul Hasan")
+st.caption("BaraQura Studios | v1.0 Master Engine | Admin: Sakibul Hasan")
