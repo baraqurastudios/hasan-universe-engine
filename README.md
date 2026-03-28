@@ -1,7 +1,7 @@
 """
 ====================================================
-🚀 NEXT STEP UNIFIED CORE SYSTEM
-PURE PYTHON • SINGLE SHEET • STRUCTURED ENGINE
+🚀 NEXT STEP MASTER CORE SYSTEM
+PURE PYTHON • SINGLE FILE • CLEAN ARCHITECTURE
 ====================================================
 """
 
@@ -10,13 +10,13 @@ import time
 import uuid
 
 # =========================
-# SYSTEM STATE
+# SYSTEM CORE STATE
 # =========================
 STATE = {
-    "users": 10000,
+    "users": 0,
     "sessions": 0,
     "revenue": 0,
-    "capital": 1000000,
+    "capital": 100000,
     "deployments": 0,
     "tasks": 0,
     "api_calls": 0,
@@ -40,7 +40,7 @@ def log(event, data=None):
     })
 
 # =========================
-# AUTH MODULE
+# AUTH SYSTEM
 # =========================
 def register(user):
     STATE["users"] += 1
@@ -53,15 +53,15 @@ def login(user):
     return True
 
 # =========================
-# BILLING / SAAS ENGINE
+# BILLING SYSTEM (SAAS CORE)
 # =========================
 def billing(user, amount):
     STATE["revenue"] += amount
     log("billing", {"user": user, "amount": amount})
-    return {"status": "paid", "amount": amount}
+    return {"status": "success", "amount": amount}
 
 # =========================
-# DEPLOYMENT SYSTEM
+# DEPLOYMENT ENGINE
 # =========================
 def deploy(service):
     STATE["deployments"] += 1
@@ -78,7 +78,7 @@ def api_call(endpoint):
     return {"endpoint": endpoint, "status": "ok"}
 
 # =========================
-# MEMORY ENGINE
+# MEMORY SYSTEM
 # =========================
 def memory_add(text):
     MEMORY.append(text)
@@ -120,14 +120,14 @@ AGENTS = {
 }
 
 # =========================
-# AUTONOMOUS AI CORE
+# AUTONOMOUS AI ENGINE
 # =========================
 def autonomous_ai():
     STATE["ai_cycles"] += 1
 
     tasks = [
         "optimize system",
-        "fix issue",
+        "fix bug",
         "deploy update",
         "analyze data",
         "scale system"
@@ -137,27 +137,27 @@ def autonomous_ai():
     return AGENTS["auto"].execute(task)
 
 # =========================
-# ECONOMY SIMULATION
+# ECONOMY ENGINE
 # =========================
 def economy():
     return {
-        "gdp": random.randint(5000, 90000),
-        "inflation": round(random.uniform(1, 20), 2),
-        "growth": round(random.uniform(-10, 15), 2)
+        "gdp": random.randint(10000, 90000),
+        "inflation": round(random.uniform(1, 15), 2),
+        "growth": round(random.uniform(-5, 10), 2)
     }
 
 # =========================
-# CENTRAL BANK
+# CENTRAL BANK SYSTEM
 # =========================
 def central_bank():
-    rate = round(random.uniform(0, 10), 2)
+    rate = round(random.uniform(0, 8), 2)
     return {
         "interest_rate": rate,
         "policy": "EXPAND" if rate < 3 else "CONTROL"
     }
 
 # =========================
-# STOCK SYSTEM
+# STOCK MARKET + HEDGE FUND
 # =========================
 def stock_market():
     assets = ["AAPL", "TSLA", "NVDA", "AMZN"]
@@ -165,7 +165,7 @@ def stock_market():
         {
             "asset": a,
             "signal": random.choice(["BUY", "SELL", "HOLD"]),
-            "profit": round(random.uniform(0, 500), 2)
+            "profit": round(random.uniform(0, 300), 2)
         }
         for a in assets
     ]
@@ -173,11 +173,11 @@ def stock_market():
 def hedge_fund():
     trades = stock_market()
     profit = sum(t["profit"] for t in trades)
-    STATE["capital"] += profit * 1000
+    STATE["capital"] += profit * 100
     return {"profit": profit, "capital": STATE["capital"]}
 
 # =========================
-# GLOBAL INTELLIGENCE
+# GLOBAL INTELLIGENCE CORE
 # =========================
 def global_brain():
     return {
@@ -191,10 +191,10 @@ def global_brain():
 # =========================
 def autocode(task):
     log("autocode", task)
-    return f"generated_code::{task}"
+    return f"generated::{task}"
 
 # =========================
-# ANALYTICS SYSTEM
+# ANALYTICS ENGINE
 # =========================
 def analytics():
     return {
@@ -215,27 +215,27 @@ def analytics():
 # SYSTEM BOOT
 # =========================
 def boot():
-    print("🚀 NEXT STEP UNIFIED CORE STARTED")
+    print("🚀 NEXT STEP MASTER CORE STARTED")
 
     user = register("admin")
     login("admin")
-    billing(user["id"], 1000)
-    deploy("core")
+    billing(user["id"], 500)
+    deploy("core_system")
     workspace_create("admin")
-    memory_add("system started")
+    memory_add("system initialized")
 
     while True:
-        print("\n========================")
+        print("\n==========================")
         print("AI:", autonomous_ai())
         print("ANALYTICS:", analytics())
         print("GLOBAL:", global_brain())
         print("MEMORY:", memory_search("system"))
         print("SERVICES:", SERVICES)
-        print("========================")
+        print("==========================")
 
         time.sleep(2)
 
 # =========================
-# START
+# START SYSTEM
 # =========================
 boot()
