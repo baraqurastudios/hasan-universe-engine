@@ -1,7 +1,7 @@
 """
 ====================================================
-🚀 NEXT STEP AI SYSTEM — FULL ONE SHEET PYTHON
-(CLOUD + AI + SAAS + AUTONOMOUS ENGINE)
+🚀 NEXT STEP AI SYSTEM — ULTRA FULL ONE SHEET
+(PURE PYTHON • SAAS • AI • CLOUD • AUTONOMOUS)
 ====================================================
 """
 
@@ -10,20 +10,22 @@ import time
 import uuid
 
 # =========================
-# GLOBAL STATE (SAAS CORE)
+# GLOBAL CORE STATE
 # =========================
 STATE = {
     "users": 1000,
     "revenue": 50000,
     "capital": 1000000,
     "deployments": 0,
-    "ai_tasks": 0
+    "tasks": 0
 }
 
 LOGS = []
+MEMORY = []
+WORKSPACES = {}
 
 # =========================
-# LOGGER (OBSERVABILITY)
+# LOGGER SYSTEM
 # =========================
 def log(event, data=None):
     LOGS.append({
@@ -34,11 +36,11 @@ def log(event, data=None):
     })
 
 # =========================
-# AUTH SYSTEM (MULTI USER)
+# AUTH + USERS (SAAS CORE)
 # =========================
-def register_user(email):
-    log("register", email)
+def register(email):
     STATE["users"] += 1
+    log("register", email)
     return str(uuid.uuid4())
 
 def login(email):
@@ -46,9 +48,9 @@ def login(email):
     return str(uuid.uuid4())
 
 # =========================
-# BILLING SYSTEM (SAAS)
+# BILLING SYSTEM
 # =========================
-def charge(user, amount):
+def billing(user, amount):
     STATE["revenue"] += amount
     log("billing", {"user": user, "amount": amount})
     return True
@@ -56,10 +58,10 @@ def charge(user, amount):
 # =========================
 # DEPLOY SYSTEM (CLOUD)
 # =========================
-def deploy_app(name):
+def deploy(app):
     STATE["deployments"] += 1
-    log("deploy", name)
-    return f"{name}_deployed"
+    log("deploy", app)
+    return f"{app}-deployed"
 
 # =========================
 # AI AGENT SYSTEM (CORE BRAIN)
@@ -68,54 +70,51 @@ class AIAgent:
     def __init__(self, role):
         self.role = role
 
-    def execute(self, task):
-        STATE["ai_tasks"] += 1
-        result = f"{self.role} executed {task}"
+    def act(self, task):
+        STATE["tasks"] += 1
         log("ai_task", {"role": self.role, "task": task})
-        return result
+        return f"{self.role} -> {task} DONE"
 
 AGENTS = {
-    "coder": AIAgent("coder"),
-    "analyst": AIAgent("analyst"),
-    "marketer": AIAgent("marketer"),
-    "support": AIAgent("support")
+    "dev": AIAgent("developer"),
+    "mkt": AIAgent("marketing"),
+    "sales": AIAgent("sales"),
+    "analyst": AIAgent("analyst")
 }
 
 # =========================
-# VECTOR MEMORY (SIMULATION)
+# MEMORY ENGINE (VECTOR SIM)
 # =========================
-MEMORY = []
-
 def store_memory(text):
     MEMORY.append(text)
     log("memory_store", text)
 
-def search_memory(query):
-    return [m for m in MEMORY if query in m]
+def search_memory(q):
+    return [m for m in MEMORY if q.lower() in m.lower()]
 
 # =========================
-# API ENGINE (SIMULATED BACKEND)
+# WORKSPACE SYSTEM (MULTI TENANT)
 # =========================
-def api_request(endpoint, payload=None):
-    log("api_call", {"endpoint": endpoint})
-    return {"endpoint": endpoint, "status": "ok", "data": payload}
-
-# =========================
-# REAL-TIME ANALYTICS ENGINE
-# =========================
-def analytics():
-    return {
-        "users": STATE["users"],
-        "revenue": STATE["revenue"],
-        "ai_tasks": STATE["ai_tasks"],
-        "deployments": STATE["deployments"],
-        "logs": len(LOGS)
+def create_workspace(user):
+    WORKSPACES[user] = {
+        "files": [],
+        "history": [],
+        "memory": []
     }
+    log("workspace_create", user)
+    return WORKSPACES[user]
+
+# =========================
+# API ENGINE
+# =========================
+def api(endpoint):
+    log("api_call", endpoint)
+    return {"endpoint": endpoint, "status": "ok"}
 
 # =========================
 # ECONOMY ENGINE
 # =========================
-def economy_engine():
+def economy():
     return {
         "gdp": random.randint(50, 300),
         "inflation": round(random.random() * 10, 2),
@@ -125,111 +124,101 @@ def economy_engine():
 # =========================
 # CENTRAL BANK AI
 # =========================
-def central_bank():
+def bank():
     rate = round(random.uniform(0, 12), 2)
     return {
-        "interest_rate": rate,
+        "interest": rate,
         "policy": "EASE" if rate < 5 else "TIGHT"
     }
 
 # =========================
-# STOCK + TRADING ENGINE
+# STOCK MARKET ENGINE
 # =========================
-def stock_market():
-    stocks = ["AAPL", "TSLA", "GOOG", "AMZN", "MSFT", "NVDA"]
+def stocks():
+    assets = ["AAPL", "TSLA", "GOOG", "AMZN", "MSFT"]
     return [
         {
-            "stock": s,
+            "asset": a,
             "action": random.choice(["BUY", "SELL"]),
             "profit": round(random.uniform(0, 25), 2)
         }
-        for s in stocks
+        for a in assets
     ]
 
 def hedge_fund():
-    trades = stock_market()
+    trades = stocks()
     profit = sum(t["profit"] for t in trades)
     STATE["capital"] += profit * 100
-
-    return {
-        "profit": round(profit, 2),
-        "capital": STATE["capital"]
-    }
+    return {"profit": profit, "capital": STATE["capital"]}
 
 # =========================
 # GLOBAL ECONOMY BRAIN
 # =========================
 def global_brain():
     return {
-        "bank": central_bank(),
-        "economy": economy_engine(),
-        "hedge_fund": hedge_fund()
+        "bank": bank(),
+        "economy": economy(),
+        "hedge": hedge_fund()
     }
 
 # =========================
-# MULTI-TENANT WORKSPACE
-# =========================
-WORKSPACES = {}
-
-def create_workspace(user_id):
-    WORKSPACES[user_id] = {
-        "files": [],
-        "ai_history": [],
-        "memory": []
-    }
-    log("workspace_create", user_id)
-    return WORKSPACES[user_id]
-
-# =========================
-# AI CODING SYSTEM (AUTO DEV)
+# AUTOCODE ENGINE (AI DEV)
 # =========================
 def ai_autocode(task):
-    code = f"# auto-generated code for {task}"
+    code = f"# AUTO GENERATED: {task}"
     log("autocode", task)
     return code
 
 # =========================
 # AUTONOMOUS AGENT LOOP
 # =========================
-def autonomous_step():
+def autonomous_ai():
     task = random.choice([
         "build feature",
         "fix bug",
         "optimize system",
         "analyze data"
     ])
-    return AGENTS["coder"].execute(task)
+    return AGENTS["dev"].act(task)
 
 # =========================
-# SYSTEM CORE LOOP
+# ANALYTICS ENGINE
 # =========================
-def run_system():
-    print("🚀 NEXT STEP AI SYSTEM STARTED")
+def analytics():
+    return {
+        "users": STATE["users"],
+        "revenue": STATE["revenue"],
+        "capital": STATE["capital"],
+        "deployments": STATE["deployments"],
+        "tasks": STATE["tasks"],
+        "logs": len(LOGS)
+    }
 
-    user = register_user("admin@ai.com")
+# =========================
+# SYSTEM LOOP (MAIN BRAIN)
+# =========================
+def run():
+    print("🚀 NEXT STEP AI SYSTEM ONLINE")
+
+    user = register("admin@ai.com")
     login("admin@ai.com")
-    charge(user, 100)
-    deploy_app("core_system")
-
+    billing(user, 100)
+    deploy("core_app")
     create_workspace(user)
-
-    store_memory("AI system initialized")
-
-    seed = 0
+    store_memory("system initialized")
 
     while True:
-        print("\n==============================")
-        print("🤖 AI TASK:", autonomous_step())
+        print("\n============================")
+        print("🤖 AI:", autonomous_ai())
         print("📊 ANALYTICS:", analytics())
         print("💰 GLOBAL BRAIN:", global_brain())
-        print("🧠 MEMORY SEARCH:", search_memory("AI"))
+        print("🧠 MEMORY:", search_memory("system"))
         print("🌍 WORKSPACE:", WORKSPACES)
-        print("==============================")
+        print("============================")
 
-        seed += 1
         time.sleep(3)
 
 # =========================
 # BOOT
 # =========================
-run_system()
+run()
