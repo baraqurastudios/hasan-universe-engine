@@ -1,7 +1,7 @@
 """
 ====================================================
-NEXT STEP V7 — REAL STARTUP FULL STACK (PURE PYTHON)
-FastAPI + DB + Redis + JWT + OAuth + Docker + AI
+NEXT STEP V8 — ULTIMATE STARTUP AI PLATFORM
+PURE PYTHON (FULL SAAS + AI + CLOUD + API CORE)
 ====================================================
 """
 
@@ -11,69 +11,55 @@ import hashlib
 from collections import defaultdict
 
 # ====================================================
-# DATABASE (POSTGRES SIMULATION)
+# DATABASE LAYER (POSTGRES SIM)
 # ====================================================
-class Postgres:
+class DB:
     users = {}
     projects = {}
     files = {}
     sessions = {}
-    oauth_accounts = {}
+    oauth = {}
     logs = []
-
-DB = Postgres()
+    memory = []
+    deployments = {}
 
 # ====================================================
-# REDIS CACHE (SIMULATION)
+# REDIS CACHE SIM
 # ====================================================
 class Redis:
-    store = {}
+    cache = {}
 
     @staticmethod
     def set(k, v):
-        Redis.store[k] = (v, time.time())
+        Redis.cache[k] = (v, time.time())
 
     @staticmethod
     def get(k):
-        return Redis.store.get(k, (None,))[0]
+        return Redis.cache.get(k, (None,))[0]
 
 # ====================================================
-# UTILS
+# UTILITIES
 # ====================================================
 def now():
     return int(time.time())
 
-def hash_text(t):
-    return hashlib.sha256(t.encode()).hexdigest()
+def hash_pw(p):
+    return hashlib.sha256(p.encode()).hexdigest()
+
+def uid():
+    return str(uuid.uuid4())
 
 # ====================================================
 # JWT SYSTEM
 # ====================================================
-SECRET = "V7_SECRET"
+SECRET = "V8_SECRET"
 
-def jwt_encode(user):
+def jwt(user):
     raw = f"{user}-{SECRET}-{time.time()}"
     return hashlib.sha256(raw.encode()).hexdigest()
 
-def jwt_decode(token):
+def verify(token):
     return DB.sessions.get(token)
-
-# ====================================================
-# OAUTH SIMULATION (GOOGLE / GITHUB)
-# ====================================================
-def oauth_login(provider, email):
-    if email not in DB.users:
-        DB.users[email] = {
-            "id": str(uuid.uuid4()),
-            "provider": provider
-        }
-
-    token = jwt_encode(email)
-    DB.sessions[token] = email
-    DB.oauth_accounts[email] = provider
-
-    DB.logs.append(("oauth_login", email))
-    return {"token": token, "provider": provider}
 
 # ====================================================
 # AUTH SYSTEM
@@ -83,8 +69,8 @@ def register(email, password):
         return {"error": "exists"}
 
     DB.users[email] = {
-        "id": str(uuid.uuid4()),
-        "password": hash_text(password)
+        "id": uid(),
+        "password": hash_pw(password)
     }
 
     DB.logs.append(("register", email))
@@ -92,46 +78,58 @@ def register(email, password):
 
 def login(email, password):
     u = DB.users.get(email)
-    if not u or u.get("password") != hash_text(password):
+    if not u or u["password"] != hash_pw(password):
         return {"error": "invalid"}
 
-    token = jwt_encode(email)
+    token = jwt(email)
     DB.sessions[token] = email
 
     DB.logs.append(("login", email))
     return {"token": token}
 
 # ====================================================
-# FASTAPI-LIKE SERVER CORE
+# OAUTH SYSTEM (GOOGLE / GITHUB SIM)
 # ====================================================
-class FastAPI:
+def oauth(provider, email):
+    if email not in DB.users:
+        DB.users[email] = {"id": uid(), "provider": provider}
+
+    token = jwt(email)
+    DB.sessions[token] = email
+    DB.oauth[email] = provider
+
+    return {"token": token, "provider": provider}
+
+# ====================================================
+# FAST API ENGINE (PURE PYTHON)
+# ====================================================
+class API:
     routes = {}
 
     @staticmethod
     def route(path):
         def wrapper(fn):
-            FastAPI.routes[path] = fn
+            API.routes[path] = fn
             return fn
         return wrapper
 
     @staticmethod
-    def call(path, payload=None, token=None):
-        user = jwt_decode(token) if token else None
-
-        fn = FastAPI.routes.get(path)
+    def call(path, data=None, token=None):
+        user = verify(token) if token else None
+        fn = API.routes.get(path)
         if not fn:
             return {"error": "404"}
 
-        return fn(payload or {}, user)
+        return fn(data or {}, user)
 
-app = FastAPI()
+api = API()
 
 # ====================================================
-# PROJECT SYSTEM (SAAS CORE)
+# PROJECT SYSTEM
 # ====================================================
-@app.route("/project/create")
+@api.route("/project/create")
 def create_project(data, user):
-    pid = str(uuid.uuid4())
+    pid = uid()
 
     DB.projects[pid] = {
         "owner": user,
@@ -141,7 +139,7 @@ def create_project(data, user):
 
     return {"project_id": pid}
 
-@app.route("/project/add_file")
+@api.route("/project/add_file")
 def add_file(data, user):
     pid = data.get("project_id")
 
@@ -164,13 +162,14 @@ class Agent:
         return {
             "agent": self.name,
             "task": task,
-            "result": f"executed {task}"
+            "result": f"done: {task}"
         }
 
 AGENTS = {
-    "dev": Agent("developer"),
-    "ops": Agent("operations"),
-    "ai": Agent("autonomous_ai")
+    "ai": Agent("AI_CORE"),
+    "dev": Agent("DEV"),
+    "ops": Agent("OPS"),
+    "data": Agent("DATA")
 }
 
 def run_agent(name, task):
@@ -180,9 +179,25 @@ def run_agent(name, task):
 # AUTONOMOUS AI ENGINE
 # ====================================================
 def autonomous_ai():
-    tasks = ["optimize system", "scan security", "analyze usage", "cleanup cache"]
+    tasks = [
+        "optimize system",
+        "scan security",
+        "analyze logs",
+        "cleanup cache",
+        "self improve"
+    ]
+
     task = tasks[now() % len(tasks)]
     return run_agent("ai", task)
+
+# ====================================================
+# MEMORY SYSTEM (AI BRAIN)
+# ====================================================
+def memory_add(text):
+    DB.memory.append({"id": uid(), "text": text})
+
+def memory_search(q):
+    return [m for m in DB.memory if q.lower() in m["text"].lower()]
 
 # ====================================================
 # ANALYTICS ENGINE
@@ -192,7 +207,7 @@ ANALYTICS = defaultdict(int)
 def track(event):
     ANALYTICS[event] += 1
 
-def get_analytics():
+def stats():
     return dict(ANALYTICS)
 
 # ====================================================
@@ -201,15 +216,16 @@ def get_analytics():
 class Docker:
     @staticmethod
     def build(name):
-        return f"image_{name}_v1"
+        return f"image_{name}"
 
     @staticmethod
     def run(image):
         return {"container": image, "status": "running"}
 
-@app.route("/deploy")
+@api.route("/deploy")
 def deploy(data, user):
     name = data.get("name")
+
     image = Docker.build(name)
     container = Docker.run(image)
 
@@ -218,74 +234,17 @@ def deploy(data, user):
     return container
 
 # ====================================================
-# MEMORY SYSTEM (AI MEMORY)
+# CACHE API
 # ====================================================
-MEMORY = []
-
-def memory_add(text):
-    MEMORY.append({"id": str(uuid.uuid4()), "text": text})
-
-def memory_search(q):
-    return [m for m in MEMORY if q in m["text"]]
-
-# ====================================================
-# REDIS USAGE EXAMPLE
-# ====================================================
-@app.route("/cache/set")
+@api.route("/cache/set")
 def cache_set(data, user):
     Redis.set(data["key"], data["value"])
-    return {"status": "cached"}
+    return {"cached": True}
 
-@app.route("/cache/get")
+@api.route("/cache/get")
 def cache_get(data, user):
     return {"value": Redis.get(data["key"])}
 
 # ====================================================
-# SYSTEM DASHBOARD (FRONTEND SIM)
+# PLUGIN SYSTEM
 # ====================================================
-def dashboard():
-    return {
-        "ui": "React SaaS Dashboard",
-        "modules": [
-            "Auth (JWT + OAuth)",
-            "Projects",
-            "Deployments",
-            "AI Agent",
-            "Analytics",
-            "Cache System"
-        ]
-    }
-
-# ====================================================
-# BOOT SYSTEM
-# ====================================================
-def boot():
-    print("🚀 V7 FULL STACK SAAS SYSTEM ONLINE")
-
-    register("admin@ai.com", "1234")
-    login_res = login("admin@ai.com", "1234")
-
-    token = login_res.get("token")
-
-    proj = app.call("/project/create", {"name": "AI SaaS"}, token)
-    pid = proj["project_id"]
-
-    app.call("/project/add_file", {
-        "project_id": pid,
-        "filename": "main.py",
-        "content": "print('AI SaaS')"
-    }, token)
-
-    print(app.call("/deploy", {"name": "AI SaaS"}, token))
-
-    memory_add("system boot complete")
-
-    print("AI:", autonomous_ai())
-    print("ANALYTICS:", get_analytics())
-    print("DASHBOARD:", dashboard())
-
-    # Redis demo
-    app.call("/cache/set", {"key": "mode", "value": "production"}, token)
-    print(app.call("/cache/get", {"key": "mode"}, token))
-
-boot()
