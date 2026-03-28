@@ -1,16 +1,12 @@
 import json, time, uuid, hashlib
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-# =========================
-# CORE STORAGE
-# =========================
+# =======================
+# STORAGE LAYER
+# =======================
 class DB:
-    users = {}
-    tenants = {}
-    projects = {}
-    logs = {}
-    files = {}
-    plugins = {}
+    users, tenants, projects = {}, {}, {}
+    logs, files, plugins = {}, {}, {}
 
 class Cache:
     store = {}
@@ -19,15 +15,15 @@ class Cache:
     @staticmethod
     def get(k): return Cache.store.get(k)
 
-# =========================
-# UTIL
-# =========================
+# =======================
+# UTILITIES
+# =======================
 def uid(): return str(uuid.uuid4())
 def hashv(x): return hashlib.sha256(x.encode()).hexdigest()
 
-# =========================
-# AUTH
-# =========================
+# =======================
+# AUTH SYSTEM
+# =======================
 class Auth:
     sessions = {}
     @staticmethod
@@ -38,9 +34,9 @@ class Auth:
     @staticmethod
     def verify(t): return Auth.sessions.get(t)
 
-# =========================
+# =======================
 # SAAS CORE
-# =========================
+# =======================
 def create_tenant(name):
     tid=uid()
     DB.tenants[tid]={"id":tid,"name":name}
@@ -56,78 +52,81 @@ def login(email,password):
         return {"error":"login failed"}
     return {"token":Auth.create(email)}
 
-# =========================
-# OAUTH (SIMULATION)
-# =========================
+# =======================
+# OAUTH SIMULATION
+# =======================
 def oauth(provider,email):
     if email not in DB.users:
-        tid = list(DB.tenants.keys())[0] if DB.tenants else create_tenant("default")
+        tid=list(DB.tenants.keys())[0] if DB.tenants else create_tenant("default")
         create_user(tid,email,"oauth")
     return {"token":Auth.create(email),"provider":provider}
 
-# =========================
-# PROJECT
-# =========================
+# =======================
+# PROJECT SYSTEM
+# =======================
 def create_project(tid,name):
     pid=uid()
     DB.projects[pid]={"tenant":tid,"name":name}
     return DB.projects[pid]
 
-# =========================
+# =======================
 # AI ENGINE
-# =========================
+# =======================
 def ai():
     tasks=["optimize","scan","scale","fix","secure","analyze"]
     return {"ai":tasks[int(time.time())%len(tasks)]}
 
-# =========================
-# PLUGIN
-# =========================
+# =======================
+# PLUGIN SYSTEM
+# =======================
 def register_plugin(name,fn): DB.plugins[name]=fn
 def run_plugin(name,data):
-    return DB.plugins[name](data) if name in DB.plugins else {"error":"plugin"}
+    return DB.plugins[name](data) if name in DB.plugins else {"error":"plugin not found"}
 
-# =========================
+# =======================
 # ANALYTICS
-# =========================
-def log(e): DB.logs[uid()]={"event":e}
+# =======================
+def log(event): DB.logs[uid()]={"event":event}
 def analytics():
-    r={}
+    res={}
     for l in DB.logs.values():
-        r[l["event"]]=r.get(l["event"],0)+1
-    return r
+        res[l["event"]]=res.get(l["event"],0)+1
+    return res
 
-# =========================
+# =======================
 # FILE STORAGE
-# =========================
-def upload(n,c):
+# =======================
+def upload(name,content):
     fid=uid()
-    DB.files[fid]={"name":n,"content":c}
+    DB.files[fid]={"name":name,"content":content}
     return fid
 
-# =========================
-# DEPLOY
-# =========================
+# =======================
+# DEPLOY SYSTEM
+# =======================
 def deploy(app): return {"app":app,"status":"running"}
 
-# =========================
-# API CORE
-# =========================
+# =======================
+# API ENGINE
+# =======================
 class API:
     routes={}
     @staticmethod
-    def route(p):
-        def w(fn): API.routes[p]=fn; return fn
-        return w
+    def route(path):
+        def wrap(fn):
+            API.routes[path]=fn
+            return fn
+        return wrap
     @staticmethod
-    def call(p,d=None,t=None):
-        user=Auth.verify(t)
-        if p not in API.routes: return {"error":"404"}
-        return API.routes[p](d or {},user)
+    def call(path,data=None,token=None):
+        user=Auth.verify(token)
+        if path not in API.routes:
+            return {"error":"404"}
+        return API.routes[path](data or {},user)
 
-# =========================
+# =======================
 # ROUTES
-# =========================
+# =======================
 @API.route("/tenant")
 def tenant(d,u): return {"id":create_tenant(d["name"])}
 
@@ -166,9 +165,9 @@ def cache_set(d,u): Cache.set(d["key"],d["value"]); return {"ok":True}
 @API.route("/cache/get")
 def cache_get(d,u): return {"value":Cache.get(d["key"])}
 
-# =========================
-# SERVER
-# =========================
+# =======================
+# HTTP SERVER
+# =======================
 class Handler(BaseHTTPRequestHandler):
     def send(self,d):
         self.send_response(200)
@@ -177,18 +176,18 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(d).encode())
 
     def do_POST(self):
-        l=int(self.headers["Content-Length"])
-        b=json.loads(self.rfile.read(l))
+        length=int(self.headers["Content-Length"])
+        body=json.loads(self.rfile.read(length))
         if self.path=="/api":
-            self.send(API.call(b.get("path"),b.get("data"),b.get("token")))
+            self.send(API.call(body.get("path"),body.get("data"),body.get("token")))
         else:
-            self.send({"error":"invalid"})
+            self.send({"error":"invalid route"})
 
-# =========================
+# =======================
 # BOOT
-# =========================
+# =======================
 def boot():
-    print("🚀 V24 SYSTEM READY")
+    print("🚀 FINAL SYSTEM READY")
 
     tid=create_tenant("GLOBAL")
     create_user(tid,"admin","1234")
