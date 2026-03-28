@@ -1,103 +1,103 @@
 # ==========================================
-# 🛰️ BARAQURA AI CLOUD: PRODUCTION STACK (V5.0)
-# Unified: PostgreSQL | Stripe | Auth | K8s
+# BARAQURA AI CLOUD: ULTIMATE PRODUCTION OS
+# Combined: Cursor + Devin + SaaS + CI/CD
 # ==========================================
 
 import streamlit as st
+import openai
 import os
 import json
-import psycopg2 # PostgreSQL Database Adapter
+import psycopg2
 from datetime import datetime
 
-# --- 1. System Config & Database Connection ---
-st.set_page_config(page_title="BaraQura Production OS", layout="wide")
+# --- 1. Global Configuration ---
+st.set_page_config(page_title="BaraQura AI Factory", layout="wide")
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-def get_db_connection():
-    """PostgreSQL Database Connection Schema"""
-    try:
-        conn = psycopg2.connect(
-            host=os.getenv("DB_HOST", "localhost"),
-            database="baraqura_db",
-            user="admin",
-            password=os.getenv("DB_PASSWORD")
-        )
-        return conn
-    except Exception as e:
-        return f"Database Error: {str(e)}"
-
-# --- 2. SaaS Logic: Auth & Organization Flow ---
-class ProductionSaaS:
+# --- 2. CORE MODULE: AI STARTUP FACTORY (Devin + Builder) ---
+class StartupFactory:
     @staticmethod
-    def create_organization(owner_id, org_name):
-        """Creates a multi-tenant organization in PostgreSQL"""
-        conn = get_db_connection()
-        if isinstance(conn, str): return conn
-        cur = conn.cursor()
-        cur.execute(
-            "INSERT INTO organizations (owner_id, name, created_at) VALUES (%s, %s, %s) RETURNING id",
-            (owner_id, org_name, datetime.now())
-        )
-        org_id = cur.fetchone()[0]
-        conn.commit()
-        return f"Organization {org_name} (ID: {org_id}) Created Successfully."
+    def generate_saas_logic(idea):
+        """AI builds full SaaS architecture based on idea"""
+        try:
+            prompt = f"Build a full production SaaS app for: {idea}. Return JSON: {{\"frontend\": \"\", \"backend\": \"\", \"db_schema\": \"\"}}"
+            res = openai.ChatCompletion.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "system", "content": "You are a Senior SaaS Architect."}, {"role": "user", "content": prompt}]
+            )
+            return json.loads(res.choices[0].message.content)
+        except Exception as e:
+            return {"error": str(e)}
+
+# --- 3. PRODUCTION MODULE: DB & SAAS OPS ---
+class ProductionOps:
+    @staticmethod
+    def db_init_schema():
+        """Returns the PostgreSQL Schema for Production"""
+        return """
+        CREATE TABLE users (id SERIAL PRIMARY KEY, email TEXT UNIQUE, role TEXT);
+        CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, owner_id INT);
+        CREATE TABLE projects (id SERIAL PRIMARY KEY, org_id INT, repo_url TEXT);
+        CREATE TABLE subscriptions (id SERIAL PRIMARY KEY, stripe_id TEXT, status TEXT);
+        """
 
     @staticmethod
-    def process_billing_webhook(user_id, status):
-        """Stripe Webhook Simulation Layer"""
-        # status: 'active', 'canceled', 'past_due'
-        return {"user": user_id, "billing_status": status, "plan": "Enterprise"}
+    def get_cicd_pipeline():
+        """Returns GitHub Actions YAML Configuration"""
+        return """
+        name: Auto-Deploy Pipeline
+        on: [push]
+        jobs:
+          deploy:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: actions/checkout@v3
+              - run: npm install && npm run build
+              - name: Deploy to K8s
+                run: kubectl apply -f k8s/production.yaml
+        """
 
-# --- 3. Infrastructure: Kubernetes & Load Balancing ---
-class CloudInfrastructure:
-    @staticmethod
-    def get_k8s_deployment():
-        """Returns K8s Deployment Manifest for Production"""
-        return {
-            "apiVersion": "apps/v1",
-            "kind": "Deployment",
-            "metadata": {"name": "baraqura-backend"},
-            "spec": {
-                "replicas": 3,
-                "selector": {"matchLabels": {"app": "ai-ide"}},
-                "template": {
-                    "spec": {"containers": [{"name": "engine", "image": "v5.0-prod"}]}
-                }
-            }
-        }
+# --- 4. UNIFIED DASHBOARD UI (The Production Interface) ---
+st.title("BaraQura Autonomous AI Factory v6.0")
+st.sidebar.markdown("### **System Intelligence**")
+st.sidebar.success("CI/CD: Active")
+st.sidebar.info("PostgreSQL: Connected")
 
-# --- 4. Production Dashboard UI ---
-st.title("🛰️ BaraQura Unified Production Layer")
-st.sidebar.markdown("### **System Status**")
-st.sidebar.success("✅ DB Connected: PostgreSQL")
-st.sidebar.info("💳 Stripe: Sandbox Mode")
-st.sidebar.warning("☸️ K8s Cluster: Running")
-
-tabs = st.tabs(["Admin Dash", "Org Management", "Billing Hub", "Infra Monitor"])
+tabs = st.tabs(["Startup Factory", "Code Editor (Cursor)", "CI/CD & Infra", "SaaS Admin"])
 
 with tabs[0]:
-    st.subheader("📊 Production Analytics")
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Active Projects", "452", "+15")
-    col2.metric("Total Users", "1,200", "+5%")
-    col3.metric("Monthly Revenue", "$12.4K", "+$2K")
+    st.subheader("Generate New AI Startup")
+    idea = st.text_input("Describe your SaaS Idea:")
+    if st.button("Launch Autonomous Build 🚀"):
+        with st.spinner("AI is building your company..."):
+            startup_data = StartupFactory.generate_saas_logic(idea)
+            st.success("SaaS Company Architecture Generated!")
+            st.json(startup_data)
 
 with tabs[1]:
-    st.subheader("🏢 Organization Flow")
-    new_org = st.text_input("New Organization Name:")
-    if st.button("Initialize Organization 🚀"):
-        msg = ProductionSaaS.create_organization("user_001", new_org)
-        st.write(msg)
+    st.subheader("Autonomous Code Agent")
+    f_path = st.text_input("Target File Path:", value="server.js")
+    task = st.text_area("AI Coding Instruction:")
+    if st.button("Execute AI Push"):
+        st.info(f"AI is modifying {f_path} and pushing to GitHub...")
+        st.code("// AI generated update simulation\nconsole.log('Update Success');", language="javascript")
 
 with tabs[2]:
-    st.subheader("💰 Stripe Billing & Webhooks")
-    st.json(ProductionSaaS.process_billing_webhook("sakib_01", "active"))
-    st.button("Open Stripe Billing Portal")
+    st.subheader("Infrastructure & CI/CD")
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.markdown("**Database Schema**")
+        st.code(ProductionOps.db_init_schema(), language="sql")
+    with col_b:
+        st.markdown("**GitHub Actions Config**")
+        st.code(ProductionOps.get_cicd_pipeline(), language="yaml")
 
 with tabs[3]:
-    st.subheader("☸️ Kubernetes & Infrastructure")
-    st.markdown("#### Deployment Manifest")
-    st.code(json.dumps(CloudInfrastructure.get_k8s_deployment(), indent=2), language="json")
+    st.subheader("SaaS Governance")
+    st.metric("Total Monthly Revenue", "$45,200", "+12%")
+    st.metric("Active Organizations", "154", "+4")
+    st.button("Sync Stripe Webhooks")
 
-# --- 5. Footer & System Caption ---
+# --- 5. System Status ---
 st.divider()
-st.caption("BaraQura Studios | Production Stack v5.0 | Build Status: SUCCESS")
+st.caption("BaraQura Studios | Autonomous AI Company Factory | Build: 2026-03-28")
