@@ -1,7 +1,7 @@
 """
 ====================================================
-🚀 NEXT STEP MASTER CORE SYSTEM
-PURE PYTHON • SINGLE FILE • FULL INTEGRATION
+🚀 NEXT STEP FINAL MASTER CORE SYSTEM
+PURE PYTHON • SINGLE FILE • CLEAN ARCHITECTURE
 ====================================================
 """
 
@@ -10,7 +10,7 @@ import time
 import uuid
 
 # =========================
-# CORE STATE ENGINE
+# GLOBAL STATE
 # =========================
 STATE = {
     "users": 0,
@@ -29,7 +29,7 @@ SERVICES = {}
 WORKSPACE = {}
 
 # =========================
-# LOGGER SYSTEM
+# LOGGER
 # =========================
 def log(event, data=None):
     LOGS.append({
@@ -53,7 +53,7 @@ def login(user):
     return True
 
 # =========================
-# SAAS BILLING SYSTEM
+# BILLING SYSTEM
 # =========================
 def billing(user, amount):
     STATE["revenue"] += amount
@@ -78,7 +78,7 @@ def api_call(endpoint):
     return {"endpoint": endpoint, "status": "ok"}
 
 # =========================
-# MEMORY ENGINE
+# MEMORY SYSTEM
 # =========================
 def memory_add(text):
     MEMORY.append(text)
@@ -125,39 +125,39 @@ AGENTS = {
 def autonomous_ai():
     STATE["ai_cycles"] += 1
 
-    task_pool = [
+    tasks = [
         "optimize system",
         "fix bug",
-        "deploy service",
+        "deploy update",
         "analyze data",
         "scale system"
     ]
 
-    task = random.choice(task_pool)
+    task = random.choice(tasks)
     return AGENTS["auto"].execute(task)
 
 # =========================
-# ECONOMY ENGINE
+# ECONOMY SYSTEM
 # =========================
 def economy():
     return {
-        "gdp": random.randint(20000, 80000),
-        "inflation": round(random.uniform(1, 10), 2),
-        "growth": round(random.uniform(-5, 10), 2)
+        "gdp": random.randint(20000, 60000),
+        "inflation": round(random.uniform(1, 6), 2),
+        "growth": round(random.uniform(-2, 6), 2)
     }
 
 # =========================
-# CENTRAL BANK SYSTEM
+# CENTRAL BANK
 # =========================
 def central_bank():
-    rate = round(random.uniform(0, 5), 2)
+    rate = round(random.uniform(0, 3), 2)
     return {
         "interest_rate": rate,
-        "policy": "EXPAND" if rate < 2 else "CONTROL"
+        "policy": "EXPAND" if rate < 1.5 else "CONTROL"
     }
 
 # =========================
-# STOCK + HEDGE FUND SYSTEM
+# STOCK + HEDGE FUND
 # =========================
 def stock_market():
     assets = ["AAPL", "TSLA", "NVDA", "AMZN"]
@@ -165,7 +165,7 @@ def stock_market():
         {
             "asset": a,
             "signal": random.choice(["BUY", "SELL", "HOLD"]),
-            "profit": round(random.uniform(0, 100), 2)
+            "profit": round(random.uniform(0, 50), 2)
         }
         for a in assets
     ]
@@ -173,11 +173,11 @@ def stock_market():
 def hedge_fund():
     trades = stock_market()
     profit = sum(t["profit"] for t in trades)
-    STATE["capital"] += profit * 10
+    STATE["capital"] += profit * 2
     return {"profit": profit, "capital": STATE["capital"]}
 
 # =========================
-# GLOBAL INTELLIGENCE CORE
+# GLOBAL INTELLIGENCE
 # =========================
 def global_brain():
     return {
@@ -187,11 +187,11 @@ def global_brain():
     }
 
 # =========================
-# AUTOCODE ENGINE
+# AUTOCODE SYSTEM
 # =========================
 def autocode(task):
     log("autocode", task)
-    return f"generated_code::{task}"
+    return f"code::{task}"
 
 # =========================
 # ANALYTICS SYSTEM
@@ -215,27 +215,27 @@ def analytics():
 # SYSTEM BOOT
 # =========================
 def boot():
-    print("🚀 NEXT STEP MASTER CORE ONLINE")
+    print("🚀 NEXT STEP MASTER CORE SYSTEM ONLINE")
 
     user = register("admin")
     login("admin")
-    billing(user["id"], 1000)
+    billing(user["id"], 500)
     deploy("core_system")
     workspace_create("admin")
     memory_add("system initialized")
 
     while True:
         print("\n==========================")
-        print("AI:", autonomous_ai())
-        print("ANALYTICS:", analytics())
-        print("GLOBAL:", global_brain())
-        print("MEMORY:", memory_search("system"))
-        print("SERVICES:", SERVICES)
+        print("🤖 AI:", autonomous_ai())
+        print("📊 ANALYTICS:", analytics())
+        print("🌍 GLOBAL:", global_brain())
+        print("🧠 MEMORY:", memory_search("system"))
+        print("⚙️ SERVICES:", SERVICES)
         print("==========================")
 
         time.sleep(2)
 
 # =========================
-# START SYSTEM
+# START
 # =========================
 boot()
