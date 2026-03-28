@@ -1,23 +1,27 @@
 # ==========================================
-# 🧬 BaraQura OS: Unified Master Engine v6.5
-# 📅 Date: 28 Mar, 2026 | Mode: Backup & Rollback
+# 🧬 BaraQura OS: AI-Powered Dev Engine v7.0
+# 📅 Date: 28 Mar, 2026 | Mode: Advanced Dev OS
 # ==========================================
 
 import streamlit as st
 import requests
 import base64
 import datetime
+import difflib
 
-# --- ১. রিপোজিটরি কনফিগারেশন ---
-U, R, F = "baraqurastudios", "hasan-universe-engine", "app.py"
+# --- ১. গ্লোবাল কনফিগারেশন ---
+U, R = "baraqurastudios", "hasan-universe-engine"
+# ডিফল্ট ফাইল সেট করা হলো
+if 'selected_file' not in st.session_state:
+    st.session_state['selected_file'] = "app.py"
 
-st.set_page_config(page_title="BaraQura Master Engine", layout="wide", page_icon="🛡️")
+st.set_page_config(page_title="BaraQura AI Dev OS", layout="wide", page_icon="🧠")
 
-# --- ২. সাইডবার: মাস্টার এক্সেস ---
+# --- ২. সাইডবার: মাস্টার কন্ট্রোল ---
 st.sidebar.title("🔐 Master Control")
-user_token = st.sidebar.text_input("GitHub Access Token:", type="password", key="auth_v65")
+user_token = st.sidebar.text_input("GitHub Access Token:", type="password", key="v7_token")
 
-# --- ৩. কোর ইঞ্জিন (GitHub API) ---
+# --- ৩. কোর ইঞ্জিন (GitHub API Handler) ---
 def call_github(method, endpoint, data=None, token=None):
     url = f"https://api.github.com/repos/{U}/{R}/contents/{endpoint}"
     headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
@@ -30,98 +34,105 @@ def call_github(method, endpoint, data=None, token=None):
     except Exception as e:
         return {"message": str(e)}, 500
 
-# --- ৪. মেইন ইন্টারফেস ---
-st.title("🛰️ BaraQura Unified Master Engine")
+# --- ৪. মেইন ফ্রেম ---
+st.title("🛰️ BaraQura AI-Powered Dev OS")
 
 if user_token:
-    # কানেকশন স্ট্যাটাস চেক
-    file_data, status = call_github("GET", F, token=user_token)
+    # ৪.১ ফাইল এক্সপ্লোরার (Multi-file Support)
+    st.sidebar.subheader("📁 Repository Explorer")
+    repo_files, repo_status = call_github("GET", "", token=user_token)
     
-    if status == 200:
-        st.sidebar.success(f"✅ Connected to {R}")
+    if repo_status == 200 and isinstance(repo_files, list):
+        file_list = [f['name'] for f in repo_files if f['type'] == 'file']
+        st.session_state['selected_file'] = st.sidebar.selectbox("Select File to Edit", file_list)
+        st.sidebar.success(f"📂 Active: {st.session_state['selected_file']}")
+    
+    # বর্তমান ফাইলের ডাটা রিট্রিভ
+    current_f = st.session_state['selected_file']
+    file_data, f_status = call_github("GET", current_f, token=user_token)
+
+    if f_status == 200:
+        old_code = base64.b64decode(file_data['content']).decode('utf-8', errors='ignore')
         
-        tab1, tab2 = st.tabs(["🌀 Oracle Update", "⏪ Rollback System"])
+        # ট্যাব সিস্টেম
+        tab1, tab2, tab3 = st.tabs(["🤖 AI & Oracle Editor", "🔍 Diff Viewer", "⏪ Rollback"])
 
-        # --- ট্যাব ১: ওড়াকল আপডেট (Auto Backup সহ) ---
+        # --- ট্যাব ১: AI Generator & Editor ---
         with tab1:
-            st.subheader("The Oracle Update Portal")
-            patch_code = st.text_area("নতুন কোড এখানে দিন...", height=350, key="patch_v65")
+            st.subheader("🤖 AI Code Generator")
+            ai_prompt = st.text_input("আপনি কি তৈরি করতে চান? (Describe here)", placeholder="Example: Create a login function...")
+            
+            if st.button("Generate Code ✨", key="ai_gen"):
+                # Placeholder AI Logic (ভবিষ্যতে Gemini/OpenAI API এখানে বসবে)
+                generated = f"# AI Generated for: {ai_prompt}\n\ndef new_feature():\n    print('BaraQura System: {ai_prompt} Active')\n"
+                st.session_state['ai_code'] = generated
+            
+            if 'ai_code' in st.session_state:
+                st.code(st.session_state['ai_code'], language="python")
+                if st.button("Use Generated Code ⬇️"):
+                    st.session_state['patch_code'] = st.session_state['ai_code']
 
-            if st.button("Execute System Update 🚀", key="update_btn_v65"):
-                if not patch_code:
-                    st.warning("⚠️ ইনজেক্ট করার জন্য কোনো কোড পাওয়া যায়নি।")
-                else:
-                    with st.spinner("🔄 সিঙ্ক্রোনাইজ হচ্ছে..."):
-                        # ১. অটো ব্যাকআপ লজিক (ভুল হলে আগের ফাইল রক্ষা পাবে)
-                        try:
-                            old_content = base64.b64decode(file_data['content']).decode('utf-8')
-                            timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                            backup_path = f"backups/app_backup_{timestamp}.py"
+            st.divider()
+            st.subheader("🌀 The Oracle Editor")
+            # এডিটর বক্স
+            final_patch = st.text_area("Final Code to Push", 
+                                      value=st.session_state.get('patch_code', ""), 
+                                      height=300, key="main_editor")
 
-                            backup_payload = {
-                                "message": f"🔐 Auto Backup: {timestamp}",
-                                "content": base64.b64encode(old_content.encode()).decode()
-                            }
-                            call_github("PUT", backup_path, data=backup_payload, token=user_token)
-                        except Exception as e:
-                            st.warning(f"⚠️ Backup failed: {e}")
+            if st.button("Execute Safe Update 🚀"):
+                if final_patch:
+                    try:
+                        # সিনট্যাক্স শিল্ড
+                        compile(final_patch, "<string>", "exec")
+                        
+                        # ১. অটো ব্যাকআপ
+                        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                        b_path = f"backups/{current_f}_{timestamp}.py"
+                        b_payload = {"message": f"Backup: {timestamp}", "content": base64.b64encode(old_code.encode()).decode()}
+                        call_github("PUT", b_path, data=b_payload, token=user_token)
 
-                        # ২. সিনট্যাক্স চেক এবং আপডেট
-                        try:
-                            compile(patch_code, "<string>", "exec")
-                            
-                            update_payload = {
-                                "message": f"Oracle Sync: {datetime.datetime.now().strftime('%H:%M')}",
-                                "content": base64.b64encode(patch_code.encode()).decode(),
-                                "sha": file_data['sha']
-                            }
-                            _, put_status = call_github("PUT", F, data=update_payload, token=user_token)
+                        # ২. মেইন আপডেট
+                        u_payload = {
+                            "message": f"DevOS Update: {current_f}",
+                            "content": base64.b64encode(final_patch.encode()).decode(),
+                            "sha": file_data['sha']
+                        }
+                        _, put_s = call_github("PUT", current_f, data=u_payload, token=user_token)
+                        
+                        if put_s == 200:
+                            st.balloons(); st.success("✅ Update & Backup Success!")
+                        else: st.error(f"Error: {put_s}")
+                    except Exception as e: st.error(f"❌ Syntax Error: {e}")
 
-                            if put_status == 200:
-                                st.balloons()
-                                st.success("✅ সিস্টেম আপডেট হয়েছে (Backup Safe)।")
-                                st.info("🔄 পরিবর্তন দেখতে অ্যাপটি রিফ্রেশ করুন।")
-                            else:
-                                st.error(f"❌ পুশ এরর: {put_status}")
-                        except Exception as e:
-                            st.error(f"❌ সিনট্যাক্স ভুল: {e}")
-
-        # --- ট্যাব ২: রোলব্যাক সিস্টেম (Restore Backup) ---
+        # --- ট্যাব ২: Diff Viewer ---
         with tab2:
-            st.subheader("Restore from Backup 🛡️")
-            backups_list, b_status = call_github("GET", "backups", token=user_token)
+            st.subheader("🔍 Changes Comparison (Before vs After)")
+            col_a, col_b = st.columns(2)
+            with col_a: st.text_area("📜 Current Code", old_code, height=300, disabled=True)
+            with col_b: st.text_area("✏️ New Changes", final_patch, height=300, disabled=True)
+            
+            if st.button("Compare Lines 🔍"):
+                diff = difflib.unified_diff(old_code.splitlines(), final_patch.splitlines(), lineterm='')
+                st.code("\n".join(diff), language="diff")
 
-            if b_status == 200 and isinstance(backups_list, list) and backups_list:
-                # শুধু .py ফাইলগুলো ফিল্টার করা
-                backup_files = [item['name'] for item in backups_list if item['name'].endswith(".py")]
-                selected_backup = st.selectbox("📂 Select Backup File", backup_files[::-1], key="backup_select")
-
-                if st.button("Restore Selected Backup ⏪"):
-                    with st.spinner("🔄 Restoring..."):
-                        # ব্যাকআপ কন্টেন্ট রিট্রিভ করা
-                        b_file_data, _ = call_github("GET", f"backups/{selected_backup}", token=user_token)
-                        if 'content' in b_file_data:
-                            b_content = base64.b64decode(b_file_data['content']).decode('utf-8')
-                            
-                            # বর্তমান ফাইলের SHA রিট্রিভ করা
-                            current_f, _ = call_github("GET", F, token=user_token)
-                            
-                            restore_payload = {
-                                "message": f"Rollback to: {selected_backup}",
-                                "content": base64.b64encode(b_content.encode()).decode(),
-                                "sha": current_f['sha']
-                            }
-                            _, r_status = call_github("PUT", F, data=restore_payload, token=user_token)
-
-                            if r_status == 200:
-                                st.success(f"✅ Restored from {selected_backup}")
-                                st.info("🔄 Refresh app to see changes.")
-                            else:
-                                st.error(f"❌ Restore failed. Status: {r_status}")
-            else:
-                st.info("No backups found in 'backups/' folder.")
-
+        # --- ট্যাব ৩: রোলব্যাক ---
+        with tab3:
+            st.subheader("⏪ Rollback System")
+            backups, b_s = call_github("GET", "backups", token=user_token)
+            if b_s == 200 and isinstance(backups, list):
+                b_files = [i['name'] for i in backups if current_f in i['name']]
+                sel_b = st.selectbox("Select Backup", b_files[::-1])
+                if st.button("Restore Now"):
+                    # রিস্টোর লজিক (v6.5 এর মতো)
+                    b_data, _ = call_github("GET", f"backups/{sel_b}", token=user_token)
+                    res_payload = {
+                        "message": f"Restore: {sel_b}",
+                        "content": b_data['content'],
+                        "sha": file_data['sha']
+                    }
+                    call_github("PUT", current_f, data=res_payload, token=user_token)
+                    st.success("✅ Restored!")
     else:
-        st.sidebar.error(f"❌ কানেকশন এরর: {status}")
+        st.error("File loading failed. Check Token or Repo.")
 else:
-    st.warning("🔒 Please enter GitHub token first.")
+    st.warning("🔐 Please enter GitHub token in the sidebar.")
