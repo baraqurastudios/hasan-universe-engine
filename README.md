@@ -1,7 +1,7 @@
 """
 ====================================================
-🚀 NEXT STEP FINAL MASTER CORE SYSTEM
-PURE PYTHON • SINGLE FILE • CLEAN ARCHITECTURE
+🚀 NEXT STEP MASTER CORE SYSTEM
+PURE PYTHON • SINGLE FILE • FULL INTEGRATION
 ====================================================
 """
 
@@ -29,7 +29,7 @@ SERVICES = {}
 WORKSPACE = {}
 
 # =========================
-# LOGGER
+# LOGGER SYSTEM
 # =========================
 def log(event, data=None):
     LOGS.append({
@@ -53,7 +53,7 @@ def login(user):
     return True
 
 # =========================
-# BILLING / SAAS ENGINE
+# SAAS BILLING SYSTEM
 # =========================
 def billing(user, amount):
     STATE["revenue"] += amount
@@ -120,20 +120,20 @@ AGENTS = {
 }
 
 # =========================
-# AUTONOMOUS AI CORE
+# AUTONOMOUS AI ENGINE
 # =========================
 def autonomous_ai():
     STATE["ai_cycles"] += 1
 
-    tasks = [
+    task_pool = [
         "optimize system",
         "fix bug",
-        "deploy update",
+        "deploy service",
         "analyze data",
         "scale system"
     ]
 
-    task = random.choice(tasks)
+    task = random.choice(task_pool)
     return AGENTS["auto"].execute(task)
 
 # =========================
@@ -141,13 +141,13 @@ def autonomous_ai():
 # =========================
 def economy():
     return {
-        "gdp": random.randint(10000, 80000),
+        "gdp": random.randint(20000, 80000),
         "inflation": round(random.uniform(1, 10), 2),
         "growth": round(random.uniform(-5, 10), 2)
     }
 
 # =========================
-# CENTRAL BANK
+# CENTRAL BANK SYSTEM
 # =========================
 def central_bank():
     rate = round(random.uniform(0, 5), 2)
@@ -157,7 +157,7 @@ def central_bank():
     }
 
 # =========================
-# STOCK + HEDGE FUND
+# STOCK + HEDGE FUND SYSTEM
 # =========================
 def stock_market():
     assets = ["AAPL", "TSLA", "NVDA", "AMZN"]
@@ -165,7 +165,7 @@ def stock_market():
         {
             "asset": a,
             "signal": random.choice(["BUY", "SELL", "HOLD"]),
-            "profit": round(random.uniform(0, 150), 2)
+            "profit": round(random.uniform(0, 100), 2)
         }
         for a in assets
     ]
@@ -173,7 +173,7 @@ def stock_market():
 def hedge_fund():
     trades = stock_market()
     profit = sum(t["profit"] for t in trades)
-    STATE["capital"] += profit * 20
+    STATE["capital"] += profit * 10
     return {"profit": profit, "capital": STATE["capital"]}
 
 # =========================
@@ -215,7 +215,7 @@ def analytics():
 # SYSTEM BOOT
 # =========================
 def boot():
-    print("🚀 NEXT STEP FINAL MASTER CORE STARTED")
+    print("🚀 NEXT STEP MASTER CORE ONLINE")
 
     user = register("admin")
     login("admin")
