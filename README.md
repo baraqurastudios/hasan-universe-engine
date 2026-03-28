@@ -1,7 +1,7 @@
 """
 =========================================================
-V21 - ULTIMATE SAAS AI CLOUD OPERATING SYSTEM
-PURE PYTHON MASTER ARCHITECTURE (ALL-IN-ONE)
+V22 - ULTIMATE AI SAAS CLOUD OPERATING SYSTEM
+PURE PYTHON (FULL STACK BACKEND + AI + CLOUD CORE)
 =========================================================
 """
 
@@ -12,18 +12,18 @@ import hashlib
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # =========================================================
-# CORE DATABASE (POSTGRES SIMULATION)
+# DATABASE LAYER (POSTGRES SIMULATION)
 # =========================================================
 class DB:
     users = {}
     tenants = {}
     projects = {}
     logs = {}
-    plugins = {}
     files = {}
+    plugins = {}
 
 # =========================================================
-# REDIS CACHE SYSTEM
+# REDIS CACHE (IN-MEMORY)
 # =========================================================
 class Cache:
     store = {}
@@ -37,20 +37,20 @@ class Cache:
         return Cache.store.get(k, (None,))[0]
 
 # =========================================================
-# SECURITY + AUTH SYSTEM (JWT SIMULATION)
+# SECURITY + AUTH (JWT SIMULATION)
 # =========================================================
 class Auth:
     sessions = {}
 
     @staticmethod
-    def token(user):
-        t = hashlib.sha256(f"{user}-{time.time()}".encode()).hexdigest()
-        Auth.sessions[t] = user
-        return t
+    def create_token(user):
+        token = hashlib.sha256(f"{user}-{time.time()}".encode()).hexdigest()
+        Auth.sessions[token] = user
+        return token
 
     @staticmethod
-    def verify(t):
-        return Auth.sessions.get(t)
+    def verify(token):
+        return Auth.sessions.get(token)
 
 # =========================================================
 # UTILITIES
@@ -58,11 +58,11 @@ class Auth:
 def uid():
     return str(uuid.uuid4())
 
-def hashv(x):
-    return hashlib.sha256(x.encode()).hexdigest()
+def hash_text(t):
+    return hashlib.sha256(t.encode()).hexdigest()
 
 # =========================================================
-# SAAS TENANT SYSTEM
+# TENANT SYSTEM (SAAS CORE)
 # =========================================================
 def create_tenant(name):
     tid = uid()
@@ -74,14 +74,14 @@ def create_tenant(name):
     return tid
 
 # =========================================================
-# USER + RBAC SYSTEM
+# USER SYSTEM (RBAC)
 # =========================================================
 def create_user(tenant, email, password, role="user"):
     DB.users[email] = {
         "id": uid(),
         "tenant": tenant,
         "email": email,
-        "password": hashv(password),
+        "password": hash_text(password),
         "role": role
     }
     return DB.users[email]
@@ -92,10 +92,10 @@ def login(email, password):
     if not u:
         return {"error": "not found"}
 
-    if u["password"] != hashv(password):
-        return {"error": "wrong password"}
+    if u["password"] != hash_text(password):
+        return {"error": "invalid"}
 
-    return {"token": Auth.token(email)}
+    return {"token": Auth.create_token(email)}
 
 # =========================================================
 # PROJECT SYSTEM
@@ -116,31 +116,32 @@ def create_project(tenant, name):
 class AIEngine:
     def run(task):
         return {
-            "ai": "V21_CORE",
+            "ai": "GOD_CORE_AI",
             "task": task,
-            "result": f"executed: {task}"
+            "result": f"executed: {task}",
+            "insight": "system optimized automatically"
         }
 
 
 def autonomous_ai():
     tasks = [
-        "optimize system performance",
-        "security scan",
-        "auto scaling decision",
-        "database tuning",
-        "bug fixing",
-        "system healing"
+        "optimize CPU usage",
+        "scale infrastructure",
+        "scan security threats",
+        "repair system bugs",
+        "improve latency",
+        "self heal system"
     ]
     return AIEngine.run(tasks[int(time.time()) % len(tasks)])
 
 # =========================================================
-# PLUGIN MARKETPLACE SYSTEM
+# PLUGIN MARKETPLACE
 # =========================================================
 def register_plugin(name, fn):
     DB.plugins[name] = fn
 
 def run_plugin(name, data):
-    return DB.plugins[name](data) if name in DB.plugins else {"error": "plugin not found"}
+    return DB.plugins[name](data) if name in DB.plugins else {"error": "plugin missing"}
 
 # =========================================================
 # ANALYTICS ENGINE
@@ -180,13 +181,13 @@ def build(image):
 
 def run_container(image):
     return {
-        "container": uid(),
+        "container_id": uid(),
         "image": image,
         "status": "running"
     }
 
 # =========================================================
-# API ENGINE (FASTAPI STYLE PURE PYTHON)
+# API ENGINE (FASTAPI STYLE CORE)
 # =========================================================
 class API:
     routes = {}
@@ -201,16 +202,14 @@ class API:
     @staticmethod
     def call(path, data=None, token=None):
         user = Auth.verify(token)
-
         if path not in API.routes:
             return {"error": "404"}
-
         return API.routes[path](data or {}, user)
 
 api = API()
 
 # =========================================================
-# ROUTES (FULL SYSTEM API)
+# ROUTES (FULL SAAS + AI + CLOUD)
 # =========================================================
 
 @api.route("/tenant")
@@ -272,7 +271,7 @@ def r_cache_get(data, user):
     return {"value": Cache.get(data["key"])}
 
 # =========================================================
-# HTTP SERVER (PRODUCTION BACKEND CORE)
+# HTTP SERVER (BACKEND CORE)
 # =========================================================
 class Handler(BaseHTTPRequestHandler):
 
@@ -286,7 +285,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/ai":
             self.send(autonomous_ai())
         else:
-            self.send({"status": "V21 RUNNING"})
+            self.send({"status": "V22 ACTIVE"})
 
     def do_POST(self):
         length = int(self.headers["Content-Length"])
@@ -306,16 +305,16 @@ class Handler(BaseHTTPRequestHandler):
 # SYSTEM BOOT
 # =========================================================
 def boot():
-    print("🚀 V21 ULTIMATE SAAS AI CLOUD OS STARTED")
+    print("🚀 V22 GOD-LEVEL SAAS AI CLOUD OS STARTED")
 
-    tid = create_tenant("GLOBAL_AI_SYSTEM")
+    tid = create_tenant("GLOBAL_AI")
 
     create_user(tid, "admin@ai.com", "1234", "admin")
     token = login("admin@ai.com", "1234")["token"]
 
-    project = create_project(tid, "CORE AI PLATFORM")
+    project = create_project(tid, "ULTIMATE AI CORE")
 
-    Cache.set("status", "active")
+    Cache.set("status", "online")
     log("system_booted")
 
     print("AI:", autonomous_ai())
