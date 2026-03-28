@@ -1,7 +1,7 @@
 """
 ====================================================
-🚀 NEXT STEP MASTER CORE SYSTEM
-PURE PYTHON • SINGLE SHEET • CLEAN ARCHITECTURE
+🚀 NEXT STEP FINAL MASTER CORE SYSTEM
+PURE PYTHON • SINGLE FILE • CLEAN ARCHITECTURE
 ====================================================
 """
 
@@ -13,10 +13,10 @@ import uuid
 # CORE STATE ENGINE
 # =========================
 STATE = {
-    "users": 1000,
+    "users": 0,
     "sessions": 0,
     "revenue": 0,
-    "capital": 50000,
+    "capital": 100000,
     "deployments": 0,
     "tasks": 0,
     "api_calls": 0,
@@ -53,12 +53,12 @@ def login(user):
     return True
 
 # =========================
-# SAAS / BILLING ENGINE
+# BILLING / SAAS ENGINE
 # =========================
 def billing(user, amount):
     STATE["revenue"] += amount
     log("billing", {"user": user, "amount": amount})
-    return {"status": "paid", "amount": amount}
+    return {"status": "success", "amount": amount}
 
 # =========================
 # DEPLOYMENT SYSTEM
@@ -125,39 +125,39 @@ AGENTS = {
 def autonomous_ai():
     STATE["ai_cycles"] += 1
 
-    task_pool = [
+    tasks = [
         "optimize system",
         "fix bug",
-        "deploy service",
+        "deploy update",
         "analyze data",
         "scale system"
     ]
 
-    task = random.choice(task_pool)
+    task = random.choice(tasks)
     return AGENTS["auto"].execute(task)
 
 # =========================
-# ECONOMY SIMULATION
+# ECONOMY ENGINE
 # =========================
 def economy():
     return {
-        "gdp": random.randint(20000, 80000),
-        "inflation": round(random.uniform(1, 12), 2),
-        "growth": round(random.uniform(-3, 8), 2)
+        "gdp": random.randint(10000, 80000),
+        "inflation": round(random.uniform(1, 10), 2),
+        "growth": round(random.uniform(-5, 10), 2)
     }
 
 # =========================
-# CENTRAL BANK SYSTEM
+# CENTRAL BANK
 # =========================
 def central_bank():
-    rate = round(random.uniform(0, 6), 2)
+    rate = round(random.uniform(0, 5), 2)
     return {
         "interest_rate": rate,
-        "policy": "EXPAND" if rate < 2.5 else "CONTROL"
+        "policy": "EXPAND" if rate < 2 else "CONTROL"
     }
 
 # =========================
-# STOCK + HEDGE FUND SYSTEM
+# STOCK + HEDGE FUND
 # =========================
 def stock_market():
     assets = ["AAPL", "TSLA", "NVDA", "AMZN"]
@@ -165,7 +165,7 @@ def stock_market():
         {
             "asset": a,
             "signal": random.choice(["BUY", "SELL", "HOLD"]),
-            "profit": round(random.uniform(0, 200), 2)
+            "profit": round(random.uniform(0, 150), 2)
         }
         for a in assets
     ]
@@ -173,7 +173,7 @@ def stock_market():
 def hedge_fund():
     trades = stock_market()
     profit = sum(t["profit"] for t in trades)
-    STATE["capital"] += profit * 50
+    STATE["capital"] += profit * 20
     return {"profit": profit, "capital": STATE["capital"]}
 
 # =========================
@@ -191,10 +191,10 @@ def global_brain():
 # =========================
 def autocode(task):
     log("autocode", task)
-    return f"code_generated::{task}"
+    return f"generated_code::{task}"
 
 # =========================
-# ANALYTICS ENGINE
+# ANALYTICS SYSTEM
 # =========================
 def analytics():
     return {
@@ -215,7 +215,7 @@ def analytics():
 # SYSTEM BOOT
 # =========================
 def boot():
-    print("🚀 NEXT STEP MASTER CORE ONLINE")
+    print("🚀 NEXT STEP FINAL MASTER CORE STARTED")
 
     user = register("admin")
     login("admin")
