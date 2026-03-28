@@ -1,7 +1,7 @@
 """
 =========================================================
-NEXT STEP V17 — REAL SAAS AI CLOUD KERNEL
-PURE PYTHON INDUSTRY-STYLE ARCHITECTURE
+NEXT STEP V18 — ENTERPRISE SAAS AI CLOUD CORE
+PURE PYTHON (PRODUCTION BLUEPRINT ARCHITECTURE)
 =========================================================
 """
 
@@ -12,7 +12,7 @@ import hashlib
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # =========================================================
-# CORE SAAS STORAGE (MULTI-TENANT DATABASE)
+# ENTERPRISE MULTI-TENANT DATABASE LAYER
 # =========================================================
 class DB:
     tenants = {}
@@ -24,18 +24,18 @@ class DB:
     plugins = {}
 
 # =========================================================
-# CACHE LAYER (REDIS STYLE)
+# REDIS CACHE LAYER
 # =========================================================
 class Cache:
-    data = {}
+    store = {}
 
     @staticmethod
     def set(k, v):
-        Cache.data[k] = (v, time.time())
+        Cache.store[k] = (v, time.time())
 
     @staticmethod
     def get(k):
-        return Cache.data.get(k, (None,))[0]
+        return Cache.store.get(k, (None,))[0]
 
 # =========================================================
 # UTILITIES
@@ -95,7 +95,7 @@ def verify(token):
     return DB.sessions.get(token)
 
 # =========================================================
-# AI CORE ENGINE (MULTI-AGENT SYSTEM)
+# AI AUTONOMOUS MULTI-AGENT ENGINE
 # =========================================================
 class Agent:
     def __init__(self, name):
@@ -115,21 +115,18 @@ AGENTS = {
     "data": Agent("DATA_ENGINE")
 }
 
-def run_agent(name, task):
-    return AGENTS[name].run(task)
-
 def autonomous_ai():
     tasks = [
-        "system optimization",
-        "security scan",
-        "auto scaling",
-        "self repair",
+        "optimize infrastructure",
+        "security audit",
+        "auto scaling decision",
+        "system healing",
         "performance tuning"
     ]
-    return run_agent("ai", tasks[now() % len(tasks)])
+    return AGENTS["ai"].run(tasks[now() % len(tasks)])
 
 # =========================================================
-# MEMORY ENGINE (AI BRAIN)
+# MEMORY ENGINE (AI LONG TERM BRAIN)
 # =========================================================
 def memory_add(text):
     DB.memory.append({
@@ -142,7 +139,7 @@ def memory_search(q):
     return [m for m in DB.memory if q.lower() in m["text"].lower()]
 
 # =========================================================
-# ANALYTICS ENGINE
+# ANALYTICS ENGINE (EVENT SYSTEM)
 # =========================================================
 def track(event):
     DB.analytics[event] = DB.analytics.get(event, 0) + 1
@@ -151,12 +148,12 @@ def analytics():
     return DB.analytics
 
 # =========================================================
-# DEPLOY ENGINE (CLOUD SIMULATION)
+# DEPLOYMENT ENGINE (CLOUD SIMULATION)
 # =========================================================
 def build_app(name):
     return f"{name}_image_v1"
 
-def run_app(image):
+def run_container(image):
     return {"container": image, "status": "running"}
 
 # =========================================================
@@ -182,7 +179,7 @@ def create_project(tid, name, owner):
     return pid
 
 # =========================================================
-# API ROUTER (FASTAPI STYLE CORE)
+# API ENGINE (FASTAPI STYLE CORE)
 # =========================================================
 class API:
     routes = {}
@@ -205,7 +202,7 @@ class API:
 api = API()
 
 # =========================================================
-# ROUTES (FULL SAAS API)
+# ENTERPRISE ROUTES
 # =========================================================
 @api.route("/tenant/create")
 def r_tenant(data, user):
@@ -222,7 +219,7 @@ def r_project(data, user):
     track("project_create")
     return {"project_id": pid}
 
-@api.route("/ai")
+@api.route("/ai/run")
 def r_ai(data, user):
     return autonomous_ai()
 
@@ -238,7 +235,7 @@ def r_mem_search(data, user):
 @api.route("/deploy")
 def r_deploy(data, user):
     img = build_app(data["name"])
-    return run_app(img)
+    return run_container(img)
 
 @api.route("/analytics")
 def r_analytics(data, user):
@@ -254,19 +251,19 @@ def r_cache_get(data, user):
     return {"value": Cache.get(data["key"])}
 
 # =========================================================
-# HTTP SERVER (REAL BACKEND CORE)
+# HTTP SERVER (PRODUCTION BACKEND CORE)
 # =========================================================
 class Handler(BaseHTTPRequestHandler):
 
-    def send(self, d):
+    def send(self, data):
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
-        self.wfile.write(json.dumps(d).encode())
+        self.wfile.write(json.dumps(data).encode())
 
     def do_GET(self):
         if self.path == "/ai":
-            self.send(api.call("/ai"))
+            self.send(api.call("/ai/run"))
             return
 
         if self.path == "/analytics":
@@ -302,19 +299,19 @@ class Handler(BaseHTTPRequestHandler):
         self.send({"error": "invalid route"})
 
 # =========================================================
-# SYSTEM BOOT (FULL SAAS CORE ONLINE)
+# SYSTEM BOOT (ENTERPRISE SAAS ONLINE)
 # =========================================================
 def boot():
-    print("🚀 V17 REAL SAAS AI CLOUD KERNEL ONLINE")
+    print("🚀 V18 ENTERPRISE SAAS AI CLOUD CORE RUNNING")
 
-    tid = create_tenant("DEFAULT")
+    tid = create_tenant("GLOBAL_TENANT")
+
     register(tid, "admin@ai.com", "1234", "admin")
-
     t = login("admin@ai.com", "1234")["token"]
 
-    pid = create_project(tid, "SAAS CORE", "admin@ai.com")
+    pid = create_project(tid, "ENTERPRISE CORE", "admin@ai.com")
 
-    memory_add("system initialized successfully")
+    memory_add("enterprise system initialized")
     Cache.set("mode", "production")
 
     print("AI:", autonomous_ai())
