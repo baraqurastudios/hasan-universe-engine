@@ -1,137 +1,89 @@
-# ==========================================
-# 🧠 BaraQura OS v1.5 – GOD MODE MODULE
-# Features:
-# 🧠 AI Auto Debugging
-# 🔍 AI Code Review
-# 📊 Usage Analytics
-# 🧩 Plugin Marketplace
-# ==========================================
+import requests
+import time
 
-import os
-import json
-import openai
-import datetime
+# =========================
+# CONFIG
+# =========================
+TELEGRAM_TOKEN = "YOUR_BOT_TOKEN"
+CHAT_ID = "YOUR_CHAT_ID"
 
-st.divider()
-st.header("🧠 GOD MODE AI SYSTEM")
+OPENAI_API_KEY = "YOUR_API_KEY"
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# =========================
+# TELEGRAM SEND
+# =========================
+def send(msg):
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    requests.post(url, json={"chat_id": CHAT_ID, "text": msg})
 
-# ==========================================
-# 🧠 1. AI AUTO DEBUGGING
-# ==========================================
-st.subheader("🧠 AI Auto Debugger")
+# =========================
+# GET LAST MESSAGE
+# =========================
+def get_updates(offset=None):
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/getUpdates"
+    params = {"timeout": 100, "offset": offset}
+    return requests.get(url, params=params).json()
 
-def ai_debug(code):
-    try:
-        res = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "Fix bugs and return clean Python code only."},
-                {"role": "user", "content": code}
-            ],
-            temperature=0.2
-        )
-        return res['choices'][0]['message']['content']
-    except Exception as e:
-        return f"# Debug Error: {e}"
+# =========================
+# AI SCRIPT GENERATOR
+# =========================
+def generate_script(topic):
+    prompt = f"""
+    Write a powerful emotional Islamic story about: {topic}
+    Style: short video (1 minute)
+    Tone: emotional, inspiring
+    """
 
-if st.button("🛠️ Auto Fix Code"):
-    if new_code_input:
-        fixed_code = ai_debug(new_code_input)
-        st.session_state['fixed_code'] = fixed_code
-        st.success("✅ Code Fixed!")
-
-if 'fixed_code' in st.session_state:
-    st.text_area("🧪 Fixed Code", st.session_state['fixed_code'], height=250)
-
-    if st.button("Use Fixed Code"):
-        new_code_input = st.session_state['fixed_code']
-        st.success("✅ Applied!")
-
-
-# ==========================================
-# 🔍 2. AI CODE REVIEW
-# ==========================================
-st.subheader("🔍 AI Code Review")
-
-def ai_review(code):
-    try:
-        res = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "Review this code. Give issues and improvements."},
-                {"role": "user", "content": code}
-            ],
-            temperature=0.3
-        )
-        return res['choices'][0]['message']['content']
-    except Exception as e:
-        return f"Review Error: {e}"
-
-if st.button("🔎 Run Code Review"):
-    if new_code_input:
-        review = ai_review(new_code_input)
-        st.session_state['review'] = review
-
-if 'review' in st.session_state:
-    st.text_area("📋 Review Report", st.session_state['review'], height=250)
-
-
-# ==========================================
-# 📊 3. USAGE ANALYTICS
-# ==========================================
-st.subheader("📊 Usage Analytics")
-
-if 'analytics' not in st.session_state:
-    st.session_state['analytics'] = {
-        "updates": 0,
-        "ai_used": 0,
-        "debug_runs": 0
+    headers = {
+        "Authorization": f"Bearer {OPENAI_API_KEY}"
     }
 
-# counters
-if st.button("Simulate Update"):
-    st.session_state['analytics']['updates'] += 1
+    data = {
+        "model": "gpt-4o-mini",
+        "messages": [{"role": "user", "content": prompt}]
+    }
 
-if st.button("Simulate AI Use"):
-    st.session_state['analytics']['ai_used'] += 1
+    res = requests.post("https://api.openai.com/v1/chat/completions",
+                        headers=headers, json=data)
 
-if st.button("Simulate Debug"):
-    st.session_state['analytics']['debug_runs'] += 1
+    return res.json()["choices"][0]["message"]["content"]
 
-st.json(st.session_state['analytics'])
+# =========================
+# MAIN LOOP
+# =========================
+def run():
+    last_update_id = None
 
+    send("🚀 BaraQura AI System Started")
 
-# ==========================================
-# 🧩 4. PLUGIN MARKETPLACE
-# ==========================================
-st.subheader("🧩 Plugin Marketplace")
+    while True:
+        updates = get_updates(last_update_id)
 
-PLUGINS = {
-    "Formatter": "Auto format Python code",
-    "Security Scan": "Basic vulnerability check",
-    "Comment Generator": "Add comments to code"
-}
+        for u in updates.get("result", []):
+            last_update_id = u["update_id"] + 1
 
-selected_plugin = st.selectbox("Choose Plugin", list(PLUGINS.keys()))
-st.info(PLUGINS[selected_plugin])
+            if "message" in u:
+                text = u["message"]["text"]
 
-def run_plugin(name, code):
-    if name == "Formatter":
-        return code.strip()
-    elif name == "Security Scan":
-        if "eval(" in code:
-            return "⚠️ Warning: eval() detected!"
-        return "✅ No major issues"
-    elif name == "Comment Generator":
-        return "# Auto-commented\n" + code
-    return code
+                # USER COMMAND
+                if text.startswith("/story"):
+                    topic = text.replace("/story ", "")
+                    
+                    send("🧠 Generating script...")
+                    script = generate_script(topic)
 
-if st.button("Run Plugin ⚙️"):
-    if new_code_input:
-        result = run_plugin(selected_plugin, new_code_input)
-        st.session_state['plugin_result'] = result
+                    send(f"📜 Script:\n\n{script}")
+                    send("✅ Reply 'approve' to continue or 'reject'")
 
-if 'plugin_result' in st.session_state:
-    st.text_area("🔌 Plugin Output", st.session_state['plugin_result'], height=200)
+                elif text.lower() == "approve":
+                    send("🔥 Approved! Next step coming soon...")
+
+                elif text.lower() == "reject":
+                    send("❌ Rejected. Send new topic.")
+
+        time.sleep(2)
+
+# =========================
+# START
+# =========================
+run()
