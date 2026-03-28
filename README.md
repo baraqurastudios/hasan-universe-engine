@@ -1,7 +1,7 @@
 """
 ====================================================
-NEXT STEP MASTER CORE PLATFORM
-PURE PYTHON • SINGLE FILE • CLEAN SYSTEM DESIGN
+NEXT STEP MASTER PLATFORM CORE
+PURE PYTHON • SINGLE FILE • PRODUCTION ARCHITECTURE
 ====================================================
 """
 
@@ -10,7 +10,7 @@ import uuid
 from collections import defaultdict
 
 # =========================
-# CORE DATABASE LAYER
+# DATABASE CORE
 # =========================
 class DB:
     users = {}
@@ -50,7 +50,6 @@ def create_user(username, password):
 
 def login(username, password):
     user = DB.users.get(username)
-
     if not user or user["password"] != password:
         return {"status": "failed"}
 
@@ -86,7 +85,7 @@ def add_file(project_id, filename, content):
         return {"error": "not_found"}
 
     project["files"].append({
-        "name": filename,
+        "filename": filename,
         "content": content
     })
 
@@ -100,9 +99,9 @@ def deploy(project_id):
     if project_id not in DB.projects:
         return {"error": "invalid_project"}
 
-    deploy_id = str(uuid.uuid4())
+    deployment_id = str(uuid.uuid4())
 
-    DB.deployments[deploy_id] = {
+    DB.deployments[deployment_id] = {
         "project": project_id,
         "status": "running"
     }
@@ -110,7 +109,7 @@ def deploy(project_id):
     DB.analytics["deployments"] += 1
     log("deploy", project_id)
 
-    return {"deployment_id": deploy_id}
+    return {"deployment_id": deployment_id}
 
 # =========================
 # MEMORY SYSTEM (AI CONTEXT)
@@ -120,11 +119,11 @@ def memory_add(text):
     log("memory_add", text)
 
 
-def memory_search(query):
-    return [m for m in DB.memory if query.lower() in m.lower()]
+def memory_search(keyword):
+    return [m for m in DB.memory if keyword.lower() in m.lower()]
 
 # =========================
-# AI AGENTS
+# AI AGENT SYSTEM
 # =========================
 class Agent:
     def __init__(self, role):
@@ -133,7 +132,7 @@ class Agent:
     def run(self, task):
         DB.analytics["tasks"] += 1
         log("agent_task", {"role": self.role, "task": task})
-        return f"{self.role} -> {task}"
+        return f"{self.role}: {task}"
 
 
 AGENTS = {
@@ -147,7 +146,6 @@ def run_agent(role, task):
     agent = AGENTS.get(role)
     if not agent:
         return {"error": "invalid_agent"}
-
     return agent.run(task)
 
 # =========================
@@ -157,8 +155,8 @@ def autonomous_cycle():
     tasks = [
         "optimize system",
         "scan logs",
-        "improve performance",
         "analyze memory",
+        "improve performance",
         "run diagnostics"
     ]
 
@@ -172,7 +170,7 @@ def analytics():
     return dict(DB.analytics)
 
 # =========================
-# API ROUTER (CORE BACKEND)
+# API ROUTER (BACKEND CORE)
 # =========================
 def api(route, payload=None):
     DB.analytics["requests"] += 1
@@ -201,7 +199,7 @@ def api(route, payload=None):
 # SYSTEM BOOT
 # =========================
 def boot():
-    print("🚀 NEXT STEP MASTER CORE PLATFORM ONLINE")
+    print("🚀 NEXT STEP MASTER PLATFORM ONLINE")
 
     api("user/create", {"username": "admin", "password": "1234"})
     api("user/login", {"username": "admin", "password": "1234"})
@@ -215,14 +213,14 @@ def boot():
     })
 
     api("deploy", {"project_id": project["project_id"]})
-    api("memory/add", {"text": "system initialized"})
+    api("memory/add", {"text": "system initialized successfully"})
 
     while True:
-        print("\n====================")
+        print("\n======================")
         print("AI:", autonomous_cycle())
         print("ANALYTICS:", analytics())
         print("MEMORY:", memory_search("system"))
-        print("====================")
+        print("======================")
 
         time.sleep(3)
 
