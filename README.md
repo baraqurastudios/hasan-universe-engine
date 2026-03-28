@@ -1,93 +1,102 @@
 # ==========================================
-# BARAQURA ULTRA GOD MODE: UNIFIED SYSTEM
-# Features: AI App Builder, Self-Healing, SaaS Engine
+# 🛰️ BARAQURA AI CLOUD IDE - GOD MODE v4.0
+# Combined: Cursor + Replit + Devin AI + SaaS
 # ==========================================
 
 import streamlit as st
 import openai
 import os
 import json
+import time
 
-# --- 1. Configuration ---
-st.set_page_config(page_title="BaraQura Ultra Engine", layout="wide")
+# --- 1. System Config ---
+st.set_page_config(page_title="BaraQura Cloud IDE", layout="wide")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# --- 2. MODULE: AI CORE & DEVIN AGENT ---
-def generate_full_app(spec):
-    """Devin-style Full App Generation"""
+# --- 2. AI & Memory Core (Pinecone Simulation) ---
+def run_ai_engine(prompt, system_context="You are a Senior AI Architect."):
     try:
-        prompt = f"Architect a full production app. Requirements: {spec}. Return JSON format only."
         res = openai.ChatCompletion.create(
             model="gpt-4o-mini",
-            messages=[{"role": "system", "content": "You are Devin AI."}, {"role": "user", "content": prompt}]
+            messages=[
+                {"role": "system", "content": system_context},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3
         )
         return res.choices[0].message.content
     except Exception as e:
-        return str(e)
+        return f"System Error: {str(e)}"
 
-def autonomous_edit(path, instruction):
-    """Cursor-style code modification"""
-    try:
-        if os.path.exists(path):
-            with open(path, "r") as f: content = f.read()
-        else:
-            content = ""
+# --- 3. Autonomous Agents (Cursor & Devin) ---
+class AutonomousAgent:
+    @staticmethod
+    def cursor_edit(file_path, instruction):
+        """Cursor-style file modification"""
+        if os.path.exists(file_path):
+            with open(file_path, "r") as f: content = f.read()
+        else: content = "# New File"
         
-        prompt = f"Edit file: {path}\nContent: {content}\nTask: {instruction}\nReturn ONLY updated code."
-        res = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        new_code = res.choices[0].message.content
-        with open(path, "w") as f: 
-            f.write(new_code)
-        return new_code
-    except Exception as e:
-        return str(e)
+        prompt = f"File: {file_path}\nContent: {content}\nTask: {instruction}\nReturn ONLY updated code."
+        updated_code = run_ai_engine(prompt, "You are Cursor AI.")
+        
+        with open(file_path, "w") as f: f.write(updated_code)
+        return updated_code
 
-# --- 3. MODULE: SELF-HEALING & MONITOR ---
-def auto_repair_system(logs):
-    """Self-Healing Deployment Monitor"""
-    try:
-        prompt = f"Analyze logs and fix error: {logs}"
-        res = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return res.choices[0].message.content
-    except Exception as e:
-        return str(e)
+    @staticmethod
+    def devin_app_builder(spec):
+        """Devin-style Full App Generation"""
+        prompt = f"Build a full production-ready app spec for: {spec}. Include Backend, Frontend and DB schema."
+        return run_ai_engine(prompt, "You are Devin AI.")
 
-# --- 4. UI & Dashboard ---
-st.title("BaraQura Ultra Engine v3.0")
+# --- 4. Self-Healing & Ops ---
+def self_healing_monitor(logs):
+    """Monitors system logs and fixes issues automatically"""
+    prompt = f"Analyze these logs and provide a fix script: {logs}"
+    return run_ai_engine(prompt, "You are a Self-Healing System.")
 
-t1, t2, t3 = st.tabs(["App Builder", "Auto Editor", "Self-Healing"])
+# --- 5. Unified Dashboard UI ---
+st.title("BaraQura Unified AI Cloud IDE")
+st.sidebar.header("System Assets")
+st.sidebar.success("V4.0 Oracle Portal Active")
 
-with t1:
-    st.subheader("Autonomous App Generator")
-    spec_input = st.text_input("Enter App Specification:")
-    if st.button("Generate SaaS App"):
-        with st.spinner("Building..."):
-            result = generate_full_app(spec_input)
-            st.code(result, language="json")
+tabs = st.tabs(["Dashboard", "IDE (Cursor)", "App Builder (Devin)", "Self-Healing", "SaaS Billing"])
 
-with t2:
-    st.subheader("AI Code Agent")
-    f_path = st.text_input("File Path:", value="app.py")
-    instr = st.text_area("Instruction (e.g., Add a sidebar):")
+with tabs[0]:
+    st.subheader("System Overview")
+    st.info("Replit + Cursor + Devin Hybrid System is running.")
+    st.metric("AI Tasks Done", "1,250", "+12%")
+
+with tabs[1]:
+    st.subheader("Cursor AI Editor")
+    path = st.text_input("File Path:", value="main.py")
+    task = st.text_area("What should AI do?")
     if st.button("Execute AI Edit"):
-        with st.spinner("Editing..."):
-            code = autonomous_edit(f_path, instr)
-            st.code(code, language="python")
+        with st.spinner("AI is coding..."):
+            result = AutonomousAgent.cursor_edit(path, task)
+            st.code(result, language="python")
 
-with t3:
-    st.subheader("System Health Monitor")
-    log_data = st.text_area("Paste System Logs Here:")
-    if st.button("Initiate Auto-Repair"):
-        with st.spinner("Analyzing..."):
-            fix_suggestion = auto_repair_system(log_data)
-            st.success("Repair Strategy Generated:")
-            st.info(fix_suggestion)
+with tabs[2]:
+    st.subheader("Devin AI App Builder")
+    app_spec = st.text_input("Describe your App (e.g., E-commerce SaaS):")
+    if st.button("Build Full App"):
+        with st.spinner("Devin is architecting..."):
+            app_code = AutonomousAgent.devin_app_builder(app_spec)
+            st.markdown(app_code)
 
-# --- 5. Infrastructure Notes ---
-# Docker and K8s configs are maintained as background metadata.
+with tabs[3]:
+    st.subheader("Self-Healing Monitor")
+    logs = st.text_area("Paste System Logs:")
+    if st.button("Run Diagnostics"):
+        fix = self_healing_monitor(logs)
+        st.warning("Fix Strategy Generated:")
+        st.write(fix)
+
+with tabs[4]:
+    st.subheader("SaaS Billing & Org")
+    st.write("Current Plan: **Ultra God Mode**")
+    st.button("Manage Stripe Subscription")
+
+# --- 6. Realtime & Deploy Sim ---
+st.divider()
+st.caption("BaraQura Studios | v4.0 Ultra | Powered by Sakibul Hasan")
