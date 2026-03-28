@@ -1,6 +1,7 @@
 """
-BARAQURA MASTER ENGINE - PURE PYTHON CORE
-Fixed: Incomplete Function Definitions, Emojis, and Syntax Mismatch
+BARAQURA MASTER ENGINE - PURIFIED CORE
+PURE PYTHON - AI + ECONOMY + ANALYTICS
+Fixed: Infinite Loop, Emoji Conflicts, and Syntax Stability
 """
 
 import random
@@ -8,13 +9,13 @@ import time
 import uuid
 
 # =========================
-# SYSTEM STATE
+# GLOBAL SYSTEM STATE
 # =========================
-STATE = {
-    "users": 30000,
+SYSTEM = {
+    "users": 40000,
     "sessions": 0,
-    "revenue": 75000000,
-    "capital": 3000000000,
+    "revenue": 120000000,
+    "capital": 5000000000,
     "deployments": 0,
     "tasks": 0,
     "api_calls": 0,
@@ -27,7 +28,7 @@ SERVICES = {}
 WORKSPACE = {}
 
 # =========================
-# EVENT SYSTEM
+# EVENT LOGGER
 # =========================
 def log_event(event, data=None):
     LOGS.append({
@@ -38,63 +39,101 @@ def log_event(event, data=None):
     })
 
 # =========================
-# AUTH & BILLING SYSTEM
+# CORE MODULES (AUTH & BILLING)
 # =========================
-def register(user):
-    STATE["users"] += 1
-    log_event("register", user)
+def register_user(user_email):
+    SYSTEM["users"] += 1
+    log_event("register", {"email": user_email})
     return str(uuid.uuid4())
 
-def login(user):
-    STATE["sessions"] += 1
-    log_event("login", user)
-    return True
+def process_billing(user_id, amount):
+    SYSTEM["revenue"] += amount
+    log_event("billing", {"user": user_id, "amount": amount})
+    return {"status": "success", "amount": amount}
 
-def process_billing(user, amount):
-    STATE["revenue"] += amount
-    log_event("billing", {"user": user, "amount": amount})
-    return {"status": "ok", "amount": amount}
+def deploy_service(service_name):
+    SYSTEM["deployments"] += 1
+    SERVICES[service_name] = "ACTIVE"
+    log_event("deploy", service_name)
+    return f"Service {service_name} is now ACTIVE"
 
 # =========================
-# CLOUD & AI AGENT CORE
+# AI AGENT SYSTEM
 # =========================
-def deploy_service(service):
-    STATE["deployments"] += 1
-    SERVICES[service] = "ACTIVE"
-    log_event("deploy", service)
-    return f"{service} ACTIVE"
-
 class Agent:
     def __init__(self, role):
         self.role = role
 
-    # FIXED: Added the complete function definition here
-    def run_task(self, task):
-        STATE["tasks"] += 1
+    def execute_task(self, task):
+        SYSTEM["tasks"] += 1
         log_event("agent_task", {"role": self.role, "task": task})
-        return f"{self.role} executed {task}"
+        return f"{self.role} agent executed: {task}"
+
+AGENTS = {
+    "auto": Agent("Autonomous AI"),
+    "dev": Agent("Developer")
+}
 
 # =========================
-# SYSTEM BOOT EXECUTION
+# ECONOMY & GLOBAL BRAIN
 # =========================
-def boot_core_system():
-    print("BARAQURA CORE PLATFORM INITIALIZING...")
+def get_global_intelligence():
+    # Economy Intel
+    gdp = random.randint(20000, 80000)
+    inflation = round(random.uniform(1, 10), 2)
     
-    # 1. Initialize Components
-    user_token = register("master_admin")
-    deploy_service("AI_GATEWAY_V1")
+    # Hedge Fund Logic
+    profit = random.uniform(100, 1000)
+    SYSTEM["capital"] += int(profit * 3000)
     
-    # 2. Start AI Agents
-    dev_agent = Agent("System Architect")
-    task_result = dev_agent.run_task("Core Evolution Patch")
+    return {
+        "economy": {"gdp": gdp, "inflation": inflation},
+        "market": {"daily_profit": round(profit, 2), "new_capital": SYSTEM["capital"]}
+    }
+
+# =========================
+# ANALYTICS & SIMULATION
+# =========================
+def get_analytics():
+    return {
+        "stats": {k: v for k, v in SYSTEM.items()},
+        "active_services": list(SERVICES.keys()),
+        "total_logs": len(LOGS)
+    }
+
+def run_autonomous_cycle():
+    SYSTEM["ai_cycles"] += 1
+    tasks = ["optimize system", "fix bug", "scale infrastructure", "analyze market"]
+    selected_task = random.choice(tasks)
+    return AGENTS["auto"].execute_task(selected_task)
+
+# =========================
+# SYSTEM BOOT (SAFE MODE)
+# =========================
+def boot_system():
+    print("--- BARAQURA NEXT STEP CORE ENGINE ONLINE ---")
     
-    # Final Status Print
-    print("\n--- CORE SYSTEM STATUS ---")
-    print(f"Total Users: {STATE['users']}")
-    print(f"Revenue: ${STATE['revenue']}")
-    print(f"Active Services: {list(SERVICES.keys())}")
-    print(f"Agent Feedback: {task_result}")
-    print("--------------------------")
+    # Initializing
+    admin_id = register_user("admin@baraqura.studio")
+    process_billing(admin_id, 200000)
+    print(deploy_service("CORE_ORACLE_V133"))
+    
+    # Running Simulation Cycles (Preventing infinite loop for Oracle UI stability)
+    for i in range(3):
+        print(f"\nCycle {i+1} Status:")
+        print(f"AI Task: {run_autonomous_cycle()}")
+        print(f"Intelligence: {get_global_intelligence()}")
+    
+    # Final Analytics Report
+    print("\n--- FINAL SYSTEM ANALYTICS ---")
+    report = get_analytics()
+    for key, value in report["stats"].items():
+        print(f"{key.capitalize()}: {value}")
+    print(f"Logs Recorded: {report['total_logs']}")
+    print("---------------------------------------------")
 
 if __name__ == "__main__":
-    boot_core_system()
+    try:
+        boot_system()
+    except Exception as e:
+        print(f"System Critical Error: {str(e)}")
