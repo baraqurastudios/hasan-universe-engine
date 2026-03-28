@@ -1,64 +1,67 @@
 import requests
 import time
+import sys
 
-# সঠিক টোকেন আপডেট করা হয়েছে
+# ==============================
+# CONFIGURATION
+# ==============================
+# আপনার সর্বশেষ টোকেনটি এখানে বসান
 TELEGRAM_TOKEN = "8712362120:AAEopZQcsqZCHbNDck2suTxPGoSdBYeCYRg"
 BASE_URL = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}"
 
 def send_message(chat_id, text):
-    requests.post(f"{BASE_URL}/sendMessage", json={
-        "chat_id": chat_id,
-        "text": text
-    })
+    try:
+        url = f"{BASE_URL}/sendMessage"
+        payload = {"chat_id": chat_id, "text": text, "parse_mode": "Markdown"}
+        requests.post(url, json=payload)
+    except Exception as e:
+        print(f"❌ Error sending message: {e}")
 
 def get_updates(offset=None):
     params = {"timeout": 30, "offset": offset}
     try:
-        return requests.get(f"{BASE_URL}/getUpdates", params=params).json()
+        response = requests.get(f"{BASE_URL}/getUpdates", params=params)
+        return response.json()
     except Exception as e:
-        print(f"Error fetching updates: {e}")
+        print(f"📡 Connection error: {e}")
         return {}
 
 # -------------------------
-# ISLAMIC MULTI-CONTENT ENGINE
+# MULTI-CONTENT SCRIPT GENERATOR
 # -------------------------
 def generate_script(topic):
-    # f-string লজিক ফিক্স করা হয়েছে
     return f"""
-📖 Islamic Story: Production Unit
-💠 **BARAQURA ISLAMIC HUB** 💠
+💠 **BARAQURA ISLAMIC HUB - PRODUCTION** 💠
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 📌 **বিষয়:** {topic}
-🛠️ **ফরম্যাট:** Audio Book & Visual Storytelling
+🎭 **ক্যারেক্টার:** হাসান, লিজা এবং শাকিব
 
---- 🎙️ **AUDIO BOOK MODULE** ---
-[শান্ত এবং গম্ভীর ভয়েসওভার শুরু হবে]
-🔊 **Narrator:** আসসালামু আলাইকুম। আজ আমরা শুনবো {topic}-এর এক অসামান্য অধ্যায়...
-📝 **Script:** (এখানে গল্পের মূল কাহিনী থাকবে যা অডিও বুকের জন্য দীর্ঘ এবং বিস্তারিত হবে।)
+--- 🎙️ **AUDIO BOOK / STORY MODULE** ---
+🔊 **Narrator:** আসসালামু আলাইকুম। আজ আমাদের আলোচনার বিষয় {topic}...
+📝 **Script:** (ভবিষ্যতে এখানে এআই সম্পূর্ণ গল্পটি লিখবে)
 
---- 🖼️ **AI IMAGE GENERATION PROMPTS** ---
-🎨 **Prompt 1:** Cinematic 3D animation style, an ancient desert city at sunset, 8k resolution, glowing golden light.
-🎨 **Prompt 2:** A young boy (Hasan) listening to his mother (Liza), emotional lighting, warm cozy room, 3D character design.
+--- 🖼️ **AI IMAGE PROMPTS** ---
+🎨 **Prompt:** Cinematic 3D style, {topic} theme, emotional lighting, 8k.
 
---- 📜 **STORYTELLING STATUS** ---
-✅ এই স্ক্রিপ্টটি কি Audio Book-এর জন্য ফাইনাল?
-✅ ইমেজ প্রম্পটগুলো কি ঠিক আছে?
-
-[REPLY: APPROVE OR REJECT]
+--- 📜 **STATUS** ---
+✅ এই স্ক্রিপ্টটি কি ফাইনাল? 
+[Reply: APPROVE or REJECT]
+━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
 
 # -------------------------
-# MAIN BOT LOOP
+# MAIN BOT ENGINE
 # -------------------------
-def run_bot():
+def run_engine():
     offset = None
-    print("🚀 BaraQura Bot is running...")
+    print("🚀 BaraQura Engine v127.0 is LIVE...")
+    print("🔔 Waiting for commands in Telegram...")
 
     while True:
         data = get_updates(offset)
         
         if not data or "result" not in data:
-            time.sleep(1)
+            time.sleep(2)
             continue
 
         for update in data.get("result", []):
@@ -74,22 +77,26 @@ def run_bot():
             if text.startswith("/story"):
                 topic = text.replace("/story", "").strip()
                 if not topic:
-                    send_message(chat_id, "দয়া করে একটি টপিক দিন। যেমন: /story Patience")
+                    send_message(chat_id, "⚠️ দয়া করে একটি বিষয় লিখুন। যেমন: `/story দানশীলতা`")
                     continue
 
+                send_message(chat_id, "🧠 **AI Autopilot** ইজ জেনারেটিং স্ক্রিপ্ট...")
                 script = generate_script(topic)
-                send_message(chat_id, "🧠 Generating multi-content script...")
                 send_message(chat_id, script)
-                send_message(chat_id, "Reply: APPROVE or REJECT")
 
+            # APPROVAL SYSTEM
             elif text.upper() == "APPROVE":
-                send_message(chat_id, "✅ Approved! Next pipeline (Phase 2) coming soon...")
-
+                send_message(chat_id, "✅ **Approved!** অডিও বুক এবং ভিডিও পাইপলাইন শুরু হচ্ছে...")
+                # এখানে আমরা Phase 2-এর ভয়েস কোড যুক্ত করব
+                
             elif text.upper() == "REJECT":
-                send_message(chat_id, "❌ Rejected. Send new topic with /story.")
+                send_message(chat_id, "❌ **Rejected.** নতুন টপিক দিন অথবা পুনরায় চেষ্টা করুন।")
 
         time.sleep(1)
 
-# রান করার কমান্ড
 if __name__ == "__main__":
-    run_bot()
+    try:
+        run_engine()
+    except KeyboardInterrupt:
+        print("\n🛑 Engine stopped by Owner.")
+        sys.exit()
