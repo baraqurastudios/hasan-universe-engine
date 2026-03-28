@@ -165,3 +165,50 @@ if st.button("Execute Smart Inject Update 🚀"):
             else:
                 st.error(f"❌ ফাইল খুঁজে পাওয়া যায়নি (Status: {get_status})।")
 
+# --- 🌀 Oracle Patch: 2026-03-28 08:22:25.585408 ---
+# ==========================================
+# 🧬 BaraQura OS: Unified Main Frame v1.2
+# 📅 Date: 28 Mar, 2026 | Mode: Final Correction
+# ==========================================
+
+import streamlit as st
+import requests
+import base64
+import datetime
+
+# --- ১. রিপোজিটরি কনফিগারেশন ---
+U = "baraqurastudios"
+R = "hasan-universe-engine"
+F = "app.py"
+
+# --- ২. সাইডবার: মাস্টার এক্সেস ---
+st.sidebar.title("🔐 Master Access")
+# 'user_token' ডিফাইন করা হয়েছে যাতে NameError না হয়
+user_token = st.sidebar.text_input("GitHub Token (BaraQuraSync):", type="password")
+
+# --- ৩. কোর ইঞ্জিন (GitHub API) ---
+def call_github(method, endpoint, data=None, current_token=None):
+    url = f"https://api.github.com/repos/{U}/{R}/contents/{endpoint}"
+    headers = {
+        "Authorization": f"token {current_token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    try:
+        if method == "GET":
+            res = requests.get(url, headers=headers)
+        else:
+            res = requests.put(url, headers=headers, json=data)
+        return res.json(), res.status_code
+    except Exception as e:
+        return {"message": str(e)}, 500
+
+# --- ৪. কানেকশন স্ট্যাটাস চেক ---
+if user_token:
+    # TypeError এড়াতে প্যারামিটার নাম 'current_token' ব্যবহার করা হয়েছে
+    data, status = call_github("GET", F, current_token=user_token)
+    if status == 200:
+        st.sidebar.success(f"✅ Connected to {R}")
+    else:
+        st.sidebar.error(f"❌ Connection Error: {status}")
+        st.sidebar.info("💡 GitHub Settings-এ 'repo' পারমিশন চেক করুন। [cite: 26967.jpg
+
