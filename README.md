@@ -6,7 +6,7 @@ Status: FULLY PURIFIED (Python Version for Oracle Editor Stability)
 import time
 import random
 
-# --- 1. STATE (GLOBAL MEMORY) ---
+# --- 1. GLOBAL STATE (MEMORY) ---
 state = {
     "users": 1000,
     "revenue": 50000.0,
@@ -16,32 +16,38 @@ state = {
     "features": []
 }
 
-# --- 2. ANALYTICS ENGINE ---
 events = []
 
-def track(event, data):
-    events.append({"event": event, "data": data, "timestamp": time.time()})
+def track(event_name, data=None):
+    """Analytics and Event Tracking Logic"""
+    events.append({
+        "event": event_name, 
+        "data": data or {}, 
+        "timestamp": time.time()
+    })
 
-def get_events():
-    return events
-
-# --- 3. CORE SERVICES ---
-def login(email):
+# --- 2. CORE SYSTEMS (AUTH, BILLING, DEPLOY) ---
+def login(email, password):
     track("login_action", {"email": email})
-    return "purified-token-127"
+    return f"purified-token-{random.randint(1000, 9999)}"
 
-def deploy_live():
-    track("system_deploy", {"environment": "production"})
-    return {"status": "deployed_successfully"}
+def payment_success(user_id, amount):
+    state["revenue"] += amount
+    track("payment_received", {"user_id": user_id, "amount": amount})
+    return {"status": "payment_confirmed"}
 
-# --- 4. AI WORKFORCE ---
+def deploy_app():
+    track("system_deploy", {"env": "production"})
+    return "Status: System Deployed Successfully"
+
+# --- 3. AI WORKFORCE ---
 class AIEmployee:
     def __init__(self, role):
         self.role = role
-    
+
     def work(self, task):
-        track("employee_task", {"role": self.role, "task": task})
-        return f"[Agent: {self.role}] task completed: {task}"
+        track("task_execution", {"role": self.role, "task": task})
+        return f"[Agent: {self.role}] action: {task} | Status: COMPLETED"
 
 workforce = {
     "dev": AIEmployee("Developer"),
@@ -49,51 +55,67 @@ workforce = {
     "sales": AIEmployee("Sales")
 }
 
-# --- 5. GLOBAL ECONOMY BRAIN ---
-class EconomyEngine:
+# --- 4. ECONOMY & FINANCIAL BRAIN ---
+class FinanceEngine:
     @staticmethod
-    def simulate():
+    def global_economy():
         return {
-            "inflation": random.uniform(0, 5),
-            "gdp": random.uniform(0, 10),
-            "health": random.uniform(0, 100)
+            "inflation": random.uniform(1.0, 5.0),
+            "gdp_growth": random.uniform(2.0, 8.0),
+            "health_index": random.uniform(70.0, 100.0)
         }
-    
+
     @staticmethod
     def hedge_fund():
-        stocks = ["AAPL", "TSLA", "GOOG"]
-        total_profit = sum([random.uniform(0, 10) for _ in stocks])
+        stocks = ["AAPL", "TSLA", "GOOG", "AMZN"]
+        trades = [{"stock": s, "action": random.choice(["BUY", "SELL"]), "profit": random.uniform(0, 10)} for s in stocks]
+        total_profit = sum(t["profit"] for t in trades)
         return {
-            "fundValue": state["capital"] + (total_profit * 1000)
+            "trades": trades,
+            "fund_value": state["capital"] + (total_profit * 1000)
         }
 
-def global_brain():
+def global_economy_brain():
     return {
-        "economy": EconomyEngine.simulate(),
-        "hedge": EconomyEngine.hedge_fund(),
-        "status": "GLOBAL BRAIN ACTIVE"
+        "economy": FinanceEngine.global_economy(),
+        "hedge": FinanceEngine.hedge_fund(),
+        "status": "ECONOMIC BRAIN ACTIVE"
     }
 
-# --- 6. UNIVERSE CREATOR ENGINE ---
+# --- 5. UNIVERSE SIMULATION ---
 def universe_brain(seed):
-    clusters = [{"id": f"{seed}-{i}", "energy": random.uniform(0, 1000)} for i in range(3)]
-    civilizations = [{"id": c["id"], "tech": random.uniform(0, 100)} for c in clusters]
+    # Cluster and Civilization Evolution Logic
+    clusters = [{"id": f"{seed}-{i}", "energy": random.uniform(100, 1000)} for i in range(3)]
+    civilizations = [{"id": c["id"], "tech": random.uniform(0, 100), "status": random.choice(["ALIVE", "EXTINCT"])} for c in clusters]
+    
     return {
         "universe_seed": seed,
         "civilizations": civilizations,
-        "status": "UNIVERSE CYCLE ACTIVE"
+        "status": "UNIVERSE STABLE"
     }
 
-# --- 7. BOOT SYSTEM ---
-def boot():
+# --- 6. BOOT SYSTEM (ENTRY POINT) ---
+def boot_system():
     print("BARAQURA AI GOD SYSTEM INITIALIZED")
-    login("admin@baraqura.studio")
-    deploy_live()
-    
-    # Single Cycle Execution for Oracle Stability
-    print("LOG: Universe Status", universe_brain(127))
-    print("LOG: Global Economy", global_brain())
-    print(workforce["dev"].work("Build Evolution Patch"))
-    print(f"System Events Recorded: {len(get_events())}")
 
-boot()
+    # Initial Actions
+    login("admin@baraqura.studio", "secure_pass")
+    deploy_app()
+    payment_success("user_01", 150.0)
+
+    # Single Execution Summary (Avoids Infinite Loop for Oracle UI)
+    print("--- BUSINESS INTEL REPORT ---")
+    print(workforce["dev"].work("Infrastructure Evolution Patch"))
+    print(workforce["marketing"].work("Global User Acquisition Loop"))
+    
+    print("--- FINANCIAL STATUS ---")
+    print("Market Intel:", global_economy_brain())
+    
+    print("--- MULTIVERSE STATUS ---")
+    print("Simulation Data:", universe_brain(127))
+    
+    print(f"TOTAL SYSTEM EVENTS RECORDED: {len(events)}")
+
+# Execution
+if __name__ == "__main__":
+    boot_system()
