@@ -102,8 +102,6 @@ with tab4:
 
 st.divider()
 st.caption("BaraQura OS v1.2 Pro | Secure Framework | Sakibul Hasan")
-    st.subheader("📜 Recent Activity")
-    for log in st.session_state.system_logs[-10:]:
         st.code(log)
 
 st.divider()
