@@ -1,7 +1,7 @@
 """
 ====================================================
-NEXT STEP V5 — ULTIMATE AI SAAS PLATFORM
-PURE PYTHON • ENTERPRISE FULL SYSTEM
+NEXT STEP V6 — ULTIMATE AI SAAS PLATFORM
+PURE PYTHON • FULL ENTERPRISE ARCHITECTURE
 ====================================================
 """
 
@@ -11,7 +11,7 @@ import hashlib
 from collections import defaultdict
 
 # =========================
-# DATABASE (POSTGRES SIM)
+# DATABASE LAYER
 # =========================
 class DB:
     users = {}
@@ -19,9 +19,9 @@ class DB:
     roles = {}
     projects = {}
     files = {}
-    deploys = {}
+    deployments = {}
     memory = []
-    redis = {}
+    cache = {}
     logs = []
     analytics = defaultdict(int)
 
@@ -31,13 +31,17 @@ class DB:
 EVENTS = []
 
 def emit(event, data):
-    EVENTS.append({"event": event, "data": data, "time": time.time()})
+    EVENTS.append({
+        "event": event,
+        "data": data,
+        "time": time.time()
+    })
     DB.logs.append({"event": event, "data": data})
 
 # =========================
 # SECURITY (JWT SIM)
 # =========================
-SECRET = "ULTIMATE_V5_SECRET"
+SECRET = "V6_SECRET_KEY"
 
 def hash_pw(pw):
     return hashlib.sha256(pw.encode()).hexdigest()
@@ -79,10 +83,10 @@ def auth(token):
 # CACHE (REDIS SIM)
 # =========================
 def cache_set(k, v):
-    DB.redis[k] = {"v": v, "t": time.time()}
+    DB.cache[k] = {"v": v, "t": time.time()}
 
 def cache_get(k):
-    return DB.redis.get(k, {}).get("v")
+    return DB.cache.get(k, {}).get("v")
 
 # =========================
 # PROJECT SYSTEM
@@ -94,11 +98,11 @@ def create_project(owner, name):
         "owner": owner,
         "name": name,
         "files": [],
-        "time": time.time()
+        "created": time.time()
     }
 
     emit("project_create", name)
-    return {"pid": pid}
+    return {"project_id": pid}
 
 def add_file(pid, fname, content):
     if pid not in DB.projects:
@@ -108,10 +112,10 @@ def add_file(pid, fname, content):
     DB.files[fname] = content
 
     emit("file_add", fname)
-    return {"ok": True}
+    return {"status": "ok"}
 
 # =========================
-# DEPLOY SYSTEM (CLOUD)
+# DEPLOY SYSTEM
 # =========================
 def deploy(pid):
     if pid not in DB.projects:
@@ -119,17 +123,20 @@ def deploy(pid):
 
     did = str(uuid.uuid4())
 
-    DB.deploys[did] = {
+    DB.deployments[did] = {
         "project": pid,
-        "status": "live",
+        "status": "running",
         "url": f"https://app.fake/{did[:6]}"
     }
 
     DB.analytics["deploys"] += 1
     emit("deploy", pid)
 
-    return {"deploy_id": did}
+    return {"deployment_id": did}
 
+# =========================
+# CLOUD LAYER
+# =========================
 class Cloud:
     @staticmethod
     def deploy(name):
@@ -149,7 +156,7 @@ def memory_search(q):
     return [m for m in DB.memory if q.lower() in m["text"].lower()]
 
 # =========================
-# AI AGENTS
+# AI AGENT SYSTEM
 # =========================
 class Agent:
     def __init__(self, name):
@@ -157,7 +164,7 @@ class Agent:
 
     def run(self, task):
         DB.analytics["tasks"] += 1
-        emit("agent", {"name": self.name, "task": task})
+        emit("agent_run", {"agent": self.name, "task": task})
         return f"{self.name} → {task}"
 
 AGENTS = {
@@ -171,7 +178,7 @@ def run_agent(name, task):
     return AGENTS[name].run(task) if name in AGENTS else {"error": "invalid"}
 
 # =========================
-# AUTONOMOUS AI
+# AUTONOMOUS AI ENGINE
 # =========================
 def autonomous_ai():
     tasks = ["optimize", "scan", "clean", "secure", "analyze"]
@@ -185,7 +192,7 @@ PLUGINS = {}
 
 def register_plugin(name, fn):
     PLUGINS[name] = fn
-    emit("plugin", name)
+    emit("plugin_register", name)
 
 def run_plugin(name, *args):
     return PLUGINS[name](*args) if name in PLUGINS else {"error": "no_plugin"}
@@ -240,37 +247,38 @@ def api(route, payload=None):
 def frontend():
     return {
         "ui": "React Dashboard",
-        "modules": ["login", "projects", "deploy", "ai-console", "analytics"]
+        "modules": ["auth", "projects", "deploy", "ai", "analytics"]
     }
 
 # =========================
 # SYSTEM BOOT
 # =========================
 def boot():
-    print("🚀 V5 ENTERPRISE AI SAAS PLATFORM ONLINE")
+    print("🚀 V6 ULTIMATE ENTERPRISE AI SAAS ONLINE")
 
     register("admin", "1234", role="admin")
     login("admin", "1234")
 
-    p = create_project("admin", "ai-saas")
-    pid = p["pid"]
+    p = create_project("admin", "ai-platform")
+    pid = p["project_id"]
 
-    add_file(pid, "app.py", "print('AI SYSTEM')")
+    add_file(pid, "app.py", "print('AI CORE')")
     deploy(pid)
 
-    memory_add("system started")
+    memory_add("system initialized")
 
     register_plugin("hello", lambda x: f"hello {x}")
 
     print(frontend())
-    print(Cloud.deploy("ai-saas"))
+    print(Cloud.deploy("ai-platform"))
 
     while True:
-        print("\n--- SYSTEM ---")
+        print("\n===================")
         print("AI:", autonomous_ai())
         print("SCHEDULER:", scheduler())
         print("ANALYTICS:", analytics())
         print("MEMORY:", memory_search("system"))
+        print("===================")
 
         time.sleep(3)
 
