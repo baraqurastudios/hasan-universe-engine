@@ -1,7 +1,7 @@
 """
 =========================================================
-V19 - FULL SAAS AI OPERATING SYSTEM (PURE PYTHON)
-FastAPI + PostgreSQL + Redis + JWT + AI AGENT + CLOUD
+V20 - ULTIMATE SAAS AI OPERATING SYSTEM (PURE PYTHON)
+FastAPI Style + DB + Redis + JWT + AI + Deploy + Plugins
 =========================================================
 """
 
@@ -12,43 +12,29 @@ import hashlib
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # =========================================================
-# DATABASE LAYER (POSTGRES SIMULATION)
+# CORE DATABASE (POSTGRES SIMULATION)
 # =========================================================
-class Postgres:
-    tables = {
-        "users": {},
-        "tenants": {},
-        "projects": {},
-        "logs": {},
-    }
-
-    @staticmethod
-    def insert(table, key, value):
-        Postgres.tables[table][key] = value
-
-    @staticmethod
-    def get(table, key):
-        return Postgres.tables[table].get(key)
-
-    @staticmethod
-    def all(table):
-        return list(Postgres.tables[table].values())
-
+class DB:
+    users = {}
+    tenants = {}
+    projects = {}
+    logs = {}
+    plugins = {}
+    files = {}
 
 # =========================================================
-# REDIS CACHE SIMULATION
+# REDIS CACHE SYSTEM
 # =========================================================
-class Redis:
-    cache = {}
+class Cache:
+    store = {}
 
     @staticmethod
     def set(k, v):
-        Redis.cache[k] = (v, time.time())
+        Cache.store[k] = (v, time.time())
 
     @staticmethod
     def get(k):
-        return Redis.cache.get(k, (None,))[0]
-
+        return Cache.store.get(k, (None,))[0]
 
 # =========================================================
 # UTILITIES
@@ -56,76 +42,64 @@ class Redis:
 def uid():
     return str(uuid.uuid4())
 
-def hash_password(p):
-    return hashlib.sha256(p.encode()).hexdigest()
+def hashv(x):
+    return hashlib.sha256(x.encode()).hexdigest()
 
-def token_gen(data):
-    return hashlib.sha256(f"{data}-{time.time()}".encode()).hexdigest()
-
+def token(seed):
+    return hashlib.sha256(f"{seed}-{time.time()}".encode()).hexdigest()
 
 # =========================================================
-# JWT SIMULATION
+# JWT AUTH SYSTEM (SIMULATION)
 # =========================================================
-class JWT:
+class Auth:
     sessions = {}
 
     @staticmethod
-    def encode(user):
-        t = token_gen(user)
-        JWT.sessions[t] = user
+    def login(user):
+        t = token(user)
+        Auth.sessions[t] = user
         return t
 
     @staticmethod
-    def decode(token):
-        return JWT.sessions.get(token)
-
+    def verify(t):
+        return Auth.sessions.get(t)
 
 # =========================================================
-# SAAS TENANT SYSTEM
+# TENANT SYSTEM (SAAS CORE)
 # =========================================================
 def create_tenant(name):
     tid = uid()
-    Postgres.insert("tenants", tid, {
+    DB.tenants[tid] = {
         "id": tid,
         "name": name,
         "created": time.time()
-    })
+    }
     return tid
 
-
 # =========================================================
-# USER SYSTEM (RBAC)
+# USER + RBAC SYSTEM
 # =========================================================
-def create_user(tenant_id, email, password, role="user"):
-    uid_ = uid()
-    user = {
-        "id": uid_,
-        "tenant": tenant_id,
+def create_user(tenant, email, password, role="user"):
+    u = {
+        "id": uid(),
+        "tenant": tenant,
         "email": email,
-        "password": hash_password(password),
+        "password": hashv(password),
         "role": role
     }
-    Postgres.insert("users", email, user)
-    return user
+    DB.users[email] = u
+    return u
 
 
 def login(email, password):
-    u = Postgres.get("users", email)
+    u = DB.users.get(email)
     if not u:
-        return {"error": "user not found"}
+        return {"error": "not found"}
 
-    if u["password"] != hash_password(password):
-        return {"error": "invalid password"}
+    if u["password"] != hashv(password):
+        return {"error": "wrong password"}
 
-    token = JWT.encode(email)
-    return {"token": token}
-
-
-# =========================================================
-# AUTH CHECK
-# =========================================================
-def auth(token):
-    return JWT.decode(token)
+    return {"token": Auth.login(email)}
 
 
 # =========================================================
@@ -133,83 +107,82 @@ def auth(token):
 # =========================================================
 def create_project(tenant, name):
     pid = uid()
-    project = {
+    DB.projects[pid] = {
         "id": pid,
         "tenant": tenant,
         "name": name,
         "created": time.time()
     }
-    Postgres.insert("projects", pid, project)
-    return project
-
+    return DB.projects[pid]
 
 # =========================================================
-# AI AUTONOMOUS AGENT SYSTEM
+# AI AUTONOMOUS ENGINE
 # =========================================================
-class AIAgent:
-    def __init__(self, name):
-        self.name = name
-
-    def execute(self, task):
+class AI:
+    def run(task):
         return {
-            "agent": self.name,
+            "ai": "CORE_ENGINE",
             "task": task,
-            "result": f"AI executed: {task}"
+            "result": f"executed: {task}"
         }
 
 
-AI = AIAgent("CORE_AI")
-
-
-def autonomous_system():
+def autonomous_ai():
     tasks = [
-        "optimize DB indexes",
-        "scale server",
+        "optimize system",
+        "scale backend",
         "security scan",
         "fix bugs",
-        "improve latency"
+        "improve latency",
+        "auto deploy"
     ]
-    return AI.execute(tasks[int(time.time()) % len(tasks)])
-
+    return AI.run(tasks[int(time.time()) % len(tasks)])
 
 # =========================================================
-# PLUGIN MARKETPLACE
+# PLUGIN SYSTEM (MARKETPLACE)
 # =========================================================
-PLUGINS = {}
-
 def register_plugin(name, fn):
-    PLUGINS[name] = fn
+    DB.plugins[name] = fn
 
 def run_plugin(name, data):
-    return PLUGINS[name](data) if name in PLUGINS else {"error": "not found"}
-
+    return DB.plugins[name](data) if name in DB.plugins else {"error": "missing plugin"}
 
 # =========================================================
-# LOGGING / ANALYTICS
+# LOGGING + ANALYTICS ENGINE
 # =========================================================
 def log(event):
     lid = uid()
-    Postgres.insert("logs", lid, {
+    DB.logs[lid] = {
         "id": lid,
         "event": event,
         "time": time.time()
-    })
+    }
 
 
 def analytics():
-    logs = Postgres.all("logs")
     stats = {}
-    for l in logs:
+    for l in DB.logs.values():
         e = l["event"]
         stats[e] = stats.get(e, 0) + 1
     return stats
 
+# =========================================================
+# FILE STORAGE SYSTEM (CLOUD CORE)
+# =========================================================
+def upload_file(name, content):
+    fid = uid()
+    DB.files[fid] = {
+        "name": name,
+        "content": content,
+        "time": time.time()
+    }
+    return fid
 
 # =========================================================
-# DEPLOYMENT SYSTEM (DOCKER SIMULATION)
+# DEPLOY SYSTEM (DOCKER SIMULATION)
 # =========================================================
-def build(image_name):
-    return f"{image_name}:v1"
+def build(image):
+    return f"{image}:latest"
 
 def run_container(image):
     return {
@@ -217,7 +190,6 @@ def run_container(image):
         "image": image,
         "status": "running"
     }
-
 
 # =========================================================
 # API ENGINE (FASTAPI STYLE PURE PYTHON)
@@ -227,15 +199,15 @@ class API:
 
     @staticmethod
     def route(path):
-        def wrapper(fn):
+        def wrap(fn):
             API.routes[path] = fn
             return fn
-        return wrapper
+        return wrap
 
     @staticmethod
     def call(path, data=None, token=None):
-        user = auth(token)
-        if not API.routes.get(path):
+        user = Auth.verify(token)
+        if path not in API.routes:
             return {"error": "404"}
 
         return API.routes[path](data or {}, user)
@@ -243,9 +215,8 @@ class API:
 
 api = API()
 
-
 # =========================================================
-# ROUTES
+# ROUTES (FULL SAAS SYSTEM)
 # =========================================================
 
 @api.route("/tenant")
@@ -255,8 +226,7 @@ def r_tenant(data, user):
 
 @api.route("/user")
 def r_user(data, user):
-    u = create_user(data["tenant"], data["email"], data["password"], data.get("role","user"))
-    return u
+    return create_user(data["tenant"], data["email"], data["password"], data.get("role","user"))
 
 
 @api.route("/login")
@@ -273,12 +243,17 @@ def r_project(data, user):
 
 @api.route("/ai")
 def r_ai(data, user):
-    return autonomous_system()
+    return autonomous_ai()
 
 
 @api.route("/plugin")
 def r_plugin(data, user):
     return run_plugin(data["name"], data["data"])
+
+
+@api.route("/upload")
+def r_upload(data, user):
+    return {"file_id": upload_file(data["name"], data["content"])}
 
 
 @api.route("/deploy")
@@ -292,8 +267,18 @@ def r_analytics(data, user):
     return analytics()
 
 
+@api.route("/cache/set")
+def r_cache_set(data, user):
+    Cache.set(data["key"], data["value"])
+    return {"ok": True}
+
+
+@api.route("/cache/get")
+def r_cache_get(data, user):
+    return {"value": Cache.get(data["key"])}
+
 # =========================================================
-# HTTP SERVER (PRODUCTION BACKEND CORE)
+# HTTP SERVER (PRODUCTION CORE BACKEND)
 # =========================================================
 class Handler(BaseHTTPRequestHandler):
 
@@ -305,9 +290,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/ai":
-            self.send(autonomous_system())
+            self.send(autonomous_ai())
         else:
-            self.send({"status": "running"})
+            self.send({"status": "V20 running"})
 
     def do_POST(self):
         length = int(self.headers["Content-Length"])
@@ -323,27 +308,26 @@ class Handler(BaseHTTPRequestHandler):
 
         self.send({"error": "invalid route"})
 
-
 # =========================================================
-# BOOT SYSTEM
+# SYSTEM BOOT
 # =========================================================
 def boot():
-    print("🚀 V19 FULL SAAS AI SYSTEM STARTED")
+    print("🚀 V20 ULTIMATE SAAS AI SYSTEM STARTED")
 
-    tid = create_tenant("GLOBAL")
+    tid = create_tenant("GLOBAL_SYSTEM")
 
-    user = create_user(tid, "admin@ai.com", "1234", "admin")
+    create_user(tid, "admin@ai.com", "1234", "admin")
     token = login("admin@ai.com", "1234")["token"]
 
-    project = create_project(tid, "CORE SYSTEM")
+    proj = create_project(tid, "ULTIMATE CORE")
 
-    Redis.set("status", "active")
-    log("system_boot")
+    Cache.set("system", "active")
+    log("boot_complete")
 
-    print("AI:", autonomous_system())
+    print("AI:", autonomous_ai())
     print("TENANT:", tid)
-    print("PROJECT:", project["id"])
-    print("CACHE:", Redis.get("status"))
+    print("PROJECT:", proj["id"])
+    print("CACHE:", Cache.get("system"))
     print("ANALYTICS:", analytics())
 
     # HTTPServer(("0.0.0.0", 8000), Handler).serve_forever()
