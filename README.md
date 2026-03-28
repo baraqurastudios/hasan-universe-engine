@@ -1,7 +1,7 @@
 """
 ====================================================
-NEXT STEP MASTER PLATFORM
-PURE PYTHON • SINGLE FILE • PRODUCTION CORE DESIGN
+NEXT STEP MASTER CORE PLATFORM
+PURE PYTHON • SINGLE FILE • CLEAN SYSTEM DESIGN
 ====================================================
 """
 
@@ -10,22 +10,19 @@ import uuid
 from collections import defaultdict
 
 # =========================
-# GLOBAL CORE STATE
+# CORE DATABASE LAYER
 # =========================
-class Store:
-    def __init__(self):
-        self.users = {}
-        self.sessions = {}
-        self.projects = {}
-        self.deployments = {}
-        self.memory = []
-        self.logs = []
-        self.analytics = defaultdict(int)
-
-DB = Store()
+class DB:
+    users = {}
+    sessions = {}
+    projects = {}
+    deployments = {}
+    memory = []
+    logs = []
+    analytics = defaultdict(int)
 
 # =========================
-# LOGGER SYSTEM
+# LOGGER
 # =========================
 def log(event, data=None):
     DB.logs.append({
@@ -40,7 +37,7 @@ def log(event, data=None):
 # =========================
 def create_user(username, password):
     if username in DB.users:
-        return {"error": "exists"}
+        return {"error": "user_exists"}
 
     DB.users[username] = {
         "password": password,
@@ -48,11 +45,12 @@ def create_user(username, password):
     }
 
     log("user_created", username)
-    return {"status": "ok", "user": username}
+    return {"status": "created", "user": username}
 
 
 def login(username, password):
     user = DB.users.get(username)
+
     if not user or user["password"] != password:
         return {"status": "failed"}
 
@@ -83,11 +81,12 @@ def create_project(owner, name):
 
 def add_file(project_id, filename, content):
     project = DB.projects.get(project_id)
+
     if not project:
         return {"error": "not_found"}
 
     project["files"].append({
-        "filename": filename,
+        "name": filename,
         "content": content
     })
 
@@ -95,7 +94,7 @@ def add_file(project_id, filename, content):
     return {"status": "ok"}
 
 # =========================
-# DEPLOYMENT ENGINE
+# DEPLOYMENT SYSTEM
 # =========================
 def deploy(project_id):
     if project_id not in DB.projects:
@@ -114,18 +113,18 @@ def deploy(project_id):
     return {"deployment_id": deploy_id}
 
 # =========================
-# MEMORY ENGINE (AI CONTEXT)
+# MEMORY SYSTEM (AI CONTEXT)
 # =========================
 def memory_add(text):
     DB.memory.append(text)
     log("memory_add", text)
 
 
-def memory_search(keyword):
-    return [m for m in DB.memory if keyword.lower() in m.lower()]
+def memory_search(query):
+    return [m for m in DB.memory if query.lower() in m.lower()]
 
 # =========================
-# AI AGENT SYSTEM
+# AI AGENTS
 # =========================
 class Agent:
     def __init__(self, role):
@@ -134,7 +133,7 @@ class Agent:
     def run(self, task):
         DB.analytics["tasks"] += 1
         log("agent_task", {"role": self.role, "task": task})
-        return f"{self.role}: {task}"
+        return f"{self.role} -> {task}"
 
 
 AGENTS = {
@@ -148,17 +147,18 @@ def run_agent(role, task):
     agent = AGENTS.get(role)
     if not agent:
         return {"error": "invalid_agent"}
+
     return agent.run(task)
 
 # =========================
-# AUTONOMOUS AI LOOP
+# AUTONOMOUS AI ENGINE
 # =========================
 def autonomous_cycle():
     tasks = [
         "optimize system",
-        "analyze logs",
+        "scan logs",
         "improve performance",
-        "scan memory",
+        "analyze memory",
         "run diagnostics"
     ]
 
@@ -166,13 +166,13 @@ def autonomous_cycle():
     return run_agent("ai", task)
 
 # =========================
-# ANALYTICS ENGINE
+# ANALYTICS SYSTEM
 # =========================
 def analytics():
     return dict(DB.analytics)
 
 # =========================
-# API CORE ROUTER
+# API ROUTER (CORE BACKEND)
 # =========================
 def api(route, payload=None):
     DB.analytics["requests"] += 1
@@ -201,27 +201,28 @@ def api(route, payload=None):
 # SYSTEM BOOT
 # =========================
 def boot():
-    print("🚀 NEXT STEP MASTER PLATFORM RUNNING")
+    print("🚀 NEXT STEP MASTER CORE PLATFORM ONLINE")
 
     api("user/create", {"username": "admin", "password": "1234"})
     api("user/login", {"username": "admin", "password": "1234"})
 
     project = api("project/create", {"owner": "admin", "name": "core-platform"})
+
     api("project/add_file", {
         "project_id": project["project_id"],
         "filename": "main.py",
-        "content": "print('system online')"
+        "content": "print('system running')"
     })
 
     api("deploy", {"project_id": project["project_id"]})
-    api("memory/add", {"text": "system started successfully"})
+    api("memory/add", {"text": "system initialized"})
 
     while True:
-        print("\n======================")
+        print("\n====================")
         print("AI:", autonomous_cycle())
         print("ANALYTICS:", analytics())
         print("MEMORY:", memory_search("system"))
-        print("======================")
+        print("====================")
 
         time.sleep(3)
 
