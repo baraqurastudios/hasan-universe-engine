@@ -1,7 +1,7 @@
 """
 ====================================================
-ENTERPRISE AI PLATFORM V2
-PURE PYTHON • FULL STACK SIMULATION
+NEXT STEP ULTIMATE V3 AI PLATFORM
+PURE PYTHON • ENTERPRISE SAAS CORE
 ====================================================
 """
 
@@ -16,33 +16,37 @@ from collections import defaultdict
 class DB:
     users = {}
     sessions = {}
+    roles = {}
     projects = {}
     files = {}
     deployments = {}
     memory = []
-    logs = []
     redis = {}
-    roles = {}
+    logs = []
     analytics = defaultdict(int)
 
 # =========================
-# EVENT BUS (REAL-TIME SYSTEM)
+# EVENT SYSTEM (REAL TIME BUS)
 # =========================
-EVENTS = []
+EVENT_BUS = []
 
 def emit(event, data):
-    EVENTS.append({"event": event, "data": data, "time": time.time()})
+    EVENT_BUS.append({
+        "event": event,
+        "data": data,
+        "time": time.time()
+    })
     DB.logs.append({"event": event, "data": data})
 
 # =========================
-# SECURITY (JWT SIMULATION)
+# SECURITY LAYER (JWT SIM)
 # =========================
-SECRET = "ENTERPRISE_SECRET"
+SECRET = "ULTIMATE_SECRET_KEY"
 
-def hash_password(pw):
+def hash_pw(pw):
     return hashlib.sha256(pw.encode()).hexdigest()
 
-def generate_jwt(user):
+def create_jwt(user):
     raw = user + SECRET + str(time.time())
     return hashlib.sha256(raw.encode()).hexdigest()
 
@@ -51,36 +55,34 @@ def generate_jwt(user):
 # =========================
 def register(username, password, role="user"):
     if username in DB.users:
-        return {"error": "exists"}
+        return {"error": "user_exists"}
 
     DB.users[username] = {
         "id": str(uuid.uuid4()),
-        "password": hash_password(password)
+        "password": hash_pw(password)
     }
 
     DB.roles[username] = role
     emit("register", username)
-    return {"status": "ok"}
+    return {"status": "registered"}
 
 def login(username, password):
     user = DB.users.get(username)
-    if not user or user["password"] != hash_password(password):
+    if not user or user["password"] != hash_pw(password):
         return {"status": "failed"}
 
-    token = generate_jwt(username)
+    token = create_jwt(username)
     DB.sessions[token] = username
-    DB.analytics["logins"] += 1
 
+    DB.analytics["logins"] += 1
     emit("login", username)
+
     return {"token": token}
 
 def auth(token):
     return DB.sessions.get(token)
 
-# =========================
-# ROLE BASED ACCESS CONTROL
-# =========================
-def check_role(user, role):
+def require_role(user, role):
     return DB.roles.get(user) == role
 
 # =========================
@@ -105,25 +107,25 @@ def create_project(owner, name):
         "files": []
     }
 
-    emit("project_create", name)
+    emit("project_created", name)
     return {"project_id": pid}
 
-def add_file(project_id, filename, content):
-    if project_id not in DB.projects:
+def add_file(pid, filename, content):
+    if pid not in DB.projects:
         return {"error": "not_found"}
 
-    DB.projects[project_id]["files"].append(filename)
+    DB.projects[pid]["files"].append(filename)
     DB.files[filename] = content
 
-    emit("file_add", filename)
+    emit("file_added", filename)
     return {"status": "ok"}
 
 # =========================
-# DEPLOY SYSTEM (DOCKER SIM)
+# DEPLOY SYSTEM (CLOUD SIM)
 # =========================
 def deploy(project_id):
     if project_id not in DB.projects:
-        return {"error": "invalid"}
+        return {"error": "invalid_project"}
 
     did = str(uuid.uuid4())
 
@@ -138,6 +140,15 @@ def deploy(project_id):
 
     return {"deployment_id": did}
 
+class Cloud:
+    @staticmethod
+    def deploy(name):
+        return {
+            "service": name,
+            "status": "LIVE",
+            "url": f"https://cloud.fake/{name}"
+        }
+
 # =========================
 # MEMORY ENGINE (AI CONTEXT)
 # =========================
@@ -148,8 +159,8 @@ def memory_add(text):
         "time": time.time()
     })
 
-def memory_search(q):
-    return [m for m in DB.memory if q.lower() in m["text"].lower()]
+def memory_search(keyword):
+    return [m for m in DB.memory if keyword.lower() in m["text"].lower()]
 
 # =========================
 # AI AGENT SYSTEM
@@ -176,15 +187,15 @@ def run_agent(name, task):
     return AGENTS[name].run(task)
 
 # =========================
-# AUTONOMOUS AI BRAIN
+# AUTONOMOUS AI ENGINE
 # =========================
-def autonomous_brain():
+def autonomous_ai():
     tasks = [
         "optimize system",
         "scan logs",
-        "clean memory",
+        "memory cleanup",
         "security audit",
-        "improve latency"
+        "performance boost"
     ]
 
     task = tasks[int(time.time()) % len(tasks)]
@@ -197,7 +208,7 @@ PLUGINS = {}
 
 def register_plugin(name, fn):
     PLUGINS[name] = fn
-    emit("plugin_register", name)
+    emit("plugin_registered", name)
 
 def run_plugin(name, *args):
     if name not in PLUGINS:
@@ -205,22 +216,23 @@ def run_plugin(name, *args):
     return PLUGINS[name](*args)
 
 # =========================
-# ANALYTICS ENGINE
+# SCHEDULER (CRON SIM)
+# =========================
+def scheduler():
+    jobs = ["backup", "cleanup", "optimize", "scan_logs"]
+    job = jobs[int(time.time()) % len(jobs)]
+
+    emit("scheduler", job)
+    return run_agent("ops", job)
+
+# =========================
+# ANALYTICS SYSTEM
 # =========================
 def analytics():
     return dict(DB.analytics)
 
 # =========================
-# SCHEDULER (CRON SIM)
-# =========================
-def scheduler():
-    jobs = ["backup", "cleanup", "optimize", "scan"]
-    job = jobs[int(time.time()) % len(jobs)]
-    emit("scheduler", job)
-    return run_agent("ops", job)
-
-# =========================
-# API LAYER (FASTAPI STYLE SIM)
+# API LAYER (FASTAPI SIM)
 # =========================
 def api(route, payload=None):
     DB.analytics["requests"] += 1
@@ -238,10 +250,10 @@ def api(route, payload=None):
         "memory/search": memory_search,
 
         "agent/run": run_agent,
-        "ai/run": autonomous_brain,
+        "ai/run": autonomous_ai,
 
-        "analytics": analytics,
-        "scheduler": scheduler
+        "scheduler": scheduler,
+        "analytics": analytics
     }
 
     fn = routes.get(route)
@@ -251,56 +263,49 @@ def api(route, payload=None):
     return fn(**(payload or {}))
 
 # =========================
-# CLOUD LAYER
-# =========================
-class Cloud:
-    @staticmethod
-    def deploy(name):
-        return {
-            "service": name,
-            "status": "LIVE",
-            "url": f"https://cloud.fake/{name}"
-        }
-
-# =========================
-# FRONTEND LAYER (REACT SIM)
+# FRONTEND (REACT SIM)
 # =========================
 def frontend():
     return {
         "framework": "React",
-        "pages": ["dashboard", "projects", "deploy", "ai-console"]
+        "ui": ["dashboard", "projects", "deploy", "ai-console"]
     }
 
 # =========================
 # SYSTEM BOOT
 # =========================
 def boot():
-    print("🚀 ENTERPRISE AI PLATFORM V2 ONLINE")
+    print("🚀 NEXT STEP ULTIMATE V3 PLATFORM ONLINE")
 
+    # create admin
     register("admin", "1234", role="admin")
     token = login("admin", "1234")["token"]
 
-    project = create_project("admin", "ai-core-system")
+    # project flow
+    project = create_project("admin", "ai-saas-core")
     pid = project["project_id"]
 
-    add_file(pid, "main.py", "print('AI CORE')")
+    add_file(pid, "main.py", "print('AI SYSTEM')")
     deploy(pid)
 
-    memory_add("system initialized successfully")
+    # memory init
+    memory_add("system fully initialized")
 
+    # plugin example
     register_plugin("hello", lambda x: f"hello {x}")
 
     print(frontend())
-    print(Cloud.deploy("ai-core-system"))
+    print(Cloud.deploy("ai-saas-core"))
 
     while True:
-        print("\n--- SYSTEM CYCLE ---")
-        print("AI:", autonomous_brain())
+        print("\n======================")
+        print("AI:", autonomous_ai())
         print("SCHEDULER:", scheduler())
         print("ANALYTICS:", analytics())
         print("MEMORY:", memory_search("system"))
+        print("======================")
 
         time.sleep(3)
 
-# START SYSTEM
+# RUN SYSTEM
 boot()
