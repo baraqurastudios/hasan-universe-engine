@@ -1,7 +1,7 @@
 """
 ========================================================
-🚀 NEXT STEP AI UNIFIED OPERATING SYSTEM
-PURE PYTHON • SAAS • AI AGENTS • CLOUD • ECONOMY • API
+🚀 NEXT STEP AI CORE UNIFIED SYSTEM
+PURE PYTHON • SAAS • AI • CLOUD • ECONOMY • AUTONOMY
 ========================================================
 """
 
@@ -10,13 +10,13 @@ import time
 import uuid
 
 # =========================
-# SYSTEM CORE STATE
+# GLOBAL STATE ENGINE
 # =========================
-SYS = {
-    "users": 2500,
+CORE = {
+    "users": 3000,
     "sessions": 0,
-    "revenue": 500000,
-    "capital": 20000000,
+    "revenue": 1000000,
+    "capital": 50000000,
     "deployments": 0,
     "tasks": 0,
     "api_calls": 0,
@@ -25,11 +25,11 @@ SYS = {
 
 LOGS = []
 MEMORY = []
-WORKSPACES = {}
+WORKSPACE = {}
 SERVICES = {}
 
 # =========================
-# EVENT ENGINE
+# EVENT SYSTEM
 # =========================
 def log(event, data=None):
     LOGS.append({
@@ -42,32 +42,32 @@ def log(event, data=None):
 # =========================
 # AUTH SYSTEM (SAAS CORE)
 # =========================
-def register(email):
-    SYS["users"] += 1
-    log("register", email)
+def register(user):
+    CORE["users"] += 1
+    log("register", user)
     return str(uuid.uuid4())
 
-def login(email):
-    SYS["sessions"] += 1
-    log("login", email)
+def login(user):
+    CORE["sessions"] += 1
+    log("login", user)
     return True
 
 # =========================
-# BILLING ENGINE
+# BILLING SYSTEM
 # =========================
-def bill(user, amount):
-    SYS["revenue"] += amount
+def billing(user, amount):
+    CORE["revenue"] += amount
     log("billing", {"user": user, "amount": amount})
     return True
 
 # =========================
-# DEPLOYMENT ENGINE (CLOUD)
+# CLOUD DEPLOYMENT
 # =========================
 def deploy(service):
-    SYS["deployments"] += 1
-    SERVICES[service] = "RUNNING"
+    CORE["deployments"] += 1
+    SERVICES[service] = "ACTIVE"
     log("deploy", service)
-    return f"{service} running"
+    return f"{service} active"
 
 # =========================
 # AI AGENT SYSTEM
@@ -77,44 +77,44 @@ class Agent:
         self.role = role
 
     def run(self, task):
-        SYS["tasks"] += 1
+        CORE["tasks"] += 1
         log("ai_task", {"role": self.role, "task": task})
-        return f"{self.role}: {task} DONE"
+        return f"{self.role} -> {task}"
 
 AGENTS = {
-    "dev": Agent("developer"),
+    "developer": Agent("developer"),
     "marketing": Agent("marketing"),
     "analyst": Agent("analyst"),
     "support": Agent("support")
 }
 
 # =========================
-# MEMORY ENGINE (AI BRAIN)
+# MEMORY SYSTEM (AI BRAIN)
 # =========================
 def memory_add(text):
     MEMORY.append(text)
     log("memory_add", text)
 
-def memory_query(q):
-    return [m for m in MEMORY if q.lower() in m.lower()]
+def memory_search(query):
+    return [m for m in MEMORY if query.lower() in m.lower()]
 
 # =========================
 # WORKSPACE SYSTEM
 # =========================
 def workspace_create(user):
-    WORKSPACES[user] = {
+    WORKSPACE[user] = {
         "files": [],
         "notes": [],
         "history": []
     }
     log("workspace_create", user)
-    return WORKSPACES[user]
+    return WORKSPACE[user]
 
 # =========================
-# API GATEWAY
+# API SYSTEM
 # =========================
 def api_call(endpoint):
-    SYS["api_calls"] += 1
+    CORE["api_calls"] += 1
     log("api_call", endpoint)
     return {"endpoint": endpoint, "status": "ok"}
 
@@ -123,16 +123,16 @@ def api_call(endpoint):
 # =========================
 def economy():
     return {
-        "gdp": random.randint(800, 3000),
-        "inflation": round(random.uniform(1, 30), 2),
-        "growth": round(random.uniform(-6, 25), 2)
+        "gdp": random.randint(1000, 5000),
+        "inflation": round(random.uniform(1, 35), 2),
+        "growth": round(random.uniform(-10, 30), 2)
     }
 
 # =========================
 # CENTRAL BANK AI
 # =========================
 def central_bank():
-    rate = round(random.uniform(0, 20), 2)
+    rate = round(random.uniform(0, 25), 2)
     return {
         "interest_rate": rate,
         "policy": "EXPAND" if rate < 5 else "CONTROL"
@@ -147,7 +147,7 @@ def market():
         {
             "asset": a,
             "signal": random.choice(["BUY", "SELL", "HOLD"]),
-            "profit": round(random.uniform(0, 80), 2)
+            "profit": round(random.uniform(0, 100), 2)
         }
         for a in assets
     ]
@@ -155,8 +155,8 @@ def market():
 def hedge_fund():
     trades = market()
     profit = sum(t["profit"] for t in trades)
-    SYS["capital"] += profit * 250
-    return {"profit": profit, "capital": SYS["capital"]}
+    CORE["capital"] += profit * 300
+    return {"profit": profit, "capital": CORE["capital"]}
 
 # =========================
 # GLOBAL ECONOMY BRAIN
@@ -173,39 +173,38 @@ def global_brain():
 # =========================
 def autocode(task):
     log("autocode", task)
-    return f"# GENERATED CODE: {task}"
+    return f"# AUTO CODE: {task}"
 
 # =========================
 # AUTONOMOUS AI ENGINE
 # =========================
 def autonomous_ai():
-    SYS["ai_cycles"] += 1
+    CORE["ai_cycles"] += 1
 
     tasks = [
         "optimize system",
         "fix bug",
-        "deploy update",
+        "deploy feature",
         "analyze data",
-        "improve UX",
-        "scale system"
+        "scale infrastructure"
     ]
 
     task = random.choice(tasks)
-    return AGENTS["dev"].run(task)
+    return AGENTS["developer"].run(task)
 
 # =========================
-# ANALYTICS ENGINE
+# ANALYTICS DASHBOARD
 # =========================
 def analytics():
     return {
-        "users": SYS["users"],
-        "sessions": SYS["sessions"],
-        "revenue": SYS["revenue"],
-        "capital": SYS["capital"],
-        "deployments": SYS["deployments"],
-        "tasks": SYS["tasks"],
-        "api_calls": SYS["api_calls"],
-        "ai_cycles": SYS["ai_cycles"],
+        "users": CORE["users"],
+        "sessions": CORE["sessions"],
+        "revenue": CORE["revenue"],
+        "capital": CORE["capital"],
+        "deployments": CORE["deployments"],
+        "tasks": CORE["tasks"],
+        "api_calls": CORE["api_calls"],
+        "ai_cycles": CORE["ai_cycles"],
         "logs": len(LOGS),
         "memory": len(MEMORY),
         "services": len(SERVICES)
@@ -215,27 +214,27 @@ def analytics():
 # SYSTEM BOOT
 # =========================
 def boot():
-    print("🚀 NEXT STEP AI UNIFIED OS ONLINE")
+    print("🚀 NEXT STEP AI CORE UNIFIED SYSTEM ONLINE")
 
-    user = register("admin@unified.ai")
-    login("admin@unified.ai")
-    bill(user, 500)
-    deploy("core_system")
+    user = register("admin@core.ai")
+    login("admin@core.ai")
+    billing(user, 1000)
+    deploy("core_engine")
     workspace_create(user)
-    memory_add("system initialized successfully")
+    memory_add("system fully operational")
 
     while True:
         print("\n==============================")
         print("🤖 AI:", autonomous_ai())
         print("📊 ANALYTICS:", analytics())
         print("🌍 GLOBAL BRAIN:", global_brain())
-        print("🧠 MEMORY:", memory_query("system"))
+        print("🧠 MEMORY:", memory_search("system"))
         print("⚙️ SERVICES:", SERVICES)
         print("==============================")
 
         time.sleep(3)
 
 # =========================
-# START SYSTEM
+# START
 # =========================
 boot()
