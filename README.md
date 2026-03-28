@@ -1,38 +1,36 @@
 """
 ====================================================
-🚀 NEXT STEP FINAL MASTER CORE SYSTEM
-PURE PYTHON • SINGLE FILE • CLEAN ARCHITECTURE
+NEXT STEP MASTER PLATFORM CORE
+PURE PYTHON • SINGLE FILE • PRODUCTION ARCHITECTURE
 ====================================================
 """
 
-import random
 import time
 import uuid
 
 # =========================
-# GLOBAL STATE
+# GLOBAL DATABASE (IN-MEMORY)
 # =========================
-STATE = {
-    "users": 0,
-    "sessions": 0,
-    "revenue": 0,
-    "capital": 100000,
-    "deployments": 0,
-    "tasks": 0,
-    "api_calls": 0,
-    "ai_cycles": 0
+DB = {
+    "users": {},
+    "sessions": {},
+    "projects": {},
+    "deployments": {},
+    "logs": [],
+    "memory": [],
+    "analytics": {
+        "requests": 0,
+        "logins": 0,
+        "deploys": 0,
+        "tasks": 0
+    }
 }
 
-LOGS = []
-MEMORY = []
-SERVICES = {}
-WORKSPACE = {}
-
 # =========================
-# LOGGER
+# UTIL: LOGGER
 # =========================
 def log(event, data=None):
-    LOGS.append({
+    DB["logs"].append({
         "id": str(uuid.uuid4()),
         "event": event,
         "data": data,
@@ -42,200 +40,190 @@ def log(event, data=None):
 # =========================
 # AUTH SYSTEM
 # =========================
-def register(user):
-    STATE["users"] += 1
-    log("register", user)
-    return {"user": user, "id": str(uuid.uuid4())}
+def create_user(username, password):
+    if username in DB["users"]:
+        return {"error": "User already exists"}
 
-def login(user):
-    STATE["sessions"] += 1
-    log("login", user)
-    return True
-
-# =========================
-# BILLING SYSTEM
-# =========================
-def billing(user, amount):
-    STATE["revenue"] += amount
-    log("billing", {"user": user, "amount": amount})
-    return {"status": "success", "amount": amount}
-
-# =========================
-# DEPLOYMENT SYSTEM
-# =========================
-def deploy(service):
-    STATE["deployments"] += 1
-    SERVICES[service] = "ACTIVE"
-    log("deploy", service)
-    return {"service": service, "status": "ACTIVE"}
-
-# =========================
-# API GATEWAY
-# =========================
-def api_call(endpoint):
-    STATE["api_calls"] += 1
-    log("api_call", endpoint)
-    return {"endpoint": endpoint, "status": "ok"}
-
-# =========================
-# MEMORY SYSTEM
-# =========================
-def memory_add(text):
-    MEMORY.append(text)
-    log("memory_add", text)
-
-def memory_search(query):
-    return [m for m in MEMORY if query.lower() in m.lower()]
-
-# =========================
-# WORKSPACE SYSTEM
-# =========================
-def workspace_create(user):
-    WORKSPACE[user] = {
-        "files": [],
-        "notes": [],
-        "history": []
+    DB["users"][username] = {
+        "password": password,
+        "id": str(uuid.uuid4())
     }
-    log("workspace_create", user)
-    return WORKSPACE[user]
+
+    log("create_user", username)
+    return {"status": "created", "user": username}
+
+
+def login(username, password):
+    user = DB["users"].get(username)
+
+    if not user or user["password"] != password:
+        return {"status": "failed"}
+
+    session_id = str(uuid.uuid4())
+    DB["sessions"][session_id] = username
+
+    DB["analytics"]["logins"] += 1
+    log("login", username)
+
+    return {"status": "success", "session": session_id}
 
 # =========================
-# AI AGENT SYSTEM
+# PROJECT SYSTEM
+# =========================
+def create_project(owner, name):
+    pid = str(uuid.uuid4())
+
+    DB["projects"][pid] = {
+        "owner": owner,
+        "name": name,
+        "files": [],
+        "status": "active"
+    }
+
+    log("create_project", name)
+    return {"project_id": pid}
+
+
+def add_file(project_id, filename, content):
+    project = DB["projects"].get(project_id)
+    if not project:
+        return {"error": "Project not found"}
+
+    project["files"].append({
+        "name": filename,
+        "content": content
+    })
+
+    log("add_file", filename)
+    return {"status": "added"}
+
+# =========================
+# DEPLOYMENT ENGINE
+# =========================
+def deploy(project_id):
+    project = DB["projects"].get(project_id)
+    if not project:
+        return {"error": "Invalid project"}
+
+    deployment_id = str(uuid.uuid4())
+
+    DB["deployments"][deployment_id] = {
+        "project": project_id,
+        "status": "running"
+    }
+
+    DB["analytics"]["deploys"] += 1
+    log("deploy", project_id)
+
+    return {"deployment_id": deployment_id, "status": "running"}
+
+# =========================
+# MEMORY SYSTEM (AI CONTEXT)
+# =========================
+def memory_store(text):
+    DB["memory"].append(text)
+    log("memory_store", text)
+
+
+def memory_search(keyword):
+    return [m for m in DB["memory"] if keyword.lower() in m.lower()]
+
+# =========================
+# AI AGENT ENGINE
 # =========================
 class Agent:
     def __init__(self, role):
         self.role = role
 
-    def execute(self, task):
-        STATE["tasks"] += 1
+    def run(self, task):
+        DB["analytics"]["tasks"] += 1
         log("agent_task", {"role": self.role, "task": task})
-        return f"{self.role} -> {task}"
+        return f"{self.role} executed: {task}"
+
 
 AGENTS = {
     "dev": Agent("developer"),
-    "market": Agent("marketing"),
-    "data": Agent("data"),
-    "support": Agent("support"),
-    "auto": Agent("autonomous")
+    "data": Agent("data analyst"),
+    "ops": Agent("devops"),
+    "ai": Agent("ai core")
 }
 
-# =========================
-# AUTONOMOUS AI ENGINE
-# =========================
-def autonomous_ai():
-    STATE["ai_cycles"] += 1
+def run_agent(role, task):
+    agent = AGENTS.get(role)
+    if not agent:
+        return {"error": "invalid agent"}
 
+    return agent.run(task)
+
+# =========================
+# AUTONOMOUS AI LOOP
+# =========================
+def autonomous_cycle():
     tasks = [
         "optimize system",
-        "fix bug",
-        "deploy update",
-        "analyze data",
-        "scale system"
+        "check logs",
+        "analyze memory",
+        "improve performance",
+        "run diagnostics"
     ]
 
-    task = random.choice(tasks)
-    return AGENTS["auto"].execute(task)
+    task = tasks[int(time.time()) % len(tasks)]
+    return run_agent("ai", task)
 
 # =========================
-# ECONOMY SYSTEM
-# =========================
-def economy():
-    return {
-        "gdp": random.randint(20000, 60000),
-        "inflation": round(random.uniform(1, 6), 2),
-        "growth": round(random.uniform(-2, 6), 2)
-    }
-
-# =========================
-# CENTRAL BANK
-# =========================
-def central_bank():
-    rate = round(random.uniform(0, 3), 2)
-    return {
-        "interest_rate": rate,
-        "policy": "EXPAND" if rate < 1.5 else "CONTROL"
-    }
-
-# =========================
-# STOCK + HEDGE FUND
-# =========================
-def stock_market():
-    assets = ["AAPL", "TSLA", "NVDA", "AMZN"]
-    return [
-        {
-            "asset": a,
-            "signal": random.choice(["BUY", "SELL", "HOLD"]),
-            "profit": round(random.uniform(0, 50), 2)
-        }
-        for a in assets
-    ]
-
-def hedge_fund():
-    trades = stock_market()
-    profit = sum(t["profit"] for t in trades)
-    STATE["capital"] += profit * 2
-    return {"profit": profit, "capital": STATE["capital"]}
-
-# =========================
-# GLOBAL INTELLIGENCE
-# =========================
-def global_brain():
-    return {
-        "economy": economy(),
-        "central_bank": central_bank(),
-        "hedge_fund": hedge_fund()
-    }
-
-# =========================
-# AUTOCODE SYSTEM
-# =========================
-def autocode(task):
-    log("autocode", task)
-    return f"code::{task}"
-
-# =========================
-# ANALYTICS SYSTEM
+# ANALYTICS ENGINE
 # =========================
 def analytics():
-    return {
-        "users": STATE["users"],
-        "sessions": STATE["sessions"],
-        "revenue": STATE["revenue"],
-        "capital": STATE["capital"],
-        "deployments": STATE["deployments"],
-        "tasks": STATE["tasks"],
-        "api_calls": STATE["api_calls"],
-        "ai_cycles": STATE["ai_cycles"],
-        "logs": len(LOGS),
-        "memory": len(MEMORY),
-        "services": len(SERVICES)
+    return DB["analytics"]
+
+# =========================
+# SYSTEM CORE API
+# =========================
+def request(endpoint, payload=None):
+    DB["analytics"]["requests"] += 1
+    log("request", {"endpoint": endpoint})
+
+    routes = {
+        "auth/login": login,
+        "auth/create": create_user,
+        "project/create": create_project,
+        "project/add_file": add_file,
+        "deploy": deploy,
+        "memory/add": memory_store,
+        "memory/search": memory_search,
+        "agent/run": run_agent,
+        "ai/cycle": autonomous_cycle,
+        "analytics": analytics
     }
+
+    if endpoint in routes:
+        return routes[endpoint](**(payload or {}))
+
+    return {"error": "route not found"}
 
 # =========================
 # SYSTEM BOOT
 # =========================
 def boot():
-    print("🚀 NEXT STEP MASTER CORE SYSTEM ONLINE")
+    print("🚀 NEXT STEP MASTER PLATFORM STARTED")
 
-    user = register("admin")
-    login("admin")
-    billing(user["id"], 500)
-    deploy("core_system")
-    workspace_create("admin")
-    memory_add("system initialized")
+    create_user("admin", "1234")
+    session = login("admin", "1234")
+
+    project = create_project("admin", "core-system")
+    add_file(project["project_id"], "main.py", "print('hello world')")
+
+    deploy(project["project_id"])
+    memory_store("system initialized")
 
     while True:
-        print("\n==========================")
-        print("🤖 AI:", autonomous_ai())
-        print("📊 ANALYTICS:", analytics())
-        print("🌍 GLOBAL:", global_brain())
-        print("🧠 MEMORY:", memory_search("system"))
-        print("⚙️ SERVICES:", SERVICES)
-        print("==========================")
+        print("\n====================")
+        print("AI CYCLE:", autonomous_cycle())
+        print("ANALYTICS:", analytics())
+        print("MEMORY:", memory_search("system"))
+        print("====================")
 
-        time.sleep(2)
+        time.sleep(3)
 
-# =========================
-# START
-# =========================
+# START SYSTEM
 boot()
