@@ -1,7 +1,7 @@
 """
 =========================================================
-NEXT STEP V15 — PRODUCTION AI CLOUD PLATFORM CORE
-PURE PYTHON UNIFIED ARCHITECTURE (NO FRAMEWORKS)
+NEXT STEP V16 — UNICORN AI CLOUD PLATFORM CORE
+PURE PYTHON FULL SAAS + AI + MULTI-TENANT SYSTEM
 =========================================================
 """
 
@@ -12,19 +12,19 @@ import hashlib
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # =========================================================
-# DATABASE LAYER (POSTGRES SIMULATION)
+# MULTI-TENANT CORE DB (SAAS LEVEL)
 # =========================================================
 class DB:
+    tenants = {}
     users = {}
     projects = {}
     sessions = {}
-    logs = []
+    analytics = {}
     memory = []
     plugins = {}
-    analytics = {}
 
 # =========================================================
-# REDIS CACHE LAYER
+# CACHE LAYER (REDIS SIM)
 # =========================================================
 class Cache:
     store = {}
@@ -46,24 +46,42 @@ def uid():
 def now():
     return int(time.time())
 
-def hashv(v):
-    return hashlib.sha256(v.encode()).hexdigest()
+def hashv(x):
+    return hashlib.sha256(x.encode()).hexdigest()
 
-def token(email):
-    return hashlib.sha256(f"{email}-{time.time()}".encode()).hexdigest()
+def token(seed):
+    return hashlib.sha256(f"{seed}-{time.time()}".encode()).hexdigest()
+
+# =========================================================
+# TENANT SYSTEM (MULTI SAAS)
+# =========================================================
+def create_tenant(name):
+    tid = uid()
+    DB.tenants[tid] = {
+        "name": name,
+        "created": now(),
+        "users": []
+    }
+    return tid
+
+def get_tenant(tid):
+    return DB.tenants.get(tid)
 
 # =========================================================
 # AUTH SYSTEM (JWT + OAUTH CORE)
 # =========================================================
-def register(email, password, role="user"):
+def register(tid, email, password, role="user"):
     if email in DB.users:
         return {"error": "exists"}
 
     DB.users[email] = {
         "id": uid(),
+        "tenant": tid,
         "password": hashv(password),
         "role": role
     }
+
+    DB.tenants[tid]["users"].append(email)
     return {"status": "registered"}
 
 def login(email, password):
@@ -78,13 +96,13 @@ def login(email, password):
 def oauth(provider, email):
     t = token(email + provider)
     DB.sessions[t] = email
-    return {"token": t, "provider": provider}
+    return {"token": t}
 
 def verify(t):
     return DB.sessions.get(t)
 
 # =========================================================
-# AI MULTI-AGENT SYSTEM
+# AI AGENT SYSTEM (UNIFIED BRAIN)
 # =========================================================
 class Agent:
     def __init__(self, name):
@@ -99,26 +117,23 @@ class Agent:
 
 AGENTS = {
     "ai": Agent("AI_CORE"),
-    "dev": Agent("DEV_ENGINE"),
-    "ops": Agent("OPS_ENGINE"),
-    "data": Agent("DATA_ENGINE")
+    "dev": Agent("DEV"),
+    "ops": Agent("OPS"),
+    "data": Agent("DATA")
 }
-
-def run_agent(name, task):
-    return AGENTS[name].run(task)
 
 def autonomous_ai():
     tasks = [
         "optimize system",
         "security scan",
+        "auto scaling",
         "memory cleanup",
-        "load balancing",
-        "self improvement loop"
+        "self improvement"
     ]
-    return run_agent("ai", tasks[now() % len(tasks)])
+    return AGENTS["ai"].run(tasks[now() % len(tasks)])
 
 # =========================================================
-# MEMORY ENGINE (AI BRAIN)
+# MEMORY ENGINE (AI LONG TERM BRAIN)
 # =========================================================
 def memory_add(text):
     DB.memory.append({
@@ -140,16 +155,16 @@ def analytics():
     return DB.analytics
 
 # =========================================================
-# DEPLOYMENT ENGINE (DOCKER SIM)
+# DEPLOY ENGINE (CLOUD SIM)
 # =========================================================
-def build(name):
+def build_app(name):
     return f"{name}_image_v1"
 
-def run_container(image):
+def run_app(image):
     return {"container": image, "status": "running"}
 
 # =========================================================
-# PLUGIN SYSTEM
+# PLUGIN SYSTEM (MARKETPLACE CORE)
 # =========================================================
 def register_plugin(name, fn):
     DB.plugins[name] = fn
@@ -160,9 +175,10 @@ def run_plugin(name, *args):
 # =========================================================
 # PROJECT SYSTEM (SAAS CORE)
 # =========================================================
-def create_project(name, owner):
+def create_project(tid, name, owner):
     pid = uid()
     DB.projects[pid] = {
+        "tenant": tid,
         "name": name,
         "owner": owner,
         "created": now()
@@ -170,7 +186,7 @@ def create_project(name, owner):
     return pid
 
 # =========================================================
-# API ROUTER (FASTAPI STYLE CORE)
+# API ENGINE (FASTAPI STYLE CORE)
 # =========================================================
 class API:
     routes = {}
@@ -195,29 +211,24 @@ api = API()
 # =========================================================
 # ROUTES
 # =========================================================
+@api.route("/tenant/create")
+def r_tenant(data, user):
+    tid = create_tenant(data["name"])
+    return {"tenant_id": tid}
+
 @api.route("/project/create")
 def r_project(data, user):
     if not user:
         return {"error": "unauthorized"}
-    pid = create_project(data["name"], user)
+    u = DB.users[user]
+    pid = create_project(u["tenant"], data["name"], user)
     track("project_create")
     return {"project_id": pid}
 
 @api.route("/deploy")
 def r_deploy(data, user):
-    image = build(data["name"])
-    res = run_container(image)
-    track("deploy")
-    return res
-
-@api.route("/cache/set")
-def r_cache_set(data, user):
-    Cache.set(data["key"], data["value"])
-    return {"ok": True}
-
-@api.route("/cache/get")
-def r_cache_get(data, user):
-    return {"value": Cache.get(data["key"])}
+    image = build_app(data["name"])
+    return run_app(image)
 
 @api.route("/ai")
 def r_ai(data, user):
@@ -232,8 +243,12 @@ def r_mem_add(data, user):
 def r_mem_search(data, user):
     return memory_search(data["query"])
 
+@api.route("/analytics")
+def r_analytics(data, user):
+    return analytics()
+
 # =========================================================
-# SIMPLE HTTP SERVER (REAL BACKEND CORE)
+# HTTP SERVER (REAL BACKEND CORE)
 # =========================================================
 class Handler(BaseHTTPRequestHandler):
 
@@ -259,7 +274,7 @@ class Handler(BaseHTTPRequestHandler):
         body = json.loads(self.rfile.read(length))
 
         if self.path == "/register":
-            self.send(register(body["email"], body["password"]))
+            self.send(register(body["tenant"], body["email"], body["password"]))
             return
 
         if self.path == "/login":
@@ -281,20 +296,23 @@ class Handler(BaseHTTPRequestHandler):
         self.send({"error": "invalid route"})
 
 # =========================================================
-# SYSTEM BOOT
+# SYSTEM BOOT (UNICORN STARTUP CORE)
 # =========================================================
 def boot():
-    print("🚀 NEXT STEP V15 PRODUCTION AI CLOUD CORE ONLINE")
+    print("🚀 V16 UNICORN AI CLOUD PLATFORM ONLINE")
 
-    register("admin@ai.com", "1234", "admin")
+    tid = create_tenant("DEFAULT_TENANT")
+
+    register(tid, "admin@ai.com", "1234", "admin")
     t = login("admin@ai.com", "1234")["token"]
 
-    pid = create_project("ULTIMATE AI SYSTEM", "admin@ai.com")
+    pid = create_project(tid, "UNICORN SYSTEM", "admin@ai.com")
 
-    memory_add("system fully initialized")
+    memory_add("system fully booted")
     Cache.set("mode", "production")
 
     print("AI:", autonomous_ai())
+    print("TENANT:", tid)
     print("PROJECT:", pid)
     print("CACHE:", Cache.get("mode"))
     print("ANALYTICS:", analytics())
