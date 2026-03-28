@@ -1,294 +1,240 @@
 """
-====================================================
-NEXT STEP V12 — ULTIMATE SAAS AI CLOUD OPERATING SYSTEM
-PURE PYTHON (FULL STACK ARCHITECTURE CORE)
-====================================================
+========================================================
+NEXT STEP V13 — FULL AI CLOUD PLATFORM (PURE PYTHON)
+FASTAPI + DB + REDIS + AUTH + AI + DEPLOY + UI
+========================================================
 """
 
+import json
 import time
-import uuid
+import sqlite3
 import hashlib
-from collections import defaultdict
+import uuid
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
-# ====================================================
-# CORE DATABASE (POSTGRES SIM)
-# ====================================================
-class DB:
-    users = {}
-    sessions = {}
-    projects = {}
-    files = {}
-    roles = {}
-    oauth = {}
-    logs = []
-    memory = []
-    deployments = {}
-    plugins = {}
+# ========================================================
+# DATABASE (POSTGRES SIM USING SQLITE3)
+# ========================================================
+db = sqlite3.connect(":memory:")
+cursor = db.cursor()
 
-# ====================================================
-# CACHE SYSTEM (REDIS SIM)
-# ====================================================
-class Cache:
-    store = {}
+cursor.execute("""
+CREATE TABLE users (
+    id TEXT,
+    email TEXT,
+    password TEXT,
+    role TEXT
+)
+""")
 
-    @staticmethod
-    def set(k, v):
-        Cache.store[k] = (v, time.time())
+cursor.execute("""
+CREATE TABLE projects (
+    id TEXT,
+    name TEXT,
+    owner TEXT
+)
+""")
 
-    @staticmethod
-    def get(k):
-        return Cache.store.get(k, (None,))[0]
+db.commit()
 
-# ====================================================
-# UTILITIES
-# ====================================================
-def now():
-    return int(time.time())
+# ========================================================
+# REDIS SIMULATION (CACHE)
+# ========================================================
+CACHE = {}
 
+def cache_set(k, v):
+    CACHE[k] = v
+
+def cache_get(k):
+    return CACHE.get(k)
+
+# ========================================================
+# UTIL
+# ========================================================
 def uid():
     return str(uuid.uuid4())
 
-def sha(x):
-    return hashlib.sha256(x.encode()).hexdigest()
+def hash_pw(p):
+    return hashlib.sha256(p.encode()).hexdigest()
 
-# ====================================================
-# AUTH SYSTEM (JWT + ROLE + OAUTH CORE)
-# ====================================================
-SECRET = "V12_SECRET"
+def jwt(email):
+    return hashlib.sha256(f"{email}-{time.time()}".encode()).hexdigest()
 
-def jwt(user):
-    return sha(f"{user}-{SECRET}-{time.time()}")
+SESSIONS = {}
 
-def verify(token):
-    return DB.sessions.get(token)
-
+# ========================================================
+# AUTH SYSTEM (JWT + OAUTH SIM)
+# ========================================================
 def register(email, password, role="user"):
-    if email in DB.users:
-        return {"error": "exists"}
-
-    DB.users[email] = {
-        "id": uid(),
-        "password": sha(password)
-    }
-    DB.roles[email] = role
-    DB.logs.append(("register", email))
-    return {"status": "ok"}
+    cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?)",
+                   (uid(), email, hash_pw(password), role))
+    db.commit()
+    return {"status": "registered"}
 
 def login(email, password):
-    u = DB.users.get(email)
-    if not u or u["password"] != sha(password):
-        return {"error": "invalid"}
+    cursor.execute("SELECT password FROM users WHERE email=?", (email,))
+    row = cursor.fetchone()
+    if not row:
+        return {"error": "user not found"}
+
+    if row[0] != hash_pw(password):
+        return {"error": "wrong password"}
 
     token = jwt(email)
-    DB.sessions[token] = email
-    DB.logs.append(("login", email))
+    SESSIONS[token] = email
     return {"token": token}
+
+def verify(token):
+    return SESSIONS.get(token)
 
 def oauth_login(provider, email):
-    if email not in DB.users:
-        DB.users[email] = {"id": uid(), "provider": provider}
+    token = jwt(email + provider)
+    SESSIONS[token] = email
+    return {"token": token, "provider": provider}
 
-    token = jwt(email)
-    DB.sessions[token] = email
-    DB.oauth[email] = provider
-    DB.logs.append(("oauth", email))
-    return {"token": token}
-
-# ====================================================
-# API ENGINE (FASTAPI STYLE CORE)
-# ====================================================
-class API:
-    routes = {}
-
-    @staticmethod
-    def route(path):
-        def wrapper(fn):
-            API.routes[path] = fn
-            return fn
-        return wrapper
-
-    @staticmethod
-    def call(path, data=None, token=None):
-        user = verify(token)
-        fn = API.routes.get(path)
-        if not fn:
-            return {"error": "404"}
-        return fn(data or {}, user)
-
-api = API()
-
-# ====================================================
-# PROJECT SYSTEM (SAAS CORE)
-# ====================================================
-@api.route("/project/create")
-def project_create(data, user):
-    pid = uid()
-    DB.projects[pid] = {
-        "owner": user,
-        "name": data.get("name"),
-        "created": now()
-    }
-    return {"project_id": pid}
-
-@api.route("/project/file")
-def project_file(data, user):
-    pid = data.get("project_id")
-    if pid not in DB.projects:
-        return {"error": "not_found"}
-
-    DB.files[data.get("filename")] = data.get("content")
-    return {"status": "saved"}
-
-# ====================================================
-# AI MULTI-AGENT SYSTEM
-# ====================================================
+# ========================================================
+# AI AGENT SYSTEM
+# ========================================================
 class Agent:
-    def __init__(self, name):
-        self.name = name
-
     def run(self, task):
-        return {
-            "agent": self.name,
-            "task": task,
-            "result": f"executed: {task}"
-        }
+        return f"[AI RESULT]: executed -> {task}"
 
-AGENTS = {
-    "ai": Agent("AI_CORE"),
-    "dev": Agent("DEV_ENGINE"),
-    "ops": Agent("OPS_ENGINE"),
-    "data": Agent("DATA_ENGINE")
-}
+AI = Agent()
 
-def run_agent(name, task):
-    return AGENTS[name].run(task)
-
-# ====================================================
-# AUTONOMOUS AI ENGINE
-# ====================================================
 def autonomous_ai():
-    tasks = [
-        "optimize system",
-        "security scan",
-        "log analysis",
-        "cache optimization",
-        "self improvement",
-        "resource balancing"
-    ]
-    task = tasks[now() % len(tasks)]
-    return run_agent("ai", task)
+    tasks = ["optimize DB", "scan security", "cleanup cache", "self improve"]
+    return AI.run(tasks[int(time.time()) % len(tasks)])
 
-# ====================================================
-# MEMORY ENGINE (AI BRAIN)
-# ====================================================
+# ========================================================
+# MEMORY ENGINE
+# ========================================================
+MEMORY = []
+
 def memory_add(text):
-    DB.memory.append({
-        "id": uid(),
-        "text": text,
-        "time": now()
-    })
+    MEMORY.append({"id": uid(), "text": text})
 
 def memory_search(q):
-    return [m for m in DB.memory if q.lower() in m["text"].lower()]
+    return [m for m in MEMORY if q.lower() in m["text"].lower()]
 
-# ====================================================
-# ANALYTICS ENGINE
-# ====================================================
-ANALYTICS = defaultdict(int)
+# ========================================================
+# DEPLOYMENT (DOCKER SIM)
+# ========================================================
+def docker_build(name):
+    return f"{name}_image_v1"
 
-def track(event):
-    ANALYTICS[event] += 1
+def docker_run(image):
+    return {"container": image, "status": "running"}
 
-def analytics():
-    return dict(ANALYTICS)
+# ========================================================
+# PROJECT SYSTEM
+# ========================================================
+def create_project(name, owner):
+    pid = uid()
+    cursor.execute("INSERT INTO projects VALUES (?, ?, ?)",
+                   (pid, name, owner))
+    db.commit()
+    return pid
 
-# ====================================================
-# DEPLOYMENT SYSTEM (DOCKER SIM)
-# ====================================================
-class Docker:
-    @staticmethod
-    def build(name):
-        return f"image_{name}_v1"
+# ========================================================
+# REACT DASHBOARD (STRING UI)
+# ========================================================
+REACT_DASHBOARD = """
+<!DOCTYPE html>
+<html>
+<head>
+<title>AI Dashboard</title>
+</head>
+<body>
+<h1>🚀 AI CLOUD DASHBOARD</h1>
+<div id="app">
+  <button onclick="alert('AI Running')">Run AI</button>
+  <button onclick="alert('Deploying...')">Deploy</button>
+</div>
+</body>
+</html>
+"""
 
-    @staticmethod
-    def run(image):
-        return {"container": image, "status": "running"}
+# ========================================================
+# SIMPLE API SERVER (FASTAPI STYLE)
+# ========================================================
+class Handler(BaseHTTPRequestHandler):
 
-@api.route("/deploy")
-def deploy(data, user):
-    name = data.get("name")
-    image = Docker.build(name)
-    container = Docker.run(image)
-    track("deploy")
-    return container
+    def _send(self, data):
+        self.send_response(200)
+        self.send_header("Content-type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps(data).encode())
 
-# ====================================================
-# CACHE API
-# ====================================================
-@api.route("/cache/set")
-def cache_set(data, user):
-    Cache.set(data["key"], data["value"])
-    return {"cached": True}
+    def do_GET(self):
+        if self.path == "/":
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(REACT_DASHBOARD.encode())
+            return
 
-@api.route("/cache/get")
-def cache_get(data, user):
-    return {"value": Cache.get(data["key"])}
+        if self.path == "/ai":
+            self._send({"ai": autonomous_ai()})
+            return
 
-# ====================================================
-# PLUGIN SYSTEM
-# ====================================================
-def register_plugin(name, fn):
-    DB.plugins[name] = fn
+        if self.path == "/memory":
+            self._send({"memory": MEMORY})
+            return
 
-def run_plugin(name, *args):
-    return DB.plugins[name](*args) if name in DB.plugins else {"error": "not_found"}
+        self._send({"error": "not found"})
 
-# ====================================================
-# DASHBOARD (FRONTEND MODEL)
-# ====================================================
-def dashboard():
-    return {
-        "ui": "AI Cloud SaaS Dashboard",
-        "modules": [
-            "Authentication System",
-            "Project Management",
-            "AI Multi-Agent Engine",
-            "Deployment System",
-            "Memory Brain",
-            "Analytics Engine",
-            "Cache Layer",
-            "Plugin System"
-        ]
-    }
+    def do_POST(self):
+        length = int(self.headers["Content-Length"])
+        body = json.loads(self.rfile.read(length))
 
-# ====================================================
-# SYSTEM BOOT (FULL CLOUD OS START)
-# ====================================================
-def boot():
-    print("🚀 V12 ULTIMATE AI CLOUD SAAS OS ONLINE")
+        if self.path == "/register":
+            self._send(register(body["email"], body["password"]))
+            return
 
-    register("admin@ai.com", "1234", role="admin")
+        if self.path == "/login":
+            self._send(login(body["email"], body["password"]))
+            return
+
+        if self.path == "/project":
+            token = body.get("token")
+            user = verify(token)
+            if not user:
+                self._send({"error": "unauthorized"})
+                return
+
+            pid = create_project(body["name"], user)
+            self._send({"project_id": pid})
+            return
+
+        if self.path == "/deploy":
+            image = docker_build(body["name"])
+            result = docker_run(image)
+            self._send(result)
+            return
+
+        self._send({"error": "invalid"})
+
+# ========================================================
+# BOOT SERVER
+# ========================================================
+def run():
+    print("🚀 V13 FULL AI CLOUD PLATFORM RUNNING ON http://localhost:8000")
+    server = HTTPServer(("0.0.0.0", 8000), Handler)
+    server.serve_forever()
+
+# ========================================================
+# SYSTEM INIT DEMO
+# ========================================================
+if __name__ == "__main__":
+    register("admin@ai.com", "1234", "admin")
     token = login("admin@ai.com", "1234")["token"]
 
-    project = api.call("/project/create", {"name": "CLOUD OS"}, token)
-    pid = project["project_id"]
+    pid = create_project("NEXT STEP SYSTEM", "admin@ai.com")
+    cache_set("mode", "production")
 
-    api.call("/project/file", {
-        "project_id": pid,
-        "filename": "main.py",
-        "content": "print('CLOUD OS RUNNING')"
-    }, token)
-
-    print(api.call("/deploy", {"name": "CLOUD OS"}, token))
-
-    memory_add("system fully initialized and production ready")
-
+    memory_add("system started successfully")
     print("AI:", autonomous_ai())
-    print("MEMORY:", memory_search("system"))
-    print("ANALYTICS:", analytics())
-    print("DASHBOARD:", dashboard())
+    print("PROJECT:", pid)
+    print("CACHE:", cache_get("mode"))
 
-    api.call("/cache/set", {"key": "env", "value": "production"}, token)
-    print(api.call("/cache/get", {"key": "env"}, token))
-
-boot()
+    # Uncomment below to run server
+    # run()
