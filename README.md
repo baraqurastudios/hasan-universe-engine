@@ -1,6 +1,7 @@
 """
-BARAQURA MASTER ENGINE: PURE PYTHON STABILITY PATCH
-Solved: Syntax Errors, Emoji Conflicts, and String Literals
+BARAQURA MASTER ENGINE - FINAL STABILITY VERSION
+PURE PYTHON - AI + SAAS + CLOUD + ECONOMY CORE
+Fixed: String Literals, Syntax Mismatch, and Emoji Conflicts
 """
 
 import random
@@ -8,13 +9,13 @@ import time
 import uuid
 
 # =========================
-# SYSTEM STATE (GLOBAL CORE)
+# CORE STATE ENGINE
 # =========================
-STATE = {
-    "users": 15000,
+CORE = {
+    "users": 20000,
     "sessions": 0,
-    "revenue": 10000000,
-    "capital": 500000000,
+    "revenue": 25000000,
+    "capital": 1000000000,
     "deployments": 0,
     "tasks": 0,
     "api_calls": 0,
@@ -27,7 +28,7 @@ SERVICES = {}
 WORKSPACE = {}
 
 # =========================
-# EVENT ENGINE
+# EVENT SYSTEM
 # =========================
 def log_event(event, data=None):
     LOGS.append({
@@ -38,60 +39,78 @@ def log_event(event, data=None):
     })
 
 # =========================
-# AUTH SYSTEM
+# AUTH & BILLING SYSTEM
 # =========================
-def register_user(user):
-    STATE["users"] += 1
-    log_event("register", {"user": user})
+def register(user):
+    CORE["users"] += 1
+    log_event("register", user)
     return str(uuid.uuid4())
 
-def login_user(user):
-    STATE["sessions"] += 1
-    log_event("login", {"user": user})
-    return True
-
-# =========================
-# SAAS BILLING ENGINE
-# =========================
-def process_billing(user, amount):
-    STATE["revenue"] += amount
+def billing(user, amount):
+    CORE["revenue"] += amount
     log_event("billing", {"user": user, "amount": amount})
-    return {"status": "paid", "amount": amount}
+    return {"status": "success", "paid": amount}
 
 # =========================
-# CLOUD DEPLOYMENT ENGINE
+# AI & CLOUD ENGINE
 # =========================
-def deploy_service(service_name):
-    STATE["deployments"] += 1
-    # FIXED: Added missing quotation mark here
-    SERVICES[service_name] = "RUNNING"
-    log_event("deployment", {"service": service_name, "status": "ACTIVE"})
-    return f"Service {service_name} deployed successfully."
+class Agent:
+    def __init__(self, role):
+        self.role = role
+
+    def run(self, task):
+        CORE["tasks"] += 1
+        log_event("agent_task", {"role": self.role, "task": task})
+        return f"{self.role} executed {task}"
+
+def deploy_service(service):
+    CORE["deployments"] += 1
+    SERVICES[service] = "ACTIVE"
+    log_event("deploy", service)
+    return f"{service} ACTIVE"
 
 # =========================
-# SYSTEM BOOT & EXECUTION
+# ECONOMY & GLOBAL BRAIN
 # =========================
-def boot_system():
-    print("--- BARAQURA AI CORE INITIALIZING ---")
+def get_economy_data():
+    return {
+        "gdp": random.randint(8000, 30000),
+        "growth": round(random.uniform(-30, 60), 2)
+    }
+
+def hedge_fund_simulation():
+    assets = ["AAPL", "TSLA", "NVDA", "AMZN"]
+    profit = sum(random.uniform(0, 300) for _ in assets)
+    CORE["capital"] += int(profit * 1500)
+    return {"profit": round(profit, 2), "new_capital": CORE["capital"]}
+
+def global_brain():
+    # FIXED: Added missing quotes and braces from screenshot 10
+    return {
+        "central_bank": {"interest_rate": random.uniform(1, 15)},
+        "economy": get_economy_data(),
+        "hedge_status": hedge_fund_simulation()
+    }
+
+# =========================
+# SYSTEM BOOT EXECUTION
+# =========================
+def boot_master_system():
+    print("BARAQURA MASTER SYSTEM INITIALIZING...")
     
-    # 1. Auth Test
-    token = register_user("admin_user")
-    login_user("admin_user")
+    # Run core modules
+    register("admin_user")
+    deploy_service("CLOUD_CORE_V1")
     
-    # 2. Billing Test
-    process_billing("user_01", 500)
+    # Generate business report
+    intelligence = global_brain()
     
-    # 3. Deployment Test
-    result = deploy_service("ORACLE_CORE_V12")
-    print(result)
-    
-    # Final Status Report
-    print("\n--- SYSTEM STATUS REPORT ---")
-    print(f"Total Users: {STATE['users']}")
-    print(f"Revenue: ${STATE['revenue']}")
-    print(f"Active Services: {list(SERVICES.keys())}")
-    print(f"System Logs: {len(LOGS)}")
-    print("----------------------------")
+    print("\n--- SYSTEM REPORT ---")
+    print(f"Total Users: {CORE['users']}")
+    print(f"Global Capital: ${CORE['capital']}")
+    print(f"Intelligence Data: {intelligence['economy']}")
+    print(f"Total Logs: {len(LOGS)}")
+    print("----------------------")
 
 if __name__ == "__main__":
-    boot_system()
+    boot_master_system()
