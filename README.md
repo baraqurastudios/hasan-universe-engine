@@ -1,7 +1,7 @@
 """
 ====================================================
-NEXT STEP V10 — ULTIMATE SAAS + AI PLATFORM
-PURE PYTHON (INDUSTRY LEVEL ARCHITECTURE CORE)
+NEXT STEP V11 — STARTUP OS + AI PLATFORM CORE
+PURE PYTHON (FULL SAAS + AI + CLOUD SYSTEM DESIGN)
 ====================================================
 """
 
@@ -11,7 +11,7 @@ import hashlib
 from collections import defaultdict
 
 # ====================================================
-# DATABASE LAYER (POSTGRES SIM)
+# DATABASE CORE (POSTGRES SIM)
 # ====================================================
 class DB:
     users = {}
@@ -23,20 +23,21 @@ class DB:
     logs = []
     memory = []
     deployments = {}
+    plugins = {}
 
 # ====================================================
-# CACHE LAYER (REDIS SIM)
+# CACHE SYSTEM (REDIS SIM)
 # ====================================================
-class Redis:
+class Cache:
     store = {}
 
     @staticmethod
     def set(k, v):
-        Redis.store[k] = (v, time.time())
+        Cache.store[k] = (v, time.time())
 
     @staticmethod
     def get(k):
-        return Redis.store.get(k, (None,))[0]
+        return Cache.store.get(k, (None,))[0]
 
 # ====================================================
 # UTILITIES
@@ -47,17 +48,17 @@ def now():
 def uid():
     return str(uuid.uuid4())
 
-def hash_text(t):
-    return hashlib.sha256(t.encode()).hexdigest()
+def sha(x):
+    return hashlib.sha256(x.encode()).hexdigest()
 
 # ====================================================
 # AUTH SYSTEM (JWT + ROLE)
 # ====================================================
-SECRET = "V10_SECRET"
+SECRET = "V11_SECRET"
 
 def jwt(user):
     raw = f"{user}-{SECRET}-{time.time()}"
-    return hashlib.sha256(raw.encode()).hexdigest()
+    return sha(raw)
 
 def verify(token):
     return DB.sessions.get(token)
@@ -68,7 +69,7 @@ def register(email, password, role="user"):
 
     DB.users[email] = {
         "id": uid(),
-        "password": hash_text(password)
+        "password": sha(password)
     }
     DB.roles[email] = role
 
@@ -77,7 +78,7 @@ def register(email, password, role="user"):
 
 def login(email, password):
     u = DB.users.get(email)
-    if not u or u["password"] != hash_text(password):
+    if not u or u["password"] != sha(password):
         return {"error": "invalid"}
 
     token = jwt(email)
@@ -87,7 +88,7 @@ def login(email, password):
     return {"token": token}
 
 # ====================================================
-# OAUTH SYSTEM (SIMULATION)
+# OAUTH SYSTEM (GOOGLE / GITHUB SIM)
 # ====================================================
 def oauth_login(provider, email):
     if email not in DB.users:
@@ -115,8 +116,7 @@ class API:
 
     @staticmethod
     def call(path, data=None, token=None):
-        user = verify(token) if token else None
-
+        user = verify(token)
         fn = API.routes.get(path)
         if not fn:
             return {"error": "404"}
@@ -126,7 +126,7 @@ class API:
 api = API()
 
 # ====================================================
-# PROJECT SYSTEM (CORE SAAS)
+# PROJECT SYSTEM (SAAS CORE)
 # ====================================================
 @api.route("/project/create")
 def project_create(data, user):
@@ -150,10 +150,10 @@ def project_file(data, user):
     fname = data.get("filename")
     DB.files[fname] = data.get("content")
 
-    return {"status": "file_saved"}
+    return {"status": "saved"}
 
 # ====================================================
-# AI AGENT SYSTEM (MULTI AGENT CORE)
+# AI AGENT SYSTEM (MULTI BRAIN)
 # ====================================================
 class Agent:
     def __init__(self, name):
@@ -163,12 +163,12 @@ class Agent:
         return {
             "agent": self.name,
             "task": task,
-            "result": f"done: {task}"
+            "result": f"executed: {task}"
         }
 
 AGENTS = {
     "ai": Agent("AI_CORE"),
-    "dev": Agent("DEVELOPER"),
+    "dev": Agent("DEV_ENGINE"),
     "ops": Agent("OPS_ENGINE"),
     "data": Agent("DATA_ENGINE")
 }
@@ -181,11 +181,12 @@ def run_agent(name, task):
 # ====================================================
 def autonomous_ai():
     tasks = [
-        "optimize performance",
+        "optimize system",
         "security scan",
         "log analysis",
         "cache cleanup",
-        "self improvement cycle"
+        "self improvement cycle",
+        "resource balancing"
     ]
 
     task = tasks[now() % len(tasks)]
@@ -201,8 +202,8 @@ def memory_add(text):
         "time": now()
     })
 
-def memory_search(query):
-    return [m for m in DB.memory if query.lower() in m["text"].lower()]
+def memory_search(q):
+    return [m for m in DB.memory if q.lower() in m["text"].lower()]
 
 # ====================================================
 # ANALYTICS ENGINE
@@ -243,69 +244,68 @@ def deploy(data, user):
 # ====================================================
 @api.route("/cache/set")
 def cache_set(data, user):
-    Redis.set(data["key"], data["value"])
+    Cache.set(data["key"], data["value"])
     return {"cached": True}
 
 @api.route("/cache/get")
 def cache_get(data, user):
-    return {"value": Redis.get(data["key"])}
+    return {"value": Cache.get(data["key"])}
 
 # ====================================================
-# PLUGIN SYSTEM
+# PLUGIN SYSTEM (EXTENSIBLE CORE)
 # ====================================================
-PLUGINS = {}
-
 def register_plugin(name, fn):
-    PLUGINS[name] = fn
+    DB.plugins[name] = fn
 
 def run_plugin(name, *args):
-    return PLUGINS[name](*args) if name in PLUGINS else {"error": "not_found"}
+    return DB.plugins[name](*args) if name in DB.plugins else {"error": "missing"}
 
 # ====================================================
-# DASHBOARD (FRONTEND MODEL)
+# DASHBOARD SYSTEM (FRONTEND MODEL)
 # ====================================================
 def dashboard():
     return {
-        "ui": "Enterprise React Dashboard",
+        "ui": "Enterprise SaaS Dashboard",
         "modules": [
-            "Auth System (JWT + OAuth)",
-            "Project Manager",
-            "AI Agent Engine",
+            "Auth System",
+            "Project System",
+            "AI Engine",
             "Deployment System",
             "Memory Brain",
             "Analytics Engine",
-            "Cache Layer"
+            "Cache Layer",
+            "Plugin System"
         ]
     }
 
 # ====================================================
-# SYSTEM BOOTSTRAP (FULL FLOW)
+# SYSTEM BOOT (FULL PLATFORM START)
 # ====================================================
 def boot():
-    print("🚀 V10 ULTIMATE SAAS AI PLATFORM ONLINE")
+    print("🚀 V11 STARTUP OS + AI PLATFORM ONLINE")
 
     register("admin@ai.com", "1234", role="admin")
     token = login("admin@ai.com", "1234")["token"]
 
-    project = api.call("/project/create", {"name": "NEXT AI PLATFORM"}, token)
+    project = api.call("/project/create", {"name": "STARTUP OS"}, token)
     pid = project["project_id"]
 
     api.call("/project/file", {
         "project_id": pid,
-        "filename": "core.py",
-        "content": "print('AI SYSTEM V10')"
+        "filename": "main.py",
+        "content": "print('STARTUP OS RUNNING')"
     }, token)
 
-    print(api.call("/deploy", {"name": "NEXT AI PLATFORM"}, token))
+    print(api.call("/deploy", {"name": "STARTUP OS"}, token))
 
-    memory_add("system fully initialized and running")
+    memory_add("system fully booted and stable")
 
     print("AI:", autonomous_ai())
     print("MEMORY:", memory_search("system"))
     print("ANALYTICS:", analytics())
     print("DASHBOARD:", dashboard())
 
-    api.call("/cache/set", {"key": "env", "value": "production"}, token)
-    print(api.call("/cache/get", {"key": "env"}, token))
+    api.call("/cache/set", {"key": "mode", "value": "production"}, token)
+    print(api.call("/cache/get", {"key": "mode"}, token))
 
 boot()
