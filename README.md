@@ -1,19 +1,12 @@
-"""
-=========================================================
-V23 - PRODUCTION SAAS AI CLOUD OPERATING SYSTEM
-PURE PYTHON (FULL STACK + AI + CLOUD + BACKEND CORE)
-=========================================================
-"""
-
 import json
 import time
 import uuid
 import hashlib
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-# =========================================================
-# CORE DATABASE (MULTI-TENANT SYSTEM)
-# =========================================================
+# ==============================
+# CORE STORAGE (DB + CACHE)
+# ==============================
 class DB:
     users = {}
     tenants = {}
@@ -22,161 +15,118 @@ class DB:
     files = {}
     plugins = {}
 
-# =========================================================
-# CACHE SYSTEM (REDIS STYLE)
-# =========================================================
 class Cache:
     store = {}
 
     @staticmethod
     def set(k, v):
-        Cache.store[k] = (v, time.time())
+        Cache.store[k] = v
 
     @staticmethod
     def get(k):
-        return Cache.store.get(k, (None,))[0]
+        return Cache.store.get(k)
 
-# =========================================================
-# AUTH SYSTEM (JWT SIMULATION)
-# =========================================================
-class Auth:
-    sessions = {}
-
-    @staticmethod
-    def create(user):
-        token = hashlib.sha256(f"{user}-{time.time()}".encode()).hexdigest()
-        Auth.sessions[token] = user
-        return token
-
-    @staticmethod
-    def verify(token):
-        return Auth.sessions.get(token)
-
-# =========================================================
-# UTILITIES
-# =========================================================
+# ==============================
+# UTIL
+# ==============================
 def uid():
     return str(uuid.uuid4())
 
 def hashv(x):
     return hashlib.sha256(x.encode()).hexdigest()
 
-# =========================================================
-# TENANT SYSTEM (SAAS CORE)
-# =========================================================
+# ==============================
+# AUTH (JWT-LIKE)
+# ==============================
+class Auth:
+    sessions = {}
+
+    @staticmethod
+    def create(user):
+        t = hashv(user + str(time.time()))
+        Auth.sessions[t] = user
+        return t
+
+    @staticmethod
+    def verify(t):
+        return Auth.sessions.get(t)
+
+# ==============================
+# SAAS CORE
+# ==============================
 def create_tenant(name):
     tid = uid()
-    DB.tenants[tid] = {"id": tid, "name": name, "created": time.time()}
+    DB.tenants[tid] = {"id": tid, "name": name}
     return tid
 
-# =========================================================
-# USER SYSTEM (RBAC)
-# =========================================================
-def create_user(tenant, email, password, role="user"):
+def create_user(tid, email, password):
     DB.users[email] = {
-        "id": uid(),
-        "tenant": tenant,
-        "email": email,
-        "password": hashv(password),
-        "role": role
+        "tenant": tid,
+        "password": hashv(password)
     }
     return DB.users[email]
 
-
 def login(email, password):
     u = DB.users.get(email)
-    if not u:
-        return {"error": "not_found"}
-    if u["password"] != hashv(password):
-        return {"error": "invalid"}
-
+    if not u or u["password"] != hashv(password):
+        return {"error": "login failed"}
     return {"token": Auth.create(email)}
 
-# =========================================================
-# PROJECT SYSTEM
-# =========================================================
-def create_project(tenant, name):
+# ==============================
+# PROJECT
+# ==============================
+def create_project(tid, name):
     pid = uid()
-    DB.projects[pid] = {
-        "id": pid,
-        "tenant": tenant,
-        "name": name,
-        "created": time.time()
-    }
+    DB.projects[pid] = {"tenant": tid, "name": name}
     return DB.projects[pid]
 
-# =========================================================
-# AI AUTONOMOUS ENGINE (SELF-OPERATING CORE)
-# =========================================================
-class AI:
-    def run(task):
-        return {
-            "engine": "V23_AI_CORE",
-            "task": task,
-            "result": f"executed: {task}",
-            "status": "optimized"
-        }
+# ==============================
+# AI ENGINE
+# ==============================
+def ai_run():
+    tasks = ["optimize", "scan", "scale", "fix"]
+    return {"ai": tasks[int(time.time()) % len(tasks)]}
 
-
-def autonomous_ai():
-    tasks = [
-        "optimize system",
-        "scale infrastructure",
-        "security scan",
-        "fix bugs",
-        "self heal",
-        "performance tuning"
-    ]
-    return AI.run(tasks[int(time.time()) % len(tasks)])
-
-# =========================================================
-# PLUGIN SYSTEM (MARKETPLACE CORE)
-# =========================================================
+# ==============================
+# PLUGIN
+# ==============================
 def register_plugin(name, fn):
     DB.plugins[name] = fn
 
 def run_plugin(name, data):
-    return DB.plugins[name](data) if name in DB.plugins else {"error": "missing"}
+    if name in DB.plugins:
+        return DB.plugins[name](data)
+    return {"error": "plugin not found"}
 
-# =========================================================
-# ANALYTICS SYSTEM
-# =========================================================
+# ==============================
+# ANALYTICS
+# ==============================
 def log(event):
-    lid = uid()
-    DB.logs[lid] = {"event": event, "time": time.time()}
-
+    DB.logs[uid()] = {"event": event}
 
 def analytics():
-    out = {}
+    res = {}
     for l in DB.logs.values():
-        e = l["event"]
-        out[e] = out.get(e, 0) + 1
-    return out
+        res[l["event"]] = res.get(l["event"], 0) + 1
+    return res
 
-# =========================================================
-# FILE STORAGE (CLOUD DRIVE)
-# =========================================================
-def upload_file(name, content):
+# ==============================
+# FILE STORAGE
+# ==============================
+def upload(name, content):
     fid = uid()
-    DB.files[fid] = {"name": name, "content": content, "time": time.time()}
+    DB.files[fid] = {"name": name, "content": content}
     return fid
 
-# =========================================================
-# DEPLOY SYSTEM (CONTAINER SIMULATION)
-# =========================================================
-def build(image):
-    return f"{image}:v1"
+# ==============================
+# DEPLOY
+# ==============================
+def deploy(app):
+    return {"app": app, "status": "running"}
 
-def run_container(image):
-    return {
-        "container": uid(),
-        "image": image,
-        "status": "running"
-    }
-
-# =========================================================
-# API ENGINE (FASTAPI STYLE PURE PYTHON)
-# =========================================================
+# ==============================
+# API SYSTEM
+# ==============================
 class API:
     routes = {}
 
@@ -194,120 +144,88 @@ class API:
             return {"error": "404"}
         return API.routes[path](data or {}, user)
 
-api = API()
+# ==============================
+# ROUTES
+# ==============================
+@API.route("/tenant")
+def tenant(data, user):
+    return {"id": create_tenant(data["name"])}
 
-# =========================================================
-# API ROUTES (FULL SAAS + AI + CLOUD)
-# =========================================================
+@API.route("/user")
+def user(data, user):
+    return create_user(data["tenant"], data["email"], data["password"])
 
-@api.route("/tenant")
-def r_tenant(data, user):
-    return {"tenant": create_tenant(data["name"])}
-
-
-@api.route("/user")
-def r_user(data, user):
-    return create_user(data["tenant"], data["email"], data["password"], data.get("role","user"))
-
-
-@api.route("/login")
-def r_login(data, user):
+@API.route("/login")
+def login_api(data, user):
     return login(data["email"], data["password"])
 
-
-@api.route("/project")
-def r_project(data, user):
+@API.route("/project")
+def project(data, user):
     if not user:
         return {"error": "unauthorized"}
     return create_project(data["tenant"], data["name"])
 
+@API.route("/ai")
+def ai(data, user):
+    return ai_run()
 
-@api.route("/ai")
-def r_ai(data, user):
-    return autonomous_ai()
-
-
-@api.route("/plugin")
-def r_plugin(data, user):
+@API.route("/plugin")
+def plugin(data, user):
     return run_plugin(data["name"], data["data"])
 
+@API.route("/upload")
+def upload_api(data, user):
+    return {"file_id": upload(data["name"], data["content"])}
 
-@api.route("/upload")
-def r_upload(data, user):
-    return {"file_id": upload_file(data["name"], data["content"])}
+@API.route("/deploy")
+def deploy_api(data, user):
+    return deploy(data["name"])
 
-
-@api.route("/deploy")
-def r_deploy(data, user):
-    return run_container(build(data["image"]))
-
-
-@api.route("/analytics")
-def r_analytics(data, user):
+@API.route("/analytics")
+def analytics_api(data, user):
     return analytics()
 
-
-@api.route("/cache/set")
-def r_cache_set(data, user):
-    Cache.set(data["key"], data["value"])
-    return {"ok": True}
-
-
-@api.route("/cache/get")
-def r_cache_get(data, user):
-    return {"value": Cache.get(data["key"])}
-
-# =========================================================
-# HTTP SERVER (PRODUCTION CORE BACKEND)
-# =========================================================
+# ==============================
+# HTTP SERVER
+# ==============================
 class Handler(BaseHTTPRequestHandler):
 
-    def send(self, data):
+    def send(self, d):
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
-        self.wfile.write(json.dumps(data).encode())
-
-    def do_GET(self):
-        if self.path == "/ai":
-            self.send(autonomous_ai())
-        else:
-            self.send({"status": "V23 ACTIVE SYSTEM"})
+        self.wfile.write(json.dumps(d).encode())
 
     def do_POST(self):
         length = int(self.headers["Content-Length"])
         body = json.loads(self.rfile.read(length))
 
         if self.path == "/api":
-            self.send(api.call(
+            self.send(API.call(
                 body.get("path"),
                 body.get("data"),
                 body.get("token")
             ))
-            return
+        else:
+            self.send({"error": "invalid"})
 
-        self.send({"error": "invalid route"})
-
-# =========================================================
-# SYSTEM BOOT
-# =========================================================
+# ==============================
+# BOOT
+# ==============================
 def boot():
-    print("🚀 V23 PRODUCTION SAAS AI CLOUD OS STARTED")
+    print("🚀 SYSTEM STARTED")
 
     tid = create_tenant("GLOBAL")
+    create_user(tid, "admin", "1234")
 
-    create_user(tid, "admin@ai.com", "1234", "admin")
-    token = login("admin@ai.com", "1234")["token"]
+    token = login("admin", "1234")["token"]
 
-    project = create_project(tid, "CORE_PLATFORM")
+    create_project(tid, "CORE")
 
-    Cache.set("system", "online")
-    log("boot_complete")
+    log("boot")
 
-    print("AI:", autonomous_ai())
-    print("TENANT:", tid)
-    print("PROJECT:", project["id"])
-    print("CACHE:", Cache.get("system"))
+    print("AI:", ai_run())
+    print("TOKEN:", token)
     print("ANALYTICS:", analytics())
 
     # HTTPServer(("0.0.0.0", 8000), Handler).serve_forever()
