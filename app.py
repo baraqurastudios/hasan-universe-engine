@@ -1,122 +1,99 @@
+1# ==========================================
+# 🧬 BaraQura OS: Unified Master Engine v6.0
+# 📅 Date: 28 Mar, 2026 | Mode: Self-Healing
+# ==========================================
+
 import streamlit as st
 import requests
 import base64
 import datetime
 
-# --- ১. মূল কনফিগারেশন ---
+# --- ১. গ্লোবাল রিপোজিটরি কনফিগারেশন ---
 U, R, F = "baraqurastudios", "hasan-universe-engine", "app.py"
 
-st.set_page_config(page_title="BaraQura OS v5.5", layout="wide")
+st.set_page_config(page_title="BaraQura Master Engine", layout="wide", page_icon="🛰️")
 
-# --- ২. সাইডবার এক্সেস ---
-st.sidebar.title("🔐 Master Access")
-user_token = st.sidebar.text_input("GitHub Token:", type="password", key="auth_token_final")
+# --- ২. সাইডবার: মাস্টার এক্সেস ---
+st.sidebar.header("🔐 Master Control")
+# ইউনিক key ব্যবহার করে DuplicateElementId এরর স্থায়ীভাবে ফিক্স করা হয়েছে
+user_token = st.sidebar.text_input("GitHub Access Token:", type="password", key="master_auth_v6")
 
-# --- ৩. কোর ফাংশন ---
+# --- ৩. কোর ইঞ্জিন (GitHub API Handler) ---
 def call_github(method, endpoint, data=None, token=None):
     url = f"https://api.github.com/repos/{U}/{R}/contents/{endpoint}"
-    h = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
-    try:
-        if method == "GET": res = requests.get(url, headers=h)
-        else: res = requests.put(url, headers=h, json=data)
-        return res.json(), res.status_code
-    except: return None, 500
-
-# --- ৪. মেইন ইন্টারফেস ---
-st.title("🛰️ BaraQura Unified Master Engine")
-
-if user_token:
-    data, status = call_github("GET", F, token=user_token)
-    if status == 200:
-        st.sidebar.success("✅ Connected to GitHub")
-        
-        # ওরাকল পোর্টাল
-        st.subheader("🌀 The Oracle Update Portal")
-        patch_code = st.text_area("নতুন কোড এখানে দিন...", height=350, key="patch_input_final")
-        
-        if st.button("Push System Update 🚀"):
-            if patch_code:
-                sha = data['sha']
-                payload = {
-                    "message": f"Emergency Fix: {datetime.datetime.now()}",
-                    "content": base64.b64encode(patch_code.encode()).decode(),
-                    "sha": sha
-                }
-                _, p_status = call_github("PUT", F, data=payload, token=user_token)
-                if p_status == 200:
-                    st.success("✅ সফলভাবে আপডেট হয়েছে! অ্যাপটি রিফ্রেশ দিন।")
-                    st.balloons()
-                else: st.error(f"Error: {p_status}")
-    else:
-        st.sidebar.error(f"❌ কানেকশন এরর: {status}। টোকেন চেক করুন।")
-else:
-    st.warning("দয়া করে সাইডবারে আপনার GitHub Token দিন।")
-st.sidebar.title("🔐 Master Access")
-user_token = st.sidebar.text_input("GitHub Token (BaraQuraSync):", type="password")
-
-# --- ৩. কোর ইঞ্জিন (GitHub API) ---
-def call_github(method, endpoint, data=None, current_token=None):
-    url = f"https://api.github.com/repos/{U}/{R}/contents/{endpoint}"
     headers = {
-        "Authorization": f"token {current_token}",
+        "Authorization": f"token {token}",
         "Accept": "application/vnd.github.v3+json"
     }
     try:
         if method == "GET":
-            res = requests.get(url, headers=headers)
+            res = requests.get(url, headers=headers, timeout=10)
         else:
-            res = requests.put(url, headers=headers, json=data)
+            res = requests.put(url, headers=headers, json=data, timeout=10)
         return res.json(), res.status_code
     except Exception as e:
         return {"message": str(e)}, 500
 
-# --- ৪. কানেকশন ও স্ট্যাটাস চেক ---
+# --- ৪. মেইন ফ্রেম লজিক ---
+st.title("🛰️ BaraQura Unified Master Engine")
+
 if user_token:
-    data, status = call_github("GET", F, current_token=user_token)
+    # কানেকশন চেক
+    with st.spinner("Checking Connection..."):
+        file_data, status = call_github("GET", F, token=user_token)
+    
     if status == 200:
-        st.sidebar.success(f"✅ Connected to {R}")
-    else:
-        st.sidebar.error(f"❌ Connection Error: {status}")
-
-# --- ৫. ওরাকল পোর্টাল ইন্টারফেস ---
-st.title("🌀 The Oracle Update Portal")
-st.info("Status: **Clean Recovery Mode Active**")
-
-patch_code = st.text_area("নতুন কোড এখানে দিন...", height=250)
-
-if st.button("Execute System Update 🚀"):
-    if not user_token:
-        st.error("❌ আগে সাইডবারে GitHub Token প্রদান করুন।")
-    elif not patch_code:
-        st.warning("⚠️ কোড প্রদান করুন।")
-    else:
-        with st.spinner("🔄 সিঙ্ক্রোনাইজ হচ্ছে..."):
-            file_data, get_status = call_github("GET", F, current_token=user_token)
+        st.sidebar.success(f"✅ Connected: {R}")
+        
+        # ট্যাব সিস্টেম: আপডেট এবং স্ক্রিপ্ট ল্যাব
+        tab1, tab2, tab3 = st.tabs(["🌀 Oracle Update", "📝 Story Lab", "📊 Analytics"])
+        
+        # ট্যাব ১: ওরাকল আপডেট পোর্টাল
+        with tab1:
+            st.subheader("The Oracle Update Portal")
+            st.info("Update Mode: **Full Overwrite Sync (Safe)**")
             
-            if get_status == 200:
-                sha = file_data['sha']
-                # ৫.১ ক্লিন রিডিং (Syntax Error এড়াতে)
-                old_code = base64.b64decode(file_data['content']).decode('utf-8', errors='ignore')
-                
-                # ৫.২ স্মার্ট অ্যাপেন্ড লজিক
-                final_code = old_code.rstrip() + f"\n\n# --- Oracle Patch: {datetime.datetime.now()} ---\n{patch_code}\n"
-                
-                # ৬. পুশ করা
-                update_payload = {
-                    "message": f"Fixed Syntax: {datetime.datetime.now().strftime('%H:%M')}",
-                    "content": base64.b64encode(final_code.encode()).decode(),
-                    "sha": sha
-                }
-                
-                _, put_status = call_github("PUT", F, data=update_payload, current_token=user_token)
-                
-                if put_status == 200:
-                    st.balloons()
-                    st.success("✅ অভিনন্দন! আপনার সিস্টেম সফলভাবে আপডেট হয়েছে।")
+            # নতুন কোড ইনপুট এলাকা
+            patch_code = st.text_area("নতুন কোড এখানে দিন...", height=400, key="oracle_patch_area_v6", placeholder="Paste Python code here...")
+            
+            if st.button("Push System Update 🚀", key="execute_sync_v6"):
+                if patch_code:
+                    try:
+                        # ৫.১ সিনট্যাক্স শিল্ড: ভুল কোড থাকলে এটি আপডেট আটকে দেবে
+                        compile(patch_code, "<string>", "exec")
+                        
+                        sha = file_data['sha']
+                        payload = {
+                            "message": f"BaraQura OS Auto-Sync: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}",
+                            "content": base64.b64encode(patch_code.encode()).decode(),
+                            "sha": sha
+                        }
+                        
+                        _, put_status = call_github("PUT", F, data=payload, token=user_token)
+                        
+                        if put_status == 200:
+                            st.balloons()
+                            st.success("✅ অভিনন্দন! সিস্টেম ক্লিনভাবে আপডেট হয়েছে।")
+                            st.info("💡 পরিবর্তনগুলো কার্যকর করতে অ্যাপটি রিফ্রেশ দিন।")
+                        else:
+                            st.error(f"❌ পুশ এরর: {put_status}")
+                    except Exception as e:
+                        # সিনট্যাক্স এরর মেসেজ
+                        st.error(f"❌ কোডে সিনট্যাক্স ভুল আছে! আপডেট বাতিল করা হয়েছে। \n\nError: {e}")
                 else:
-                    st.error(f"❌ পুশ এরর (Status: {put_status})।")
-            else:
-                st.error(f"❌ ফাইল খুঁজে পাওয়া যায়নি।")
+                    st.warning("⚠️ কোড বক্স খালি।")
+        
+        # ট্যাব ২: হাসান এনিমেশন স্ক্রিপ্ট (ইউজার সামারি অনুযায়ী)
+        with tab2:
+            st.subheader("📝 Script Production Lab")
+            st.write("চরিত্র: **হাসান (৭ বছর)** | মা: **লিজা**")
+            st.info("এখানে আপনার এনিমেশন সিরিজের স্টোরি এবং ভয়েস স্ক্রিপ্ট ম্যানেজ করা যাবে।")
 
+        with tab3:
+            st.subheader("Studio Analytics")
+            st.metric("System Health", "Optimal", "100%")
 
-Correction kore dau
+    else:
+        st.sidebar.error(f"❌ কানেকশন এরর: {status}। টোকেন বা রিপোজিটরি নাম চেক করুন।")
+else:
+    st.warning("🔒 অ্যাক্সেস পেতে সাইডবারে আপনার GitHub Token প্রদান করুন।")
