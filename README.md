@@ -1,7 +1,7 @@
 """
 ====================================================
-NEXT STEP REAL PRODUCT LEVEL AI PLATFORM
-PURE PYTHON • FULL STACK ARCHITECTURE SIMULATION
+NEXT STEP FINAL AI SAAS PLATFORM (LEVEL 10)
+PURE PYTHON • FULL STACK ARCHITECTURE MODEL
 ====================================================
 """
 
@@ -11,15 +11,16 @@ import hashlib
 from collections import defaultdict
 
 # =========================
-# DATABASE LAYER (SIMULATION OF POSTGRES)
+# DATABASE LAYER (POSTGRES SIMULATION)
 # =========================
 class DB:
     users = {}
     sessions = {}
+    oauth_users = {}
     projects = {}
     deployments = {}
-    oauth_users = {}
     memory = []
+    redis_cache = {}
     logs = []
     analytics = defaultdict(int)
 
@@ -35,67 +36,44 @@ def log(event, data=None):
     })
 
 # =========================
-# FASTAPI-LIKE ROUTER CORE
+# JWT SYSTEM (SIMPLIFIED)
 # =========================
-def api(route, payload=None):
-    DB.analytics["requests"] += 1
-    log("api_call", route)
+SECRET = "NEXT_STEP_SECRET"
 
-    routes = {
-        "auth/register": register_user,
-        "auth/login": login_user,
-        "auth/oauth": oauth_login,
-        "jwt/verify": verify_jwt,
+def create_jwt(username):
+    raw = username + SECRET + str(time.time())
+    return hashlib.sha256(raw.encode()).hexdigest()
 
-        "project/create": create_project,
-        "project/add_file": add_file,
-
-        "deploy/run": deploy,
-
-        "memory/add": memory_add,
-        "memory/search": memory_search,
-
-        "agent/run": run_agent,
-        "ai/autonomous": autonomous_engine,
-
-        "analytics": analytics
-    }
-
-    fn = routes.get(route)
-    if not fn:
-        return {"error": "route_not_found"}
-
-    return fn(**(payload or {}))
+def verify_jwt(token):
+    return token in DB.sessions
 
 # =========================
-# AUTH SYSTEM (JWT + BASIC)
+# AUTH SYSTEM
 # =========================
-SECRET = "AI_SECRET_KEY"
-
-def hash_pass(password):
-    return hashlib.sha256(password.encode()).hexdigest()
-
-
-def register_user(username, password):
+def register(username, password):
     if username in DB.users:
         return {"error": "exists"}
 
     DB.users[username] = {
         "id": str(uuid.uuid4()),
-        "password": hash_pass(password)
+        "password": hashlib.sha256(password.encode()).hexdigest()
     }
 
-    log("user_registered", username)
-    return {"status": "registered"}
+    log("register", username)
+    return {"status": "ok"}
 
-
-def login_user(username, password):
+def login(username, password):
     user = DB.users.get(username)
 
-    if not user or user["password"] != hash_pass(password):
+    if not user:
         return {"status": "failed"}
 
-    token = hashlib.sha256((username + SECRET).encode()).hexdigest()
+    hashed = hashlib.sha256(password.encode()).hexdigest()
+
+    if user["password"] != hashed:
+        return {"status": "failed"}
+
+    token = create_jwt(username)
     DB.sessions[token] = username
 
     DB.analytics["logins"] += 1
@@ -103,29 +81,34 @@ def login_user(username, password):
 
     return {"jwt": token}
 
-
-def verify_jwt(token):
-    return {
-        "valid": token in DB.sessions,
-        "user": DB.sessions.get(token)
-    }
-
 # =========================
-# OAUTH SYSTEM (GOOGLE/GITHUB SIMULATION)
+# OAUTH (GOOGLE / GITHUB SIMULATION)
 # =========================
 def oauth_login(provider, email):
-    user_id = f"{provider}:{email}"
+    uid = f"{provider}:{email}"
 
-    DB.oauth_users[user_id] = {
+    DB.oauth_users[uid] = {
         "provider": provider,
         "email": email
     }
 
-    log("oauth_login", user_id)
-    return {"status": "oauth_success", "user": user_id}
+    log("oauth", uid)
+    return {"status": "oauth_success", "user": uid}
 
 # =========================
-# PROJECT SYSTEM (LIKE GITHUB)
+# REDIS CACHE SYSTEM
+# =========================
+def cache_set(key, value):
+    DB.redis_cache[key] = {
+        "value": value,
+        "time": time.time()
+    }
+
+def cache_get(key):
+    return DB.redis_cache.get(key, {}).get("value")
+
+# =========================
+# PROJECT SYSTEM (GITHUB STYLE)
 # =========================
 def create_project(owner, name):
     pid = str(uuid.uuid4())
@@ -137,45 +120,43 @@ def create_project(owner, name):
         "created": time.time()
     }
 
-    log("project_created", name)
+    log("project", name)
     return {"project_id": pid}
 
-
 def add_file(project_id, filename, content):
-    project = DB.projects.get(project_id)
-    if not project:
+    if project_id not in DB.projects:
         return {"error": "not_found"}
 
-    project["files"].append({
-        "file": filename,
+    DB.projects[project_id]["files"].append({
+        "name": filename,
         "content": content
     })
 
-    log("file_added", filename)
+    log("file", filename)
     return {"status": "ok"}
 
 # =========================
-# DEPLOYMENT SYSTEM (DOCKER SIMULATION)
+# DEPLOYMENT SYSTEM (DOCKER STYLE)
 # =========================
 def deploy(project_id):
     if project_id not in DB.projects:
-        return {"error": "invalid_project"}
+        return {"error": "invalid"}
 
-    deployment_id = str(uuid.uuid4())
+    did = str(uuid.uuid4())
 
-    DB.deployments[deployment_id] = {
+    DB.deployments[did] = {
         "project": project_id,
         "status": "running",
-        "container": f"docker_{deployment_id[:6]}"
+        "container": f"container_{did[:6]}"
     }
 
     DB.analytics["deployments"] += 1
     log("deploy", project_id)
 
-    return {"deployment_id": deployment_id}
+    return {"deployment_id": did}
 
 # =========================
-# MEMORY SYSTEM (AI VECTOR LIKE STORAGE)
+# MEMORY ENGINE (AI VECTOR STYLE)
 # =========================
 def memory_add(text):
     DB.memory.append({
@@ -184,26 +165,20 @@ def memory_add(text):
         "time": time.time()
     })
 
-    log("memory_add", text)
-
-
 def memory_search(keyword):
-    return [
-        m for m in DB.memory
-        if keyword.lower() in m["text"].lower()
-    ]
+    return [m for m in DB.memory if keyword.lower() in m["text"].lower()]
 
 # =========================
-# AI AGENT SYSTEM (GPT STYLE ORCHESTRATION)
+# AI AGENT SYSTEM
 # =========================
 class Agent:
-    def __init__(self, role):
-        self.role = role
+    def __init__(self, name):
+        self.name = name
 
     def run(self, task):
         DB.analytics["tasks"] += 1
-        log("agent_task", {"role": self.role, "task": task})
-        return f"{self.role.upper()} executing: {task}"
+        log("agent", {"name": self.name, "task": task})
+        return f"{self.name} executing → {task}"
 
 
 AGENTS = {
@@ -213,41 +188,34 @@ AGENTS = {
     "ai": Agent("ai_core")
 }
 
-
 def run_agent(role, task):
-    agent = AGENTS.get(role)
-    if not agent:
+    if role not in AGENTS:
         return {"error": "invalid_agent"}
-    return agent.run(task)
+    return AGENTS[role].run(task)
 
 # =========================
-# AUTONOMOUS GPT-STYLE ENGINE
+# AUTONOMOUS AI BRAIN
 # =========================
-def autonomous_engine():
+def autonomous_ai():
     tasks = [
-        "optimize backend performance",
-        "analyze logs for errors",
-        "scan system memory",
-        "improve API latency",
-        "run security audit"
+        "optimize system",
+        "scan logs",
+        "analyze memory",
+        "improve performance",
+        "security audit"
     ]
 
     task = tasks[int(time.time()) % len(tasks)]
     return run_agent("ai", task)
 
 # =========================
-# ANALYTICS DASHBOARD (LIKE PROMETHEUS)
+# ANALYTICS DASHBOARD
 # =========================
 def analytics():
-    return {
-        "requests": DB.analytics["requests"],
-        "logins": DB.analytics["logins"],
-        "deployments": DB.analytics["deployments"],
-        "tasks": DB.analytics["tasks"]
-    }
+    return dict(DB.analytics)
 
 # =========================
-# CLOUD LAYER (DOCKER + DEPLOY SIMULATION)
+# CLOUD LAYER
 # =========================
 class Cloud:
     @staticmethod
@@ -261,38 +229,65 @@ class Cloud:
 # =========================
 # FRONTEND LAYER (REACT SIMULATION)
 # =========================
-def react_dashboard():
+def react_ui():
     return {
-        "ui": "React Dashboard Loaded",
-        "components": ["Login", "Projects", "Deployments", "Analytics"]
+        "frontend": "React Dashboard",
+        "pages": ["Login", "Projects", "Deploy", "Analytics"]
     }
 
 # =========================
-# BOOT SYSTEM
+# API ROUTER (FASTAPI STYLE)
+# =========================
+def api(route, payload=None):
+    DB.analytics["requests"] += 1
+    log("api", route)
+
+    routes = {
+        "auth/register": register,
+        "auth/login": login,
+        "auth/oauth": oauth_login,
+        "project/create": create_project,
+        "project/add": add_file,
+        "deploy": deploy,
+        "memory/add": memory_add,
+        "memory/search": memory_search,
+        "agent/run": run_agent,
+        "ai/run": autonomous_ai,
+        "analytics": analytics
+    }
+
+    fn = routes.get(route)
+    if not fn:
+        return {"error": "not_found"}
+
+    return fn(**(payload or {}))
+
+# =========================
+# SYSTEM BOOT
 # =========================
 def boot():
-    print("🚀 NEXT STEP REAL PRODUCT PLATFORM STARTED")
+    print("🚀 NEXT STEP FINAL AI SAAS PLATFORM STARTED")
 
     api("auth/register", {"username": "admin", "password": "1234"})
     token = api("auth/login", {"username": "admin", "password": "1234"})
 
-    project = api("project/create", {"owner": "admin", "name": "ai-saas-core"})
+    project = api("project/create", {"owner": "admin", "name": "ai-core"})
 
-    api("project/add_file", {
+    api("project/add", {
         "project_id": project["project_id"],
-        "filename": "app.py",
-        "content": "print('AI SaaS Running')"
+        "filename": "main.py",
+        "content": "print('AI running')"
     })
 
-    api("deploy/run", {"project_id": project["project_id"]})
-    api("memory/add", {"text": "system fully initialized"})
+    api("deploy", {"project_id": project["project_id"]})
+    api("memory/add", {"text": "system initialized successfully"})
 
-    print(react_dashboard())
-    print(Cloud.deploy_service("ai-core-api"))
+    print(react_ui())
+    print(Cloud.deploy_service("ai-core"))
 
     while True:
         print("\n========================")
-        print("AI:", autonomous_engine())
+        print("AI:", autonomous_ai())
         print("ANALYTICS:", analytics())
         print("MEMORY:", memory_search("system"))
         print("========================")
