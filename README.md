@@ -1,206 +1,137 @@
-import json, time, uuid, hashlib
-from http.server import BaseHTTPRequestHandler, HTTPServer
+# ==========================================
+# 🧠 BaraQura OS v1.5 – GOD MODE MODULE
+# Features:
+# 🧠 AI Auto Debugging
+# 🔍 AI Code Review
+# 📊 Usage Analytics
+# 🧩 Plugin Marketplace
+# ==========================================
 
-# =======================
-# STORAGE LAYER
-# =======================
-class DB:
-    users, tenants, projects = {}, {}, {}
-    logs, files, plugins = {}, {}, {}
+import os
+import json
+import openai
+import datetime
 
-class Cache:
-    store = {}
-    @staticmethod
-    def set(k,v): Cache.store[k]=v
-    @staticmethod
-    def get(k): return Cache.store.get(k)
+st.divider()
+st.header("🧠 GOD MODE AI SYSTEM")
 
-# =======================
-# UTILITIES
-# =======================
-def uid(): return str(uuid.uuid4())
-def hashv(x): return hashlib.sha256(x.encode()).hexdigest()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# =======================
-# AUTH SYSTEM
-# =======================
-class Auth:
-    sessions = {}
-    @staticmethod
-    def create(user):
-        t = hashv(user+str(time.time()))
-        Auth.sessions[t] = user
-        return t
-    @staticmethod
-    def verify(t): return Auth.sessions.get(t)
+# ==========================================
+# 🧠 1. AI AUTO DEBUGGING
+# ==========================================
+st.subheader("🧠 AI Auto Debugger")
 
-# =======================
-# SAAS CORE
-# =======================
-def create_tenant(name):
-    tid=uid()
-    DB.tenants[tid]={"id":tid,"name":name}
-    return tid
+def ai_debug(code):
+    try:
+        res = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Fix bugs and return clean Python code only."},
+                {"role": "user", "content": code}
+            ],
+            temperature=0.2
+        )
+        return res['choices'][0]['message']['content']
+    except Exception as e:
+        return f"# Debug Error: {e}"
 
-def create_user(tid,email,password):
-    DB.users[email]={"tenant":tid,"password":hashv(password)}
-    return DB.users[email]
+if st.button("🛠️ Auto Fix Code"):
+    if new_code_input:
+        fixed_code = ai_debug(new_code_input)
+        st.session_state['fixed_code'] = fixed_code
+        st.success("✅ Code Fixed!")
 
-def login(email,password):
-    u=DB.users.get(email)
-    if not u or u["password"]!=hashv(password):
-        return {"error":"login failed"}
-    return {"token":Auth.create(email)}
+if 'fixed_code' in st.session_state:
+    st.text_area("🧪 Fixed Code", st.session_state['fixed_code'], height=250)
 
-# =======================
-# OAUTH SIMULATION
-# =======================
-def oauth(provider,email):
-    if email not in DB.users:
-        tid=list(DB.tenants.keys())[0] if DB.tenants else create_tenant("default")
-        create_user(tid,email,"oauth")
-    return {"token":Auth.create(email),"provider":provider}
+    if st.button("Use Fixed Code"):
+        new_code_input = st.session_state['fixed_code']
+        st.success("✅ Applied!")
 
-# =======================
-# PROJECT SYSTEM
-# =======================
-def create_project(tid,name):
-    pid=uid()
-    DB.projects[pid]={"tenant":tid,"name":name}
-    return DB.projects[pid]
 
-# =======================
-# AI ENGINE
-# =======================
-def ai():
-    tasks=["optimize","scan","scale","fix","secure","analyze"]
-    return {"ai":tasks[int(time.time())%len(tasks)]}
+# ==========================================
+# 🔍 2. AI CODE REVIEW
+# ==========================================
+st.subheader("🔍 AI Code Review")
 
-# =======================
-# PLUGIN SYSTEM
-# =======================
-def register_plugin(name,fn): DB.plugins[name]=fn
-def run_plugin(name,data):
-    return DB.plugins[name](data) if name in DB.plugins else {"error":"plugin not found"}
+def ai_review(code):
+    try:
+        res = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Review this code. Give issues and improvements."},
+                {"role": "user", "content": code}
+            ],
+            temperature=0.3
+        )
+        return res['choices'][0]['message']['content']
+    except Exception as e:
+        return f"Review Error: {e}"
 
-# =======================
-# ANALYTICS
-# =======================
-def log(event): DB.logs[uid()]={"event":event}
-def analytics():
-    res={}
-    for l in DB.logs.values():
-        res[l["event"]]=res.get(l["event"],0)+1
-    return res
+if st.button("🔎 Run Code Review"):
+    if new_code_input:
+        review = ai_review(new_code_input)
+        st.session_state['review'] = review
 
-# =======================
-# FILE STORAGE
-# =======================
-def upload(name,content):
-    fid=uid()
-    DB.files[fid]={"name":name,"content":content}
-    return fid
+if 'review' in st.session_state:
+    st.text_area("📋 Review Report", st.session_state['review'], height=250)
 
-# =======================
-# DEPLOY SYSTEM
-# =======================
-def deploy(app): return {"app":app,"status":"running"}
 
-# =======================
-# API ENGINE
-# =======================
-class API:
-    routes={}
-    @staticmethod
-    def route(path):
-        def wrap(fn):
-            API.routes[path]=fn
-            return fn
-        return wrap
-    @staticmethod
-    def call(path,data=None,token=None):
-        user=Auth.verify(token)
-        if path not in API.routes:
-            return {"error":"404"}
-        return API.routes[path](data or {},user)
+# ==========================================
+# 📊 3. USAGE ANALYTICS
+# ==========================================
+st.subheader("📊 Usage Analytics")
 
-# =======================
-# ROUTES
-# =======================
-@API.route("/tenant")
-def tenant(d,u): return {"id":create_tenant(d["name"])}
+if 'analytics' not in st.session_state:
+    st.session_state['analytics'] = {
+        "updates": 0,
+        "ai_used": 0,
+        "debug_runs": 0
+    }
 
-@API.route("/user")
-def user(d,u): return create_user(d["tenant"],d["email"],d["password"])
+# counters
+if st.button("Simulate Update"):
+    st.session_state['analytics']['updates'] += 1
 
-@API.route("/login")
-def login_api(d,u): return login(d["email"],d["password"])
+if st.button("Simulate AI Use"):
+    st.session_state['analytics']['ai_used'] += 1
 
-@API.route("/oauth")
-def oauth_api(d,u): return oauth(d["provider"],d["email"])
+if st.button("Simulate Debug"):
+    st.session_state['analytics']['debug_runs'] += 1
 
-@API.route("/project")
-def project(d,u):
-    if not u: return {"error":"unauthorized"}
-    return create_project(d["tenant"],d["name"])
+st.json(st.session_state['analytics'])
 
-@API.route("/ai")
-def ai_api(d,u): return ai()
 
-@API.route("/plugin")
-def plugin_api(d,u): return run_plugin(d["name"],d["data"])
+# ==========================================
+# 🧩 4. PLUGIN MARKETPLACE
+# ==========================================
+st.subheader("🧩 Plugin Marketplace")
 
-@API.route("/upload")
-def upload_api(d,u): return {"file_id":upload(d["name"],d["content"])}
+PLUGINS = {
+    "Formatter": "Auto format Python code",
+    "Security Scan": "Basic vulnerability check",
+    "Comment Generator": "Add comments to code"
+}
 
-@API.route("/deploy")
-def deploy_api(d,u): return deploy(d["name"])
+selected_plugin = st.selectbox("Choose Plugin", list(PLUGINS.keys()))
+st.info(PLUGINS[selected_plugin])
 
-@API.route("/analytics")
-def analytics_api(d,u): return analytics()
+def run_plugin(name, code):
+    if name == "Formatter":
+        return code.strip()
+    elif name == "Security Scan":
+        if "eval(" in code:
+            return "⚠️ Warning: eval() detected!"
+        return "✅ No major issues"
+    elif name == "Comment Generator":
+        return "# Auto-commented\n" + code
+    return code
 
-@API.route("/cache/set")
-def cache_set(d,u): Cache.set(d["key"],d["value"]); return {"ok":True}
+if st.button("Run Plugin ⚙️"):
+    if new_code_input:
+        result = run_plugin(selected_plugin, new_code_input)
+        st.session_state['plugin_result'] = result
 
-@API.route("/cache/get")
-def cache_get(d,u): return {"value":Cache.get(d["key"])}
-
-# =======================
-# HTTP SERVER
-# =======================
-class Handler(BaseHTTPRequestHandler):
-    def send(self,d):
-        self.send_response(200)
-        self.send_header("Content-Type","application/json")
-        self.end_headers()
-        self.wfile.write(json.dumps(d).encode())
-
-    def do_POST(self):
-        length=int(self.headers["Content-Length"])
-        body=json.loads(self.rfile.read(length))
-        if self.path=="/api":
-            self.send(API.call(body.get("path"),body.get("data"),body.get("token")))
-        else:
-            self.send({"error":"invalid route"})
-
-# =======================
-# BOOT
-# =======================
-def boot():
-    print("🚀 FINAL SYSTEM READY")
-
-    tid=create_tenant("GLOBAL")
-    create_user(tid,"admin","1234")
-
-    token=login("admin","1234")["token"]
-    create_project(tid,"CORE")
-
-    log("boot")
-
-    print("AI:",ai())
-    print("TOKEN:",token)
-    print("ANALYTICS:",analytics())
-
-    # HTTPServer(("0.0.0.0",8000),Handler).serve_forever()
-
-boot()
+if 'plugin_result' in st.session_state:
+    st.text_area("🔌 Plugin Output", st.session_state['plugin_result'], height=200)
