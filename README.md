@@ -1,7 +1,7 @@
 """
 ====================================================
-NEXT STEP FULL PLATFORM (ALL FEATURES COMBINED)
-PURE PYTHON • SINGLE FILE • MODULAR SYSTEM
+NEXT STEP FULL AI SAAS PLATFORM
+PURE PYTHON • SINGLE FILE • CLEAN ARCHITECTURE
 ====================================================
 """
 
@@ -10,7 +10,7 @@ import uuid
 from collections import defaultdict
 
 # =========================
-# IN-MEMORY DATABASE
+# DATABASE LAYER (IN-MEMORY)
 # =========================
 class DB:
     users = {}
@@ -22,7 +22,7 @@ class DB:
     analytics = defaultdict(int)
 
 # =========================
-# LOGGER CORE
+# LOGGER
 # =========================
 def log(event, data=None):
     DB.logs.append({
@@ -33,7 +33,7 @@ def log(event, data=None):
     })
 
 # =========================
-# AUTH MODULE
+# AUTH SYSTEM
 # =========================
 def create_user(username, password):
     if username in DB.users:
@@ -45,12 +45,11 @@ def create_user(username, password):
     }
 
     log("user_created", username)
-    return {"status": "created", "user": username}
+    return {"status": "ok", "user": username}
 
 
 def login(username, password):
     user = DB.users.get(username)
-
     if not user or user["password"] != password:
         return {"status": "failed"}
 
@@ -72,7 +71,7 @@ def create_project(owner, name):
         "owner": owner,
         "name": name,
         "files": [],
-        "created": time.time()
+        "created_at": time.time()
     }
 
     log("project_created", name)
@@ -100,9 +99,9 @@ def deploy(project_id):
     if project_id not in DB.projects:
         return {"error": "invalid_project"}
 
-    deploy_id = str(uuid.uuid4())
+    deployment_id = str(uuid.uuid4())
 
-    DB.deployments[deploy_id] = {
+    DB.deployments[deployment_id] = {
         "project_id": project_id,
         "status": "running",
         "time": time.time()
@@ -111,10 +110,10 @@ def deploy(project_id):
     DB.analytics["deployments"] += 1
     log("deploy", project_id)
 
-    return {"deployment_id": deploy_id}
+    return {"deployment_id": deployment_id}
 
 # =========================
-# MEMORY SYSTEM (AI CONTEXT)
+# MEMORY ENGINE (AI CONTEXT)
 # =========================
 def memory_add(text):
     DB.memory.append({
@@ -142,7 +141,7 @@ class Agent:
     def run(self, task):
         DB.analytics["tasks"] += 1
         log("agent_task", {"agent": self.name, "task": task})
-        return f"[{self.name}] executed: {task}"
+        return f"{self.name} → {task}"
 
 
 AGENTS = {
@@ -153,22 +152,22 @@ AGENTS = {
 }
 
 
-def run_agent(agent_name, task):
-    agent = AGENTS.get(agent_name)
+def run_agent(name, task):
+    agent = AGENTS.get(name)
     if not agent:
         return {"error": "invalid_agent"}
     return agent.run(task)
 
 # =========================
-# AUTONOMOUS AI ENGINE
+# AUTONOMOUS AI LOOP
 # =========================
 def autonomous_ai():
     tasks = [
-        "system optimization",
-        "log analysis",
-        "memory scan",
-        "performance tuning",
-        "security check"
+        "optimize system",
+        "scan logs",
+        "analyze memory",
+        "improve performance",
+        "run security check"
     ]
 
     task = tasks[int(time.time()) % len(tasks)]
@@ -181,7 +180,7 @@ def analytics():
     return dict(DB.analytics)
 
 # =========================
-# API ROUTER (CORE ENGINE)
+# API ROUTER CORE
 # =========================
 def api(route, payload=None):
     DB.analytics["requests"] += 1
@@ -207,33 +206,33 @@ def api(route, payload=None):
     return fn(**(payload or {}))
 
 # =========================
-# SYSTEM BOOTSTRAP
+# SYSTEM BOOT
 # =========================
 def boot():
-    print("🚀 NEXT STEP PLATFORM INITIALIZING...")
+    print("🚀 NEXT STEP AI SAAS PLATFORM STARTED")
 
     api("user/create", {"username": "admin", "password": "1234"})
     api("user/login", {"username": "admin", "password": "1234"})
 
-    project = api("project/create", {"owner": "admin", "name": "ai-core-system"})
+    project = api("project/create", {"owner": "admin", "name": "core-ai-system"})
 
     api("project/add_file", {
         "project_id": project["project_id"],
         "filename": "main.py",
-        "content": "print('AI system running')"
+        "content": "print('AI running')"
     })
 
     api("deploy", {"project_id": project["project_id"]})
-    api("memory/add", {"text": "system initialized successfully"})
+    api("memory/add", {"text": "system initialized"})
 
     while True:
-        print("\n==========================")
+        print("\n========================")
         print("AI:", autonomous_ai())
         print("ANALYTICS:", analytics())
         print("MEMORY:", memory_search("system"))
-        print("==========================")
+        print("========================")
 
         time.sleep(3)
 
-# START SYSTEM
+# START
 boot()
