@@ -1,20 +1,44 @@
-import os
-import getpass # এটি টাইপ করার সময় পাসওয়ার্ড লুকিয়ে রাখে
+import os  # 'i' অবশ্যই ছোট হাতের হতে হবে
 
 def master_revive():
-    print("🔥 --- [ BARAQURA REVIVAL PROTOCOL ] --- 🔥")
-    print("Status: DEEP FROZEN ❄️")
+    print("🔥 INITIATING REVIVAL PROTOCOL...")
     
-    # এটি পাসওয়ার্ডটি স্ক্রিনে দেখাবে না
-    secret_input = getpass.getpass("🔑 Enter Master Key to Restore Reality: ")
+    # আপনার মাস্টার কি ইনপুট
+    user_input = input("ENTER MASTER KEY TO ACTIVATE SYSTEM: ")
     
-    # এখানে আপনার খাতার সেই গোপন কি-টি বসিয়ে নিন (আমি এখন এটি জানি না)
-    if secret_input == "আপনার_খাতায়_লেখা_সেই_গোপন_কোড":
-        print("\n✅ AUTHENTICATION SUCCESSFUL!")
-        # ফাইল আনলক করার লজিক এখানে শুরু হবে...
-        print("🚀 System is waking up... [ONLINE]")
+    # মাস্টার কি ভেরিফিকেশন
+    if user_input == "V8_UNIVERSE_GOD_2026":
+        print("🔑 Key Accepted. Unlocking Vault...")
+        
+        # ১. লক ফাইল রিমুভ করা
+        if os.path.exists(".master_lock"):
+            try:
+                os.remove(".master_lock")
+                print("🔓 Master Lock file removed.")
+            except Exception as e:
+                print(f"⚠️ Could not remove lock file: {e}")
+            
+        # ২. ফাইলগুলোকে ভল্ট থেকে বের করে আনা
+        # এখানে ফাইলগুলোর নাম আপনার তালিকার সাথে হুবহু মিলতে হবে
+        vault_files = [".v81_engine.py.vault", ".github_handler.py.vault", ".admin_panel.py.vault"]
+        
+        for v_file in vault_files:
+            # ফাইলের নাম থেকে ডট এবং .vault বাদ দিয়ে আসল নাম বের করা
+            # উদাহরণ: .v81_engine.py.vault -> v81_engine.py
+            original_name = v_file.lstrip('.').replace(".vault", "")
+            
+            if os.path.exists(v_file):
+                try:
+                    os.rename(v_file, original_name)
+                    print(f"⚡ {original_name} is now ACTIVE.")
+                except Exception as e:
+                    print(f"❌ Error activating {original_name}: {e}")
+            else:
+                print(f"❓ {v_file} not found. Skipping...")
+
+        print("\n🚀 SYSTEM ONLINE. Welcome back, Master.")
     else:
-        print("\n❌ AUTHENTICATION FAILED! ACCESS DENIED.")
+        print("❌ ACCESS DENIED! SYSTEM REMAINING FROZEN.")
 
 if __name__ == "__main__":
     master_revive()
