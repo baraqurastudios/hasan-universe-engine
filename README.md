@@ -1,120 +1,125 @@
-import numpy as np
-from collections import deque
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
+import time
+from collections import deque, defaultdict
 
 
-class LSTMBrianV321:
+class StreamingBrainV323:
     """
-    v3.2.1 LSTM Forecast Brain
-    - Learns sequential system behavior
-    - Predicts next state from history
+    v3.2.3 Real-Time Streaming Intelligence Brain
+    - Processes continuous data stream
+    - Learns instantly from incoming events
     """
 
-    def __init__(self, window_size=5):
-        self.window_size = window_size
+    def __init__(self, window_size=10):
+        self.window = deque(maxlen=window_size)
 
-        # sliding time window
-        self.data = deque(maxlen=window_size)
+        # live counters
+        self.event_count = defaultdict(int)
 
-        self.model = self._build_model()
-        self.trained = False
-
-    # -----------------------------
-    # 🏗 MODEL BUILD
-    # -----------------------------
-    def _build_model(self):
-        model = Sequential()
-
-        model.add(LSTM(32, input_shape=(self.window_size, 1)))
-        model.add(Dense(1))
-
-        model.compile(optimizer="adam", loss="mse")
-
-        return model
+        # live risk score
+        self.risk_score = 0.0
 
     # -----------------------------
-    # 🧾 INGEST DATA
+    # ⚡ STREAM INPUT
     # -----------------------------
-    def ingest(self, value: float):
+    def stream_event(self, event: dict):
+
         """
-        value: normalized metric (0-1)
+        event format:
+        {
+            "type": "cpu_spike",
+            "value": 0.8
+        }
         """
-        self.data.append(value)
+
+        self.window.append(event)
+
+        event_type = event.get("type", "unknown")
+        value = event.get("value", 0)
+
+        self.event_count[event_type] += 1
+
+        # live risk update
+        self._update_risk(value)
+
+        return self.live_state()
 
     # -----------------------------
-    # 🧠 TRAIN MODEL
+    # 📊 RISK ENGINE (REAL TIME)
     # -----------------------------
-    def train(self, epochs=10):
+    def _update_risk(self, value):
 
-        if len(self.data) < self.window_size:
-            return "Not enough data"
-
-        X = []
-        y = []
-
-        data = list(self.data)
-
-        for i in range(len(data) - self.window_size):
-            X.append(data[i:i+self.window_size])
-            y.append(data[i+self.window_size])
-
-        X = np.array(X)
-        y = np.array(y)
-
-        X = X.reshape((X.shape[0], X.shape[1], 1))
-
-        self.model.fit(X, y, epochs=epochs, verbose=0)
-
-        self.trained = True
-
-        return "LSTM trained"
+        # exponential smoothing style
+        alpha = 0.3
+        self.risk_score = (alpha * value) + (1 - alpha) * self.risk_score
 
     # -----------------------------
-    # 🔮 PREDICT NEXT VALUE
+    # 🔍 ANOMALY SIGNAL (LIVE)
     # -----------------------------
-    def predict_next(self):
+    def detect_live_anomaly(self):
 
-        if not self.trained or len(self.data) < self.window_size:
-            return {"prediction": None}
+        if len(self.window) < 3:
+            return {"status": "INSUFFICIENT DATA"}
 
-        input_seq = np.array(list(self.data)[-self.window_size:])
-        input_seq = input_seq.reshape((1, self.window_size, 1))
+        recent_values = [e["value"] for e in self.window]
 
-        pred = self.model.predict(input_seq, verbose=0)[0][0]
+        avg = sum(recent_values) / len(recent_values)
+
+        if avg > 0.75:
+            return {
+                "status": "ANOMALY",
+                "reason": "High sustained load detected"
+            }
 
         return {
-            "next_value": float(pred),
-            "risk": "HIGH" if pred > 0.7 else "LOW"
+            "status": "NORMAL"
         }
 
     # -----------------------------
-    # 📊 TREND ANALYSIS
+    # 🧠 LIVE DECISION ENGINE
     # -----------------------------
-    def trend(self):
+    def decide(self):
 
-        if len(self.data) < 2:
-            return {"trend": "INSUFFICIENT DATA"}
+        anomaly = self.detect_live_anomaly()
 
-        arr = np.array(self.data)
+        if anomaly["status"] == "ANOMALY":
+            return {
+                "action": "SCALE_UP",
+                "confidence": 0.9,
+                "reason": anomaly["reason"]
+            }
 
-        diff = np.diff(arr)
-
-        direction = "UPWARD" if diff.mean() > 0 else "DOWNWARD"
+        if self.risk_score > 0.6:
+            return {
+                "action": "PREPARE_SCALE",
+                "confidence": 0.7,
+                "reason": "Rising risk detected"
+            }
 
         return {
-            "trend": direction,
-            "volatility": float(np.std(diff))
+            "action": "NOOP",
+            "confidence": 0.8,
+            "reason": "System stable"
         }
 
     # -----------------------------
-    # 📡 REPORT
+    # 📡 LIVE SYSTEM STATE
+    # -----------------------------
+    def live_state(self):
+
+        return {
+            "risk_score": round(self.risk_score, 3),
+            "event_counts": dict(self.event_count),
+            "decision": self.decide(),
+            "window_size": len(self.window)
+        }
+
+    # -----------------------------
+    # 📊 REPORT
     # -----------------------------
     def report(self):
 
         return {
-            "trained": self.trained,
-            "data_points": len(self.data),
-            "prediction": self.predict_next(),
-            "trend": self.trend()
+            "risk_score": self.risk_score,
+            "events": dict(self.event_count),
+            "current_decision": self.decide()
         }
