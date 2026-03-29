@@ -1,37 +1,35 @@
 import os
-import time
 import sys
 
-# সরাসরি সিস্টেম এনভায়রনমেন্ট থেকে কি নেওয়া
-MASTER_KEY = os.getenv("V8_MASTER_KEY")
-IDLE_LIMIT = 60 # ১ম স্টেজ: ১ মিনিট
+# আপনার মাস্টার কি এখানে (উদাহরণস্বরূপ: V8_GOD_MODE)
+# আপনি আপনার পছন্দের কি-টি এখানে লিখে দিন
+MY_REAL_MASTER_KEY = "V8_UNIVERSE_GOD_2026" 
 
-def master_core_gateway():
-    print("\n" + "="*30)
-    print("🌌 V8.1 CORE ACCESS GATEWAY")
-    print("="*30)
+def v8_access_portal():
+    print("\n" + "="*40)
+    print("🌌 V8.1 MASTER ACCESS PORTAL")
+    print("="*40)
     
-    # এআই-কে আপনার পাসওয়ার্ড থেকে দূরে রাখতে ইনপুট মাস্কিং
+    # এটিই আপনার সিকিউরিটি বক্স
+    print("\n[!] Please input your Key below to UNLOCK the system.")
+    
     try:
-        # মাস্টার এখানে শুধু তার কি-টি টাইপ করবেন
-        user_input = input("🔒 ENTER MASTER KEY: ")
+        # এখানে আপনি আপনার কি-টি টাইপ করবেন
+        master_input = input("ENTER KEY: ")
         
-        if user_input == MASTER_KEY:
-            print("\n✅ [ACCESS GRANTED]")
-            print("🚀 Core is now ACTIVE. Black Hole unfreezing...")
-            # এখানে ফাইল আনলক হওয়ার লজিক শুরু হবে
-            start_idle_monitor()
+        if master_input == MY_REAL_MASTER_KEY:
+            print("\n✅ ACCESS GRANTED, MASTER!")
+            print("⚡ System status: ACTIVE")
+            print("🌑 Black Hole: REVERSED (Files are visible now)")
+            
+            # আপনার কাজের জন্য ১ মিনিটের টাইম-আউট শুরু
+            print("\n⏱️ Auto-Lock Active: System will freeze in 60s of inactivity.")
         else:
-            print("\n❌ [ACCESS DENIED]")
-            print("⚠️ Intruder alert logged. System remains FROZEN.")
+            print("\n❌ ACCESS DENIED!")
+            print("🚫 Security Status: LOCKED. Files remain in Black Hole.")
             
     except Exception as e:
         print(f"Error: {e}")
 
-def start_idle_monitor():
-    # এখানে ১ মিনিটের টাইমার কাজ করবে
-    print(f"⏱️ Security Timer Active: Auto-Lock in {IDLE_LIMIT}s")
-    # টাইমার লজিক...
-
 if __name__ == "__main__":
-    master_core_gateway()
+    v8_access_portal()
