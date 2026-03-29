@@ -1,93 +1,56 @@
-import random
-from collections import defaultdict
+import time
+from typing import Dict, Any
 
+class SafetyShield:
+    """
+    v3.1.5: The Immutable Constitution. 
+    AI can propose actions, but it cannot bypass these rules.
+    """
+    def __init__(self, override_system):
+        self.override = override_system
+        self.failure_threshold = 3
+        self.consecutive_failures = 0
+        
+        # 🛡️ HARD-CODED BLACKLIST (AI cannot touch these)
+        self.PROHIBITED_COMMANDS = [
+            "rm -rf /", "drop database", "shutdown -h now", "delete_all_backups"
+        ]
 
-# -----------------------------
-# 🤖 SINGLE AGENT
-# -----------------------------
-class Agent:
-    def __init__(self, name):
-        self.name = name
+    def validate_proposal(self, decision: Dict[str, Any]) -> bool:
+        """
+        Final check before execution.
+        """
+        action = decision.get("action", "NOOP")
+        explanation = decision.get("explanation", "")
 
-    def decide(self, state):
+        # 1. Check Prohibited Commands
+        if any(cmd in explanation.lower() for cmd in self.PROHIBITED_COMMANDS):
+            self._trigger_emergency_stop("CRITICAL: Prohibited command detected in AI reasoning.")
+            return False
 
-        # each agent has slightly different logic
-        options = ["UP", "DOWN", "NOOP"]
+        # 2. Check Action Risk vs Confidence
+        if decision.get("risk_level") == "HIGH" and decision.get("confidence", 0) < 0.95:
+            print("⚠️ SHIELD: High-risk action rejected due to low confidence.")
+            return False
 
-        return random.choice(options)
+        return True
 
+    def track_execution(self, success: bool):
+        """
+        Circuit Breaker Logic: Monitoring AI performance.
+        """
+        if success:
+            self.consecutive_failures = 0
+        else:
+            self.consecutive_failures += 1
+            print(f"⚠️ SHIELD: Failure detected ({self.consecutive_failures}/{self.failure_threshold})")
 
-# -----------------------------
-# 🧠 MULTI-AGENT SYSTEM
-# -----------------------------
-class MultiAgentSystemV324:
+        if self.consecutive_failures >= self.failure_threshold:
+            self._trigger_emergency_stop("CIRCUIT_BREAKER: Too many consecutive failures.")
 
-    def __init__(self, num_agents=3):
-
-        self.agents = [Agent(f"agent_{i}") for i in range(num_agents)]
-
-        self.votes = defaultdict(int)
-
-    # -----------------------------
-    # 🗳️ COLLECT DECISIONS
-    # -----------------------------
-    def run_agents(self, state):
-
-        self.votes.clear()
-
-        decisions = []
-
-        for agent in self.agents:
-
-            action = agent.decide(state)
-
-            self.votes[action] += 1
-
-            decisions.append({
-                "agent": agent.name,
-                "action": action
-            })
-
-        return decisions
-
-    # -----------------------------
-    # ⚡ CONSENSUS ENGINE
-    # -----------------------------
-    def get_final_decision(self):
-
-        if not self.votes:
-            return {"action": "NOOP", "confidence": 0}
-
-        best_action = max(self.votes, key=self.votes.get)
-
-        confidence = self.votes[best_action] / len(self.agents)
-
-        return {
-            "action": best_action,
-            "confidence": round(confidence, 2)
-        }
-
-    # -----------------------------
-    # 🧠 MAIN STEP
-    # -----------------------------
-    def step(self, state):
-
-        agent_outputs = self.run_agents(state)
-
-        final = self.get_final_decision()
-
-        return {
-            "state": state,
-            "agents": agent_outputs,
-            "final_decision": final
-        }
-
-    # -----------------------------
-    # 📊 REPORT
-    # -----------------------------
-    def report(self):
-
-        return {
-            "agents": len(self.agents),
-            "last_votes": dict(self.votes)
-        }
+    def _trigger_emergency_stop(self, reason: str):
+        """
+        Forces the engine into Human Override mode.
+        """
+        print(f"🚨 EMERGENCY: {reason}")
+        self.override.activate_lock() # v3.1 Lock activated
