@@ -1,104 +1,112 @@
 import random
+import copy
 from datetime import datetime
 
 
 # -----------------------------
-# 🌌 AGI SIMULATION CORE
+# 🌐 WORLD SIMULATION ENGINE
 # -----------------------------
-class AGISimulationV41:
+class WorldSimulationV42:
 
-    def __init__(self, memory, brain, cloud):
+    def __init__(self, base_state, brain):
 
-        self.memory = memory
+        self.base_state = base_state
         self.brain = brain
-        self.cloud = cloud
 
-        self.goals = []
-        self.thought_log = []
+        self.simulations = []
+        self.history = []
 
     # -----------------------------
-    # 🎯 GOAL GENERATION ENGINE
+    # 🌍 CREATE WORLD COPY
     # -----------------------------
-    def generate_goal(self, context):
+    def _clone_world(self):
 
-        possible_goals = [
-            "optimize_system",
-            "reduce_latency",
-            "improve_learning",
-            "detect_anomalies",
-            "increase_efficiency"
-        ]
+        return copy.deepcopy(self.base_state)
 
-        goal = random.choice(possible_goals)
+    # -----------------------------
+    # 🔮 SIMULATE FUTURE
+    # -----------------------------
+    def simulate_future(self, action):
 
-        self.goals.append(goal)
+        world = self._clone_world()
+
+        # random environmental drift (uncertainty)
+        world["noise"] = random.uniform(0, 1)
+
+        # apply action effect
+        if action == "SCALE_UP":
+            world["performance"] += 10
+
+        elif action == "OPTIMIZE":
+            world["efficiency"] += 15
+
+        elif action == "LOCKDOWN":
+            world["stability"] += 20
+
+        # random failure chance
+        world["risk"] = random.uniform(0, 1)
+
+        score = (
+            world.get("performance", 50)
+            + world.get("efficiency", 50)
+            + world.get("stability", 50)
+            - world["risk"] * 20
+        )
 
         return {
-            "goal": goal,
-            "context": context
+            "action": action,
+            "projected_score": score,
+            "world_state": world
         }
 
     # -----------------------------
-    # 🧠 GENERAL REASONING LOOP
+    # 🧠 SIMULATION-BASED DECISION
     # -----------------------------
-    def reason(self, input_signal):
+    def decide_via_simulation(self, possible_actions):
 
-        context = {
-            "input": input_signal,
-            "memory_summary": self.memory.summary(),
+        results = []
+
+        for action in possible_actions:
+            sim = self.simulate_future(action)
+            results.append(sim)
+
+        best = max(results, key=lambda x: x["projected_score"])
+
+        self.simulations.append(results)
+
+        return {
+            "best_action": best["action"],
+            "score": best["projected_score"],
+            "all_simulations": results
+        }
+
+    # -----------------------------
+    # 🔄 RUN WORLD STEP
+    # -----------------------------
+    def world_step(self, signal):
+
+        actions = self.brain.decide(signal).get(
+            "possible_actions",
+            ["NOOP", "OPTIMIZE", "SCALE_UP"]
+        )
+
+        decision = self.decide_via_simulation(actions)
+
+        self.history.append({
+            "signal": signal,
+            "decision": decision,
             "timestamp": datetime.utcnow().isoformat()
-        }
-
-        goal = self.generate_goal(context)
-
-        decision = self.brain.decide({
-            "goal": goal,
-            "context": context
         })
 
         return decision
 
     # -----------------------------
-    # 🔄 SIMULATED CONSCIOUS LOOP
-    # -----------------------------
-    def consciousness_step(self, signal):
-
-        reasoning = self.reason(signal)
-
-        execution = self.cloud.execute(reasoning.get("action", "noop"))
-
-        self.thought_log.append({
-            "signal": signal,
-            "reasoning": reasoning,
-            "execution": execution
-        })
-
-        return {
-            "status": "processed",
-            "reasoning": reasoning,
-            "execution": execution
-        }
-
-    # -----------------------------
-    # 🧠 CROSS DOMAIN TRANSFER
-    # -----------------------------
-    def transfer_knowledge(self, domain_a, domain_b):
-
-        return {
-            "status": "transfer_complete",
-            "from": domain_a,
-            "to": domain_b,
-            "efficiency_gain": random.uniform(0.1, 0.9)
-        }
-
-    # -----------------------------
-    # 📊 AGI STATUS
+    # 📊 WORLD STATUS
     # -----------------------------
     def status(self):
 
         return {
-            "goals": len(self.goals),
-            "thoughts": len(self.thought_log),
-            "memory_state": self.memory.health(),
-            "cloud_state": self.cloud.report()
+            "simulations_run": len(self.simulations),
+            "history": len(self.history),
+            "base_state": self.base_state
         }
