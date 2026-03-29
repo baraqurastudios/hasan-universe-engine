@@ -1,62 +1,49 @@
-import time
-from collections import Counter
-from datetime import datetime, timedelta
+import requests
+import json
 
-class LogAnalyzer:
-    def __init__(self, log_file="alert.log"):
-        self.log_file = log_file
+class ReasoningEngine:
+    def __init__(self, api_key):
+        self.api_key = api_key
+        self.endpoint = "https://api.openai.com/v1/chat/completions"
 
-    def read_logs(self, hours=24):
-        """নির্ধারিত সময়ের ভেতরের লগগুলো ফিল্টার করে রিড করবে।"""
-        threshold_time = datetime.now() - timedelta(hours=hours)
-        filtered_logs = []
+    def _build_system_prompt(self):
+        return (
+            "You are a Senior System Reliability Engineer (SRE). "
+            "Your task is to analyze system logs and provide a root cause analysis "
+            "and actionable fix recommendations in professional Bengali."
+        )
+
+    def analyze(self, log_report):
+        """v1.4 এর রিপোর্ট থেকে রিজন বের করবে।"""
+        prompt = f"Please analyze the following system report and explain why these issues occur and how to fix them:\n\n{log_report}"
         
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+
+        # Temperature ০.৩ রাখা হয়েছে যাতে লজিক্যাল এবং ফিক্সড অ্যানসার পাওয়া যায়
+        payload = {
+            "model": "gpt-4o-mini",
+            "messages": [
+                {"role": "system", "content": self._build_system_prompt()},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.3
+        }
+
         try:
-            with open(self.log_file, "r", encoding="utf-8") as f:
-                for line in f:
-                    try:
-                        # টাইমস্ট্যাম্প বের করা: [2026-03-29 10:00:00]
-                        ts_str = line.split(']')[0].strip('[')
-                        log_time = datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S")
-                        
-                        if log_time > threshold_time:
-                            filtered_logs.append(line)
-                    except (ValueError, IndexError):
-                        continue # ফরম্যাট না মিললে স্কিপ করবে
-            return filtered_logs
-        except FileNotFoundError:
-            return []
+            r = requests.post(self.endpoint, headers=headers, json=payload, timeout=20)
+            r.raise_for_status()
+            ai_response = r.json()["choices"][0]["message"]["content"]
+            return ai_response
+        except Exception as e:
+            return f"Reasoning Engine Error: {str(e)[:100]}"
 
-    def find_patterns(self, logs):
-        """লগ থেকে এরর মেসেজ আলাদা করে ফ্রিকুয়েন্সি বের করবে।"""
-        error_list = []
-        for line in logs:
-            if any(word in line.upper() for word in ["ERROR", "FAILED", "FAIL"]):
-                # টাইমস্ট্যাম্প বাদে শুধু মেসেজটি নিবে
-                msg = line.split("]")[-1].strip()
-                error_list.append(msg)
-        
-        return Counter(error_list)
-
-    def generate_report(self):
-        logs = self.read_logs()
-        patterns = self.find_patterns(logs)
-        
-        report = f"\n📊 *SYSTEM ANALYSIS REPORT* ({datetime.now().strftime('%Y-%m-%d')})\n"
-        report += f"━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        report += f"📈 *Recent Logs (24h):* {len(logs)}\n"
-        report += f"⚠️ *Unique Issues:* {len(patterns)}\n\n"
-
-        if not patterns:
-            report += "✅ *No critical issues detected!*"
-        else:
-            report += "🔥 *Top Issues & Frequency:*\n"
-            for issue, count in patterns.most_common(5):
-                report += f"• `{issue}` → {count} times\n"
-        
-        return report
-
-# ব্যবহার বিধি:
-if __name__ == "__main__":
-    analyzer = LogAnalyzer()
-    print(analyzer.generate_report())
+# v1.4 + v1.5 integration logic
+def final_workflow(report_data, key):
+    engine = ReasoningEngine(key)
+    analysis = engine.analyze(report_data)
+    
+    final_output = f"--- 🧠 AI REASONING REPORT ---\n\n{analysis}"
+    return final_output
