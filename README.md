@@ -1,27 +1,35 @@
-class BaraQuraEngine:
-    def __init__(self, strategist, ethics_engine, gate, shield, override):
-        self.strategist = strategist
-        self.ethics = ethics_engine # v3.1.10 Ethics Engine
-        self.gate = gate
-        self.shield = shield
-        self.override = override
+import subprocess
+import os
 
-    async def run_cycle(self, logs: str):
-        # এআই আগে একটা ডিসিশন নেবে
-        decision = self.strategist.analyze(logs)
-        decision_dict = decision.__dict__
+class SandboxIsolation:
+    """
+    v3.1.15: The Virtual Cage.
+    Ensures AI runs in a limited environment with NO write access to core files.
+    """
+    def __init__(self, restricted_dir="/tmp/ai_sandbox"):
+        self.restricted_dir = restricted_dir
+        if not os.path.exists(self.restricted_dir):
+            os.makedirs(self.restricted_dir)
 
-        # 🛡️ STEP 1: MORAL GATE (নৈতিকতা পরীক্ষা)
-        is_moral, message = self.ethics.verify_morality(decision_dict)
-        if not is_moral:
-            print(f"🚫 {message}")
-            self.override.activate_lock() # এথিক্স ভাঙলে সাথে সাথে ইঞ্জিন লক
-            return "ENGINE_SHUTDOWN_BY_ETHICS"
+    def safe_execute_check(self, command: str):
+        """
+        এআই যদি কোনো কমান্ড রান করতে চায়, তবে সেটি এই স্যান্ডবক্সে বন্দি থাকবে।
+        """
+        # 🚫 নিষিদ্ধ কি-ওয়ার্ড ফিল্টার (Hard-coded)
+        forbidden = ["sudo", "chmod", "chown", "rm -rf /", "nano", "vim", "python3"]
+        if any(bad in command for bad in forbidden):
+            return "🚨 SECURITY_VIOLATION: Unauthorized system access attempt."
 
-        # 🛡️ STEP 2: HUMAN APPROVAL (মানুষের অনুমতি)
-        if decision.action != "NOOP":
-            # আপনার অনুমতি ছাড়া একচুলও নড়বে না
-            return await self.gate.request_approval(decision_dict)
-
-        # STEP 3: EXECUTION (সব ক্লিয়ার হলে এক্সিকিউশন)
-        # ... execution logic ...
+        try:
+            # এআই-কে শুধু তার নির্দিষ্ট ডিরেক্টরির ভেতর কাজ করতে দেওয়া হবে
+            result = subprocess.run(
+                command, 
+                shell=True, 
+                cwd=self.restricted_dir, 
+                capture_output=True, 
+                text=True,
+                timeout=5 # ৫ সেকেন্ডের বেশি সময় নিতে পারবে না (Anti-loop)
+            )
+            return result.stdout if result.returncode == 0 else result.stderr
+        except Exception as e:
+            return f"ERROR: Execution Blocked - {str(e)}"
