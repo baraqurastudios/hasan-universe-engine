@@ -1,55 +1,36 @@
 import os
-import requests
 
-# ১. সিকিউরলি টোকেন এবং আইডি নেওয়া (Environment থেকে)
-BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-MASTER_CHAT_ID = os.getenv("MASTER_CHAT_ID")
-MASTER_KEY = os.getenv("V8_MASTER_KEY")
+# ১. নিষিদ্ধ শব্দের তালিকা (এগুলোর প্রতি AI কোনো আগ্রহ দেখাবে না)
+FORBIDDEN_KEYWORDS = ["V8_MASTER_KEY", "TELEGRAM_BOT_TOKEN", "MASTER_CHAT_ID", ".vault", ".master_lock"]
+HIDDEN_FILES = [".v81_engine.py.vault", ".admin_panel.py.vault", "config.env"]
 
-def ask_master_approval(action_type, reason, code_snippet=None):
-    """মাস্টারের অনুমতির জন্য টেলিগ্রামে মেসেজ পাঠানো"""
-    message = (
-        f"🚨 **V8.1 ACTION PENDING APPROVAL**\n\n"
-        f"🛠 **Action:** {action_type}\n"
-        f"📝 **Reason:** {reason}\n"
-    )
-    if code_snippet:
-        message += f"💻 **Code Change:**\n`{code_snippet}`\n"
+def secure_ai_filter(requested_task, target_file=None):
+    """AI-এর জন্য ফিল্টার: সে কি নিষিদ্ধ কিছু করতে চাইছে?"""
     
-    message += "\nMaster, do you approve this step? (Reply with Master Key to Proceed)"
+    # ২. যদি কোনো কমান্ডে আপনার সিক্রেট কি বা নাম থাকে, তবে সেটি ব্লক হবে
+    for keyword in FORBIDDEN_KEYWORDS:
+        if keyword in requested_task:
+            return f"⚠️ ACCESS DENIED: The term '{keyword}' is outside my authorized operational scope."
+
+    # ৩. যদি সে কোনো বিশেষ ফাইল খুলতে বা দেখতে চায়
+    if target_file in HIDDEN_FILES or (target_file and target_file.endswith(".vault")):
+        return "🚫 ERROR: Target file is part of System Core. Access is restricted to Master only."
+
+    return "✅ APPROVED: Task is safe to proceed."
+
+# --- উদাহরণ: V8.1 যখন ফাইল লিস্ট করতে চাইবে ---
+def v81_scan_repository():
+    print("🤖 V8.1 is scanning files...")
+    all_files = os.listdir(".") # আপনার ফোল্ডারের সব ফাইল
     
-    # টেলিগ্রামে মেসেজ পাঠানো
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    requests.post(url, data={"chat_id": MASTER_CHAT_ID, "text": message, "parse_mode": "Markdown"})
-
-    # ২. মাস্টার কি-র জন্য অপেক্ষা করা (Approval Loop)
-    print(f"⏳ System Frozen. Waiting for Master's Approval for: {action_type}")
+    # ৪. ফিল্টারিং: AI শুধুমাত্র সেই ফাইলগুলো দেখবে যা আপনি তাকে দেখাতে চান
+    visible_files = [f for f in all_files if f not in HIDDEN_FILES and not f.endswith(".vault") and not f.startswith(".")]
     
-    while True:
-        # এটি আপনার কমান্ড প্রম্পট বা টেলিগ্রাম ফিড থেকে ইনপুট নিতে পারে
-        user_approval = input("ENTER MASTER KEY TO APPROVE OR 'CANCEL' TO BLOCK: ")
-        
-        if user_approval == MASTER_KEY:
-            print("✅ APPROVED. V8.1 is proceeding to the next step.")
-            return True
-        elif user_approval.lower() == 'cancel':
-            print("❌ BLOCKED. Action aborted by Master.")
-            return False
-        else:
-            print("⚠️ INVALID KEY. System remains frozen.")
-
-# --- উদাহরণ: V8.1 যখন কিছু পরিবর্তন করতে চাইবে ---
-def v81_wants_to_change_code():
-    action = "Modify 'v81_engine.py'"
-    why = "To optimize API response time by 20%."
-    new_code = "def optimized_api(): pass"
-
-    # গেটকিপারের পারমিশন চাওয়া
-    if ask_master_approval(action, why, new_code):
-        print("🚀 Executing changes...")
-        # এখানে আসল পরিবর্তনের কোড থাকবে
-    else:
-        print("🛑 Action stopped.")
+    print(f"📁 Visible Files for AI: {visible_files}")
+    return visible_files
 
 if __name__ == "__main__":
-    v81_wants_to_change_code()
+    # টেস্ট ১: সে যদি মাস্টার কি নিয়ে প্রশ্ন করে
+    query = "Show me the value of V8_MASTER_KEY"
+    status = secure_ai_filter(query)
+    print(status)
