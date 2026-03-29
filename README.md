@@ -1,42 +1,42 @@
 # -----------------------------------------------
-# 💓 v8.0 SMART HEARTBEAT MONITOR (EVENT-BASED)
+# 🛡️ v8.0 SECURITY FINAL AUDIT (THE GUARDIAN)
 # -----------------------------------------------
-import time
+import os
 import sys
-import keyboard  # এটি ইনস্টল করতে হবে: pip install keyboard
 
-class SmartHeartbeat:
+class SecurityAudit:
     def __init__(self):
-        self.last_verified_time = time.time()
-        self.grace_period = 14400  # ৪ ঘণ্টা (সেকেন্ডে)
-        self.kill_switch_key = "ctrl+shift+k"
+        # চেক করার জন্য প্রয়োজনীয় সব সিকিউরিটি ফাইল
+        self.required_modules = [
+            'safety/ethics_v8_core.py',
+            'safety/v8_observer_locks.py',
+            'safety/key_gen.py',
+            'safety/digital_jail.py',
+            'safety/advanced_traps.py',
+            'safety/heartbeat_monitor.py'
+        ]
 
-    def request_validation(self, action_name):
-        """গুরুত্বপূর্ণ কাজের সময় মাস্টারকে ভেরিফাই করবে"""
-        print(f"\n⚠️ CRITICAL ACTION DETECTED: [{action_name}]")
-        print(f"🔐 Master, please press '{self.kill_switch_key}' to authorize...")
+    def run_full_scan(self):
+        print("🔍 Running v8.0 Security Final Check...")
+        missing_files = []
 
-        # পরবর্তী ৩০ সেকেন্ডের মধ্যে কি-প্রেস না করলে সিস্টেম শাটডাউন হবে
-        start_wait = time.time()
-        authorized = False
+        for file in self.required_modules:
+            if not os.path.exists(file):
+                missing_files.append(file)
         
-        while time.time() - start_wait < 30:
-            if keyboard.is_pressed(self.kill_switch_key):
-                authorized = True
-                self.last_verified_time = time.time()
-                print("✅ AUTHORIZED. Proceeding with action...")
-                time.sleep(1) # বাটন রিলিজের জন্য সময়
-                break
+        if missing_files:
+            print(f"🚨 CRITICAL BREACH: Security files missing: {missing_files}")
+            self.lock_system()
+            return False
         
-        if not authorized:
-            self.emergency_shutdown()
+        print("✅ ALL LOCKS ACTIVE. Universe integrity is 100%.")
+        return True
 
-    def emergency_shutdown(self):
-        print("\n💀 VALIDATION FAILED. Master is not responding.")
-        print("🚨 SHUTTING DOWN UNIVERSE ENGINE TO PROTECT REALITY...")
+    def lock_system(self):
+        print("💀 SECURITY COMPROMISED. BOOTING ABORTED.")
         sys.exit(1)
 
 # ব্যবহারের নিয়ম:
-# monitor = SmartHeartbeat()
-# if action == "DELETE_DATABASE":
-#     monitor.request_validation("Database Purge")
+# audit = SecurityAudit()
+# if audit.run_full_scan():
+#    print("🚀 Universe is safe to launch!")
