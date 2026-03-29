@@ -1,31 +1,58 @@
+import time
 import requests
+from datetime import datetime
 
-def explain_error(status, api_key):
-    # Precise prompt for high quality output
-    prompt = f"""
-    System Status Data: {status}
-    Task: Explain the issues in simple, professional Bengali. 
-    Provide a step-by-step fix recommendation for the developer.
-    """
+class DebugMonitor:
+    def __init__(self, token, api_key, interval=30):
+        self.token = token
+        self.api_key = api_key
+        self.interval = interval
+        self.log_file = "system.log"
+        # আগের অবস্থা মনে রাখার জন্য
+        self.prev_status = {"tg": None, "gpt": None}
 
-    url = "https://api.openai.com/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-    
-    data = {
-        "model": "gpt-4o-mini",
-        "messages": [
-            {"role": "system", "content": "You are a senior system architect explaining bugs to a developer in Bengali."},
-            {"role": "user", "content": prompt}
-        ],
-        "temperature": 0.3 # Consistency বজায় রাখার জন্য
-    }
+    def log(self, message):
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        entry = f"[{timestamp}] {message}\n"
+        try:
+            with open(self.log_file, "a", encoding="utf-8") as f:
+                f.write(entry)
+            print(entry.strip())
+        except IOError as e:
+            print(f"Logging Error: {e}")
 
-    try:
-        r = requests.post(url, headers=headers, json=data, timeout=15)
-        r.raise_for_status()
-        return r.json()["choices"][0]["message"]["content"]
-    except Exception as e:
-        return f"AI Explanation layer failed: {str(e)[:100]}"
+    def check_telegram(self):
+        try:
+            url = f"https://api.telegram.org/bot{self.token}/getMe"
+            r = requests.get(url, timeout=5, allow_redirects=False)
+            return "ok" if r.status_code == 200 else f"fail ({r.status_code})"
+        except Exception as e:
+            return f"error ({str(e)[:100]})"
+
+    def check_gpt(self):
+        try:
+            url = "https://api.openai.com/v1/models"
+            headers = {"Authorization": f"Bearer {self.api_key}"}
+            r = requests.get(url, headers=headers, timeout=7)
+            return "ok" if r.status_code == 200 else f"fail ({r.status_code})"
+        except Exception as e:
+            return f"error ({str(e)[:100]})"
+
+    def run(self):
+        self.log("🔄 Monitoring started...")
+        while True:
+            tg_status = self.check_telegram()
+            gpt_status = self.check_gpt()
+
+            # শুধু স্ট্যাটাস পরিবর্তন হলে লগ করবে (Smart Logging)
+            if tg_status != self.prev_status["tg"]:
+                icon = "✅" if tg_status == "ok" else "❌"
+                self.log(f"{icon} Telegram: {tg_status}")
+                self.prev_status["tg"] = tg_status
+
+            if gpt_status != self.prev_status["gpt"]:
+                icon = "✅" if gpt_status == "ok" else "❌"
+                self.log(f"{icon} GPT: {gpt_status}")
+                self.prev_status["gpt"] = gpt_status
+
+            time.sleep(self.interval)
