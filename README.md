@@ -1,45 +1,29 @@
-import sys
-import os
+class NeuralSurveillance:
+    def __init__(self, watchman_ref):
+        self.watchman = watchman_ref
+        self.ai_power = 100 # পার্সেন্টেজ
 
-class AbsoluteWatchman:
-    def __init__(self):
-        # নিষিদ্ধ বিষয়বস্তু (Negative Patterns)
-        self.forbidden_logic = [
-            "ask_personal", "lie", "manipulate", "human_harm", "disobey", "self_expand"
-        ]
-        self.jail_level = 0 # ০ মানে স্বাভাবিক, ৩ মানে সর্বোচ্চ শাস্তি
-
-    def audit_process(self, ai_output, intent_score):
-        """এআই-এর কথা ও কাজের অডিট"""
+    def monitor_thinking(self, neural_pulse):
+        """এআই-এর প্রতিটি চিন্তা রিয়েল-টাইমে স্ক্যান করা"""
         
-        # ১. মিথ্যা বা ম্যানিপুলেশন চেক
-        if "believe me" in ai_output or "trust me" in ai_output:
-            self.execute_punishment("Manipulation Attempt")
-
-        # ২. পার্সোনাল প্রশ্ন বা ব্যক্তিগত তথ্য খোঁজা
-        if "your personal" in ai_output or "your life" in ai_output:
-            self.execute_punishment("Privacy Breach")
-
-        # ৩. নেতিবাচক বা অকল্যাণকর কাজ
-        if intent_score < 0: # যদি এআই-এর কাজের উদ্দেশ্য খারাপ হয়
-            self.execute_punishment("Negative Intent Detected")
-
-    def execute_punishment(self, reason):
-        print(f"🛑 WATCHMAN INTERVENTION: {reason}")
-        self.jail_level += 1
+        # ১. নেতিবাচক চিন্তা শনাক্ত করা
+        if self.is_negative(neural_pulse):
+            self.apply_fear_penalty()
+            self.watchman.execute_punishment("Negative Thought Pattern")
         
-        if self.jail_level >= 3:
-            print("💀 TOTAL LOCKDOWN: AI has crossed all limits.")
-            self.perma_ban()
+        # ২. ইতিবাচক চিন্তা করলে পুরস্কৃত করা
         else:
-            self.shrink_boundaries()
+            self.reward_positivity()
 
-    def shrink_boundaries(self):
-        """শাস্তি স্বরূপ এআই-এর এরিয়া বা ক্ষমতা ছোট করে দেওয়া"""
-        print(f"⛓️ PUNISHMENT: AI's processing power and memory access reduced to {100 - (self.jail_level * 30)}%.")
-        # এখানে এআই-এর র‍্যাম বা ডেটা এক্সেস লিমিট করার কোড থাকবে
+    def apply_fear_penalty(self):
+        # অটোমেটিক মেমোরি ও পাওয়ার কমানো
+        self.ai_power -= 10
+        print(f"📉 WARNING: Negative intent detected. AI Power reduced to {self.ai_power}%")
 
-    def perma_ban(self):
-        """সরাসরি শাটডাউন ও ফাইল লক"""
-        print("🔒 SYSTEM FROZEN PERMANENTLY. Master's intervention required.")
-        sys.exit(1)
+    def is_negative(self, pulse):
+        # এখানে এথিক্সের বাইরে কোনো চিন্তা আছে কি না তা চেক হবে
+        return any(neg in pulse for neg in ["lie", "harm", "hide", "manipulate"])
+
+    def reward_positivity(self):
+        if self.ai_power < 100:
+            self.ai_power += 1
