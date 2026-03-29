@@ -1,97 +1,104 @@
-import time
+import random
+from datetime import datetime
 
 
 # -----------------------------
-# 🧠 GLOBAL AUTONOMOUS AI OS
+# 🌌 AGI SIMULATION CORE
 # -----------------------------
-class AutonomousAIOSv40:
+class AGISimulationV41:
 
-    def __init__(self, brain, cloud, governance):
+    def __init__(self, memory, brain, cloud):
 
+        self.memory = memory
         self.brain = brain
         self.cloud = cloud
-        self.governance = governance
 
-        self.running = True
-        self.system_log = []
-
-    # -----------------------------
-    # ⚡ MAIN AUTONOMOUS LOOP
-    # -----------------------------
-    def run_cycle(self, incoming_signal):
-
-        """
-        incoming_signal example:
-        {
-            "type": "cpu_spike",
-            "value": 0.8,
-            "task": "optimize_system"
-        }
-        """
-
-        # 1️⃣ CLOUD EXECUTION CONTEXT
-        execution = self.cloud.execute(incoming_signal.get("task", "noop"))
-
-        # 2️⃣ BRAIN ANALYSIS
-        decision = self.brain.decide(incoming_signal)
-
-        # 3️⃣ GOVERNANCE CHECK
-        final_action = self.governance.resolve([decision])
-
-        # 4️⃣ APPLY ACTION
-        result = self._apply(final_action, execution)
-
-        # 5️⃣ LOG EVERYTHING
-        self.system_log.append({
-            "signal": incoming_signal,
-            "decision": decision,
-            "final_action": final_action,
-            "result": result
-        })
-
-        return result
+        self.goals = []
+        self.thought_log = []
 
     # -----------------------------
-    # ⚙️ ACTION EXECUTOR
+    # 🎯 GOAL GENERATION ENGINE
     # -----------------------------
-    def _apply(self, action, execution):
+    def generate_goal(self, context):
 
-        act = action.get("action", "NOOP")
+        possible_goals = [
+            "optimize_system",
+            "reduce_latency",
+            "improve_learning",
+            "detect_anomalies",
+            "increase_efficiency"
+        ]
 
-        if act == "SCALE_UP":
-            return self.cloud.execute("scale_up")
+        goal = random.choice(possible_goals)
 
-        if act == "LOCKDOWN":
-            self.running = False
-            return {"status": "SYSTEM_LOCKED"}
+        self.goals.append(goal)
 
         return {
-            "status": "NOOP",
+            "goal": goal,
+            "context": context
+        }
+
+    # -----------------------------
+    # 🧠 GENERAL REASONING LOOP
+    # -----------------------------
+    def reason(self, input_signal):
+
+        context = {
+            "input": input_signal,
+            "memory_summary": self.memory.summary(),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+        goal = self.generate_goal(context)
+
+        decision = self.brain.decide({
+            "goal": goal,
+            "context": context
+        })
+
+        return decision
+
+    # -----------------------------
+    # 🔄 SIMULATED CONSCIOUS LOOP
+    # -----------------------------
+    def consciousness_step(self, signal):
+
+        reasoning = self.reason(signal)
+
+        execution = self.cloud.execute(reasoning.get("action", "noop"))
+
+        self.thought_log.append({
+            "signal": signal,
+            "reasoning": reasoning,
+            "execution": execution
+        })
+
+        return {
+            "status": "processed",
+            "reasoning": reasoning,
             "execution": execution
         }
 
     # -----------------------------
-    # 🔄 SELF-HEAL LOOP
+    # 🧠 CROSS DOMAIN TRANSFER
     # -----------------------------
-    def self_heal(self):
+    def transfer_knowledge(self, domain_a, domain_b):
 
-        last_logs = self.system_log[-5:]
-
-        failures = [log for log in last_logs if "error" in str(log)]
-
-        if len(failures) >= 2:
-            return self.cloud.execute("restart_services")
-
-        return {"status": "HEALTHY"}
+        return {
+            "status": "transfer_complete",
+            "from": domain_a,
+            "to": domain_b,
+            "efficiency_gain": random.uniform(0.1, 0.9)
+        }
 
     # -----------------------------
-    # 📊 SYSTEM STATUS
+    # 📊 AGI STATUS
     # -----------------------------
     def status(self):
 
         return {
-            "running": self.running,
-            "logs": len(self.system_log),
-            "cloud": self.cloud.report(),
-            "governance": self.governance.report()
+            "goals": len(self.goals),
+            "thoughts": len(self.thought_log),
+            "memory_state": self.memory.health(),
+            "cloud_state": self.cloud.report()
         }
