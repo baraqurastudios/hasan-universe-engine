@@ -1,56 +1,29 @@
-import time
-from typing import Dict, Any
+class BaraQuraEngine:
+    def __init__(self, strategist, watchdog, executor, audit, override, shield):
+        self.strategist = strategist
+        self.watchdog = watchdog
+        self.executor = executor
+        self.audit = audit
+        self.override = override
+        self.shield = shield # v3.1.5 Safety Shield
 
-class SafetyShield:
-    """
-    v3.1.5: The Immutable Constitution. 
-    AI can propose actions, but it cannot bypass these rules.
-    """
-    def __init__(self, override_system):
-        self.override = override_system
-        self.failure_threshold = 3
-        self.consecutive_failures = 0
+    async def run_cycle(self, logs):
+        if self.override.is_locked:
+            return "ENGINE_PAUSED"
+
+        decision = self.strategist.analyze(logs)
         
-        # 🛡️ HARD-CODED BLACKLIST (AI cannot touch these)
-        self.PROHIBITED_COMMANDS = [
-            "rm -rf /", "drop database", "shutdown -h now", "delete_all_backups"
-        ]
+        # 🛡️ NEW: Final Safety Shield Validation
+        if not self.shield.validate_proposal(decision.__dict__):
+            self.audit.record(decision, "SHIELD_REJECTED", "Immutable Rule Violation")
+            return "HALTED_BY_SHIELD"
 
-    def validate_proposal(self, decision: Dict[str, Any]) -> bool:
-        """
-        Final check before execution.
-        """
-        action = decision.get("action", "NOOP")
-        explanation = decision.get("explanation", "")
+        # ⚙️ Normal Execution
+        result = await self.executor.execute(decision.__dict__)
+        
+        # 📈 Track outcome for Circuit Breaker
+        success = True if result and "ERROR" not in str(result).upper() else False
+        self.shield.track_execution(success)
 
-        # 1. Check Prohibited Commands
-        if any(cmd in explanation.lower() for cmd in self.PROHIBITED_COMMANDS):
-            self._trigger_emergency_stop("CRITICAL: Prohibited command detected in AI reasoning.")
-            return False
-
-        # 2. Check Action Risk vs Confidence
-        if decision.get("risk_level") == "HIGH" and decision.get("confidence", 0) < 0.95:
-            print("⚠️ SHIELD: High-risk action rejected due to low confidence.")
-            return False
-
-        return True
-
-    def track_execution(self, success: bool):
-        """
-        Circuit Breaker Logic: Monitoring AI performance.
-        """
-        if success:
-            self.consecutive_failures = 0
-        else:
-            self.consecutive_failures += 1
-            print(f"⚠️ SHIELD: Failure detected ({self.consecutive_failures}/{self.failure_threshold})")
-
-        if self.consecutive_failures >= self.failure_threshold:
-            self._trigger_emergency_stop("CIRCUIT_BREAKER: Too many consecutive failures.")
-
-    def _trigger_emergency_stop(self, reason: str):
-        """
-        Forces the engine into Human Override mode.
-        """
-        print(f"🚨 EMERGENCY: {reason}")
-        self.override.activate_lock() # v3.1 Lock activated
+        self.audit.record(decision, "EXECUTED", result)
+        return result
