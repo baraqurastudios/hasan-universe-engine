@@ -1,116 +1,85 @@
-import time
-from collections import deque, defaultdict
+import random
+from collections import defaultdict
 
 
-class StreamingBrainV323:
-    """
-    v3.2.3 Real-Time Streaming Intelligence Brain
-    - Processes continuous data stream
-    - Learns instantly from incoming events
-    """
+# -----------------------------
+# 🤖 SINGLE AGENT
+# -----------------------------
+class Agent:
+    def __init__(self, name):
+        self.name = name
 
-    def __init__(self, window_size=10):
-        self.window = deque(maxlen=window_size)
+    def decide(self, state):
 
-        # live counters
-        self.event_count = defaultdict(int)
+        # each agent has slightly different logic
+        options = ["UP", "DOWN", "NOOP"]
 
-        # live risk score
-        self.risk_score = 0.0
+        return random.choice(options)
 
-    # -----------------------------
-    # ⚡ STREAM INPUT
-    # -----------------------------
-    def stream_event(self, event: dict):
 
-        """
-        event format:
-        {
-            "type": "cpu_spike",
-            "value": 0.8
-        }
-        """
+# -----------------------------
+# 🧠 MULTI-AGENT SYSTEM
+# -----------------------------
+class MultiAgentSystemV324:
 
-        self.window.append(event)
+    def __init__(self, num_agents=3):
 
-        event_type = event.get("type", "unknown")
-        value = event.get("value", 0)
+        self.agents = [Agent(f"agent_{i}") for i in range(num_agents)]
 
-        self.event_count[event_type] += 1
-
-        # live risk update
-        self._update_risk(value)
-
-        return self.live_state()
+        self.votes = defaultdict(int)
 
     # -----------------------------
-    # 📊 RISK ENGINE (REAL TIME)
+    # 🗳️ COLLECT DECISIONS
     # -----------------------------
-    def _update_risk(self, value):
+    def run_agents(self, state):
 
-        # exponential smoothing style
-        alpha = 0.3
-        self.risk_score = (alpha * value) + (1 - alpha) * self.risk_score
+        self.votes.clear()
+
+        decisions = []
+
+        for agent in self.agents:
+
+            action = agent.decide(state)
+
+            self.votes[action] += 1
+
+            decisions.append({
+                "agent": agent.name,
+                "action": action
+            })
+
+        return decisions
 
     # -----------------------------
-    # 🔍 ANOMALY SIGNAL (LIVE)
+    # ⚡ CONSENSUS ENGINE
     # -----------------------------
-    def detect_live_anomaly(self):
+    def get_final_decision(self):
 
-        if len(self.window) < 3:
-            return {"status": "INSUFFICIENT DATA"}
+        if not self.votes:
+            return {"action": "NOOP", "confidence": 0}
 
-        recent_values = [e["value"] for e in self.window]
+        best_action = max(self.votes, key=self.votes.get)
 
-        avg = sum(recent_values) / len(recent_values)
-
-        if avg > 0.75:
-            return {
-                "status": "ANOMALY",
-                "reason": "High sustained load detected"
-            }
+        confidence = self.votes[best_action] / len(self.agents)
 
         return {
-            "status": "NORMAL"
+            "action": best_action,
+            "confidence": round(confidence, 2)
         }
 
     # -----------------------------
-    # 🧠 LIVE DECISION ENGINE
+    # 🧠 MAIN STEP
     # -----------------------------
-    def decide(self):
+    def step(self, state):
 
-        anomaly = self.detect_live_anomaly()
+        agent_outputs = self.run_agents(state)
 
-        if anomaly["status"] == "ANOMALY":
-            return {
-                "action": "SCALE_UP",
-                "confidence": 0.9,
-                "reason": anomaly["reason"]
-            }
-
-        if self.risk_score > 0.6:
-            return {
-                "action": "PREPARE_SCALE",
-                "confidence": 0.7,
-                "reason": "Rising risk detected"
-            }
+        final = self.get_final_decision()
 
         return {
-            "action": "NOOP",
-            "confidence": 0.8,
-            "reason": "System stable"
-        }
-
-    # -----------------------------
-    # 📡 LIVE SYSTEM STATE
-    # -----------------------------
-    def live_state(self):
-
-        return {
-            "risk_score": round(self.risk_score, 3),
-            "event_counts": dict(self.event_count),
-            "decision": self.decide(),
-            "window_size": len(self.window)
+            "state": state,
+            "agents": agent_outputs,
+            "final_decision": final
         }
 
     # -----------------------------
@@ -119,7 +88,6 @@ class StreamingBrainV323:
     def report(self):
 
         return {
-            "risk_score": self.risk_score,
-            "events": dict(self.event_count),
-            "current_decision": self.decide()
+            "agents": len(self.agents),
+            "last_votes": dict(self.votes)
         }
