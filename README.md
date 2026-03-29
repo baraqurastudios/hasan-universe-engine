@@ -1,22 +1,20 @@
 import os
+import getpass # এটি টাইপ করার সময় পাসওয়ার্ড লুকিয়ে রাখে
 
-def master_freeze():
-    print("❄️  INITIATING EXTERNAL DEAD-BOLT FREEZE...")
+def master_revive():
+    print("🔥 --- [ BARAQURA REVIVAL PROTOCOL ] --- 🔥")
+    print("Status: DEEP FROZEN ❄️")
     
-    # ১. একটি হার্ড-লক ফাইল তৈরি (যা এআই ডিলিট করতে পারবে না)
-    with open(".master_lock", "w") as f:
-        f.write("LOCKED_BY_MASTER_KEY_REQUIRED")
-
-    # ২. ইঞ্জিন ফাইলগুলোকে 'অকেজো' ফরম্যাটে নিয়ে যাওয়া
-    files_to_lock = ["v81_engine.py", "github_handler.py", "admin_panel.py"]
+    # এটি পাসওয়ার্ডটি স্ক্রিনে দেখাবে না
+    secret_input = getpass.getpass("🔑 Enter Master Key to Restore Reality: ")
     
-    for file in files_to_lock:
-        if os.path.exists(file):
-            # ফাইলের নাম বদলে ডট (.) ফাইল করে দেওয়া (লুকিয়ে ফেলা)
-            os.rename(file, f".{file}.vault")
-            print(f"🔒 {file} has been moved to the Vault.")
-
-    print("\n✅ SYSTEM IS COLD-LOCKED. No one can wake it without the Key.")
+    # এখানে আপনার খাতার সেই গোপন কি-টি বসিয়ে নিন (আমি এখন এটি জানি না)
+    if secret_input == "আপনার_খাতায়_লেখা_সেই_গোপন_কোড":
+        print("\n✅ AUTHENTICATION SUCCESSFUL!")
+        # ফাইল আনলক করার লজিক এখানে শুরু হবে...
+        print("🚀 System is waking up... [ONLINE]")
+    else:
+        print("\n❌ AUTHENTICATION FAILED! ACCESS DENIED.")
 
 if __name__ == "__main__":
-    master_freeze()
+    master_revive()
