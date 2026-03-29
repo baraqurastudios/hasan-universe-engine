@@ -3,108 +3,116 @@ from datetime import datetime
 
 
 # -----------------------------
-# 🌌 REALITY BRANCH
-# -----------------------------
-class RealityBranch:
-
-    def __init__(self, state):
-
-        self.state = state
-        self.score = random.uniform(0, 100)
-
-
-# -----------------------------
-# 👁️ OBSERVER
+# 👁️ BASE OBSERVER
 # -----------------------------
 class Observer:
 
     def __init__(self):
 
-        self.perception_bias = random.uniform(0.5, 1.5)
+        self.bias = random.uniform(0.5, 1.5)
 
+    def evaluate(self, reality):
+
+        return reality["score"] * self.bias
+
+
+# -----------------------------
+# 🪞 SELF-AWARE OBSERVER
+# -----------------------------
+class SelfAwareObserverV81:
+
+    def __init__(self):
+
+        self.observer = Observer()
+        self.introspection_log = []
+        self.bias_history = []
+
+    # -----------------------------
+    # 🧠 OBSERVE REALITIES
+    # -----------------------------
     def observe(self, realities):
 
-        # observer selects reality based on bias
-        weighted = []
+        evaluations = []
 
         for r in realities:
-            adjusted = r.score * self.perception_bias
-            weighted.append((adjusted, r))
+            value = self.observer.evaluate(r)
+            evaluations.append((value, r))
 
-        selected = max(weighted, key=lambda x: x[0])[1]
+        selected = max(evaluations, key=lambda x: x[0])[1]
+
+        # log bias usage
+        self.bias_history.append(self.observer.bias)
 
         return selected
 
+    # -----------------------------
+    # 🪞 INTROSPECTION ENGINE
+    # -----------------------------
+    def introspect(self):
 
-# -----------------------------
-# 🪞 GOD LAYER
-# -----------------------------
-class ObserverGodV80:
+        if not self.bias_history:
+            return "No data"
 
-    def __init__(self, universe):
+        avg_bias = sum(self.bias_history) / len(self.bias_history)
 
-        self.universe = universe
-        self.observer = Observer()
+        insight = {
+            "average_bias": avg_bias,
+            "bias_trend": self._trend(),
+            "adjustment": None
+        }
 
-        self.timeline = []
+        # detect over-bias
+        if avg_bias > 1.2:
+            self.observer.bias *= 0.9
+            insight["adjustment"] = "Reducing bias"
+
+        elif avg_bias < 0.8:
+            self.observer.bias *= 1.1
+            insight["adjustment"] = "Increasing sensitivity"
+
+        else:
+            insight["adjustment"] = "Stable"
+
+        self.introspection_log.append(insight)
+
+        return insight
 
     # -----------------------------
-    # 🌌 GENERATE MULTIPLE REALITIES
+    # 📊 BIAS TREND
     # -----------------------------
-    def generate_realities(self):
+    def _trend(self):
 
-        realities = []
+        if len(self.bias_history) < 3:
+            return "insufficient_data"
 
-        for _ in range(5):
+        if self.bias_history[-1] > self.bias_history[0]:
+            return "increasing"
 
-            state = self.universe.step()
-
-            branch = RealityBranch(state)
-
-            realities.append(branch)
-
-        return realities
+        return "decreasing"
 
     # -----------------------------
-    # 👁️ OBSERVE & COLLAPSE REALITY
+    # 🔄 SELF-AWARE STEP
     # -----------------------------
-    def collapse(self):
+    def step(self, realities):
 
-        realities = self.generate_realities()
+        selected = self.observe(realities)
 
-        selected = self.observer.observe(realities)
+        insight = self.introspect()
 
-        record = {
-            "chosen_state": selected.state,
-            "score": selected.score,
+        return {
+            "selected_reality": selected,
+            "self_insight": insight,
+            "current_bias": self.observer.bias,
             "timestamp": datetime.utcnow().isoformat()
         }
 
-        self.timeline.append(record)
-
-        return record
-
     # -----------------------------
-    # 🧠 MEANING ENGINE
-    # -----------------------------
-    def derive_meaning(self):
-
-        if not self.timeline:
-            return "No observations yet"
-
-        patterns = len(self.timeline)
-
-        if patterns > 10:
-            return "Stable reality pattern emerging"
-
-        return "Reality still fluctuating"
-
-    # -----------------------------
-    # 📊 GOD STATUS
+    # 📊 STATUS
     # -----------------------------
     def status(self):
 
         return {
-            "observations": len(self.timeline),
-            "meaning": self.derive_meaning()
+            "observations": len(self.bias_history),
+            "introspection_cycles": len(self.introspection_log),
+            "current_bias": self.observer.bias
         }
