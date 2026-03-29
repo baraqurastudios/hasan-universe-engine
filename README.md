@@ -1,18 +1,35 @@
-class HumanOverride:
+class ControlPlaneV31:
     """
-    v3.1 Core: Manual control switch (production safety).
+    v3.1: Observable + Safe Execution Engine
     """
 
-    def __init__(self):
-        self.locked = False
+    def __init__(self, strategist, watchdog, executor, audit, override):
+        self.strategist = strategist
+        self.watchdog = watchdog
+        self.executor = executor
+        self.audit = audit
+        self.override = override
 
-    def lock_system(self):
-        self.locked = True
-        return "🔒 SYSTEM LOCKED (Human Override Activated)"
+    def run_cycle(self, logs):
 
-    def unlock_system(self):
-        self.locked = False
-        return "🔓 SYSTEM UNLOCKED"
+        decision = self.strategist.analyze(logs)
 
-    def is_locked(self):
-        return self.locked
+        # 🛡️ Human override check
+        if self.override.is_locked():
+            return "BLOCKED: SYSTEM LOCKED BY HUMAN"
+
+        # 🛡️ Safety check
+        if not self.watchdog.validate(decision):
+            self.audit.log_decision(decision, "BLOCKED", None)
+            return "BLOCKED_BY_SAFETY"
+
+        # ⚙️ Execute
+        result = self.executor.execute(decision)
+
+        # 📊 Audit EVERYTHING
+        self.audit.log_decision(decision, "EXECUTED", result)
+
+        return {
+            "decision": decision,
+            "result": result
+        }
