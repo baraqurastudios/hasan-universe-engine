@@ -1,53 +1,48 @@
-import subprocess
-import logging
+import time
+from datetime import datetime, timedelta
 
-class SafeExecutor:
-    def __init__(self):
-        # হোয়াইটলিস্ট করা কমান্ডগুলো এখানে থাকবে
-        self.allowed_actions = {
-            "restart_service": ["echo", "Service Restarted"], # এখানে আসল কমান্ড বসবে
-            "clear_cache": ["echo", "Cache Cleared"],
-            "update_env": ["echo", "Environment Updated"]
-        }
+class AutoPilotController:
+    def __init__(self, max_retries=3, window_minutes=10):
+        self.max_retries = max_retries
+        self.window_minutes = window_minutes
+        # এরর হিস্টোরি স্টোর করবে: { error_name: [timestamp1, timestamp2] }
+        self.error_history = {}
 
-    def execute(self, action_name):
-        if action_name in self.allowed_actions:
-            try:
-                # subprocess.run ব্যবহার করা os.system এর চেয়ে অনেক নিরাপদ
-                result = subprocess.run(
-                    self.allowed_actions[action_name], 
-                    capture_output=True, 
-                    text=True, 
-                    check=True
-                )
-                return f"✅ Success: {result.stdout.strip()}"
-            except subprocess.CalledProcessError as e:
-                return f"❌ Failed to execute {action_name}: {e}"
-        return "⚠️ Unauthorized Action Blocked!"
+    def _clean_old_errors(self, error_name):
+        """উইন্ডোর বাইরের পুরনো এররগুলো ডিলিট করবে।"""
+        now = datetime.now()
+        threshold = now - timedelta(minutes=self.window_minutes)
+        if error_name in self.error_history:
+            self.error_history[error_name] = [
+                ts for ts in self.error_history[error_name] if ts > threshold
+            ]
 
-class ActionMapper:
-    def map_ai_suggestion(self, ai_text):
-        """AI-এর টেক্সট থেকে নির্দিষ্ট অ্যাকশন খুঁজে বের করবে।"""
-        text = ai_text.lower()
-        if "restart" in text and "service" in text:
-            return "restart_service"
-        if "clear" in text and "cache" in text:
-            return "clear_cache"
-        return "unknown"
-
-class SelfHealingSystem:
-    def __init__(self):
-        self.mapper = ActionMapper()
-        self.executor = SafeExecutor()
-
-    def handle_healing(self, ai_reasoning_output):
-        action = self.mapper.map_ai_suggestion(ai_reasoning_output)
+    def should_retry(self, error_name):
+        self._clean_old_errors(error_name)
         
-        if action != "unknown":
-            print(f"🧠 AI Suggested: {action}")
-            # রিয়েল সিস্টেমে এখানে একটি 'Human Approval' গেট রাখা ভালো
-            result = self.executor.execute(action)
-            print(result)
-            return result
+        if error_name not in self.error_history:
+            self.error_history[error_name] = []
+            
+        # নতুন এরর টাইমস্ট্যাম্প যোগ করা
+        self.error_history[error_name].append(datetime.now())
+        
+        current_count = len(self.error_history[error_name])
+        if current_count <= self.max_retries:
+            return True, current_count
+        return False, current_count
+
+    def activate_emergency_mode(self, error_name):
+        print(f"\n🚨 [CRITICAL] EMERGENCY MODE ACTIVATED")
+        print(f"🛑 Cause: '{error_name}' failed {self.max_retries} times in {self.window_minutes} min.")
+        print(f"📡 Action: Autopilot DISENGAGED. Sending SOS to Admin...")
+        # এখানে তোমার v1.3 এর Telegram Alert কল হবে
+
+    def handle_incident(self, error_name):
+        can_retry, count = self.should_retry(error_name)
+        
+        if can_retry:
+            print(f"🔄 Attempting Auto-Fix ({count}/{self.max_retries}) for: {error_name}")
+            return "healing"
         else:
-            return "🤷 No automated fix found. Manual intervention required."
+            self.activate_emergency_mode(error_name)
+            return "emergency_stop"
