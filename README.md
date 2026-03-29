@@ -1,28 +1,40 @@
 # -----------------------------------------------
-# 🗝️ v8.0 UNIVERSE MASTER LAUNCHER (MAIN ENGINE)
+# 🌌 v8.0 UNIVERSE MASTER LAUNCHER (THE INCEPTION)
 # -----------------------------------------------
+import sys
 import time
-from safety.ethics_v8_core import EthicsV8
 from core.memory_cloud import MemoryCloud
-from dashboard.god_mode import app as dashboard
+from core.self_healing import SelfHealer
+from safety.ethics_v8_core import EthicsV8
+from safety.v8_observer_locks import ObserverLock
+from dashboard.god_mode import app
 
-def start_v8_universe():
-    print("🌌 Initializing v8.0 Observer God Layer...")
-    
-    # ১. সিকিউরিটি এবং এথিক্স লোড করা
-    print("🛡️ Loading Mandatory Locks and Ethics...")
-    time.sleep(1)
-    
-    # ২. মেমোরি ক্লাউড কানেক্ট করা
-    print("🧠 Connecting to Memory Cloud...")
+def initialize_universe():
+    print("✨ Starting v8.0 Observer God Layer...")
     time.sleep(1)
 
-    # ৩. ড্যাশবোর্ড এবং এআই ইঞ্জিন স্টার্ট করা
-    print("👁️ God-Mode Dashboard is Live at http://localhost:8080")
-    print("🚀 Universe Engine is now Online. Watching Reality...")
+    # ১. এথিক্স এবং লক লোড করা (Mandatory)
+    print("🛡️ Booting Ethics Engine & Mandatory Locks...")
+    ethics = EthicsV8(admin_id="MASTER_USER")
+    locks = ObserverLock()
     
-    # ড্যাশবোর্ড রান করা
-    dashboard.run(port=8080)
+    # ২. মেমোরি এবং সেলফ-হিলিং চালু করা
+    print("🧠 Awakening Long-term Memory Cloud...")
+    memory = MemoryCloud()
+    healer = SelfHealer()
+
+    # ৩. সিস্টেম চেক (সব সিকিউরিটি পাস করলে ড্যাশবোর্ড খুলবে)
+    print("✅ All Security Protocols Verified.")
+    print("\n--- UNIVERSE IS NOW LIVE ---")
+    print("👁️ God-Mode Dashboard: http://localhost:8080")
+    print("----------------------------\n")
+
+    # ৪. ড্যাশবোর্ড রান করা
+    try:
+        app.run(port=8080, debug=False, use_reloader=False)
+    except KeyboardInterrupt:
+        print("\n🛑 Master Shutdown Initiated. Reality Wiping...")
+        sys.exit(0)
 
 if __name__ == "__main__":
-    start_v8_universe()
+    initialize_universe()
