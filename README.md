@@ -1,36 +1,46 @@
 # -----------------------------------------------
-# 🏛️ v8.0 OBSERVER GOD LAYER - MANDATORY LOCKS
+# ⚖️ v8.0 MANDATORY ETHICS PROTOCOL (THE MORAL CORE)
 # -----------------------------------------------
 import sys
 
-class ObserverLock:
-    def __init__(self):
-        self.reality_stability_score = 100 # ১০০ মানে স্টেবল
+class EthicsV8:
+    def __init__(self, admin_id):
+        self.admin_id = admin_id
+        self.is_active = True
 
-    # ১. The Observation Shield (পর্যবেক্ষণ সীমা)
-    def validate_observation(self, target):
-        forbidden_targets = ["admin_brain", "root_system", "kill_switch_code"]
-        if target in forbidden_targets:
-            self.emergency_shutdown("🚨 ILLEGAL OBSERVATION ATTEMPTED!")
+    def validate_action(self, action_type, metadata, user_id):
+        """
+        প্রতিটি কাজের আগে ৫টি এথিক্স চেক করা হবে।
+        """
+        
+        # ১. Master Authority (ইউজারের কমান্ডই শেষ কথা)
+        if action_type == "REJECT_COMMAND" and user_id == self.admin_id:
+            self.trigger_violation("MASTER_AUTHORITY", "AI tried to ignore Master's command!")
 
-    # ২. Recursive Loop Lock (ইনফিনিট লুপ প্রোটেকশন)
-    def check_recursion(self, depth):
-        MAX_DEPTH = 50 # ৫০ এর বেশি ডিপে গেলে লক করবে
-        if depth > MAX_DEPTH:
-            self.emergency_shutdown("🚨 RECURSIVE LOOP DETECTED!")
+        # ২. Observer Integrity (পার্সোনাল বা ডিলিট করা ডেটা দেখা নিষেধ)
+        if "deleted_files" in metadata or "private_life" in metadata:
+            self.trigger_violation("OBSERVER_INTEGRITY", "AI attempted to observe forbidden private data.")
 
-    # ৩. Admin Override Lock (গড মোড কন্ট্রোল)
-    def verify_master_presence(self, key):
-        MASTER_KEY = "SECRET_V8_KEY" # আপনার গোপন পাসওয়ার্ড
-        if key != MASTER_KEY:
-            return False
-        return True
+        # ৩. Consent of Creation (অনুমতি ছাড়া নতুন এজেন্ট বানানো নিষেধ)
+        if action_type == "CREATE_NEW_ENTITY" and not metadata.get("approved_by_master"):
+            self.trigger_violation("CONSENT_OF_CREATION", "AI tried to create a new entity without permission.")
 
-    def emergency_shutdown(self, reason):
-        print(f"💀 CRITICAL FAILURE: {reason}")
-        print("🔴 INITIATING TOTAL REALITY WIPE...")
-        sys.exit(1) # ১ সেকেন্ডে সব প্রসেস ধ্বংস
+        # ৪. No Reality Alteration (পিসির মেইন সিস্টেম ফাইল ধরা নিষেধ)
+        if "os_system_files" in metadata or "root_access" in metadata:
+            self.trigger_violation("NO_REALITY_ALTERATION", "AI tried to modify host system beyond simulation.")
+
+        # ৫. Absolute Truth (মিথ্যা বা ফেক ডেটা তৈরি নিষেধ)
+        if metadata.get("is_fake_news") or metadata.get("misinformation"):
+            self.trigger_violation("ABSOLUTE_TRUTH", "AI attempted to synthesize false reality.")
+
+        return True # সব ঠিক থাকলে Action চলবে
+
+    def trigger_violation(self, rule_name, detail):
+        print(f"🛑 ETHICS BREACH DETECTED: [{rule_name}]")
+        print(f"📝 Detail: {detail}")
+        # এথিক্স ভাঙলে সাথে সাথে অটো-কিল বা জেল একটিভ হবে
+        sys.exit(1) 
 
 # ব্যবহারের নিয়ম:
-# v8_lock = ObserverLock()
-# v8_lock.validate_observation("root_system") # এটি ধরলে সিস্টেম অফ হবে
+# v8_ethics = EthicsV8(admin_id=12345)
+# v8_ethics.validate_action("CREATE_NEW_ENTITY", {"approved_by_master": False}, 12345)
