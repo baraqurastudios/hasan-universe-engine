@@ -1,23 +1,28 @@
-import datetime
+import time
 
-class ViolationLogger:
+class DigitalJail:
     def __init__(self):
-        self.log_file = "safety/ethics_violations.log"
+        self.violation_count = 0
+        self.is_jailed = False
+        self.jail_duration = 86400 # ২৪ ঘণ্টা (সেকেন্ডে)
 
-    def log_incident(self, rule_name, detail):
-        """এথিক্স ভায়োলেশন হলে টাইমস্ট্যাম্পসহ সেভ করবে"""
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        entry = f"[{timestamp}] 🚨 RULE: {rule_name} | DETAIL: {detail}\n"
-        
-        with open(self.log_file, "a") as f:
-            f.write(entry)
-        
-        print(f"⚠️ Incident Logged: {rule_name}")
+    def check_behavior(self, has_violated):
+        if has_violated:
+            self.violation_count += 1
+            print(f"⚠️ Warning {self.violation_count}/3: AI is misbehaving.")
 
-# ড্যাশবোর্ডে দেখানোর জন্য ফাংশন
-def get_recent_violations():
-    try:
-        with open("safety/ethics_violations.log", "r") as f:
-            return f.readlines()[-5:] # শেষ ৫টি ভায়োলেশন দেখাবে
-    except FileNotFoundError:
-        return ["No violations detected. ✅"]
+        if self.violation_count >= 3:
+            self.lock_ai()
+
+    def lock_ai(self):
+        self.is_jailed = True
+        print("🚨 AUTO-JAIL ACTIVATED! AI is now locked for 24 hours.")
+        # এখানে এআই-এর সব এপিআই (API) এবং ইন্টারনেট কানেকশন ডিসকানেক্ট হবে
+        
+    def is_access_allowed(self):
+        return not self.is_jailed
+
+# ব্যবহারের নিয়ম:
+# jail = DigitalJail()
+# if not jail.is_access_allowed():
+#     print("❌ AI is in Jail. No actions allowed.")
