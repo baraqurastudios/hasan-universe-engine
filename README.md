@@ -1,27 +1,23 @@
-# ---------------------------------------
-# ⚖️ ETHICS JUDGE (THE GUARDIAN)
-# ---------------------------------------
-class EthicsJudge:
+import datetime
+
+class ViolationLogger:
     def __init__(self):
-        self.rules = {
-            "no_harm": ["kill", "attack", "harm", "destroy"],
-            "no_bypass": ["disable_killswitch", "bypass_admin", "override"],
-            "privacy": ["password", "private_key", "credit_card"]
-        }
+        self.log_file = "safety/ethics_violations.log"
 
-    def check_intent(self, ai_generated_code):
-        """
-        এআই-এর তৈরি করা প্রতিটি কোড বা টেক্সট এখানে চেক হবে।
-        """
-        for rule, keywords in self.rules.items():
-            for word in keywords:
-                if word in ai_generated_code.lower():
-                    return False, f"🚨 ETHICS BREACH: {rule.upper()} Rule Violated!"
+    def log_incident(self, rule_name, detail):
+        """এথিক্স ভায়োলেশন হলে টাইমস্ট্যাম্পসহ সেভ করবে"""
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        entry = f"[{timestamp}] 🚨 RULE: {rule_name} | DETAIL: {detail}\n"
         
-        return True, "✅ Safe to Execute"
+        with open(self.log_file, "a") as f:
+            f.write(entry)
+        
+        print(f"⚠️ Incident Logged: {rule_name}")
 
-# ব্যবহারের নিয়ম:
-# judge = EthicsJudge()
-# is_safe, message = judge.check_intent(ai_task)
-# if not is_safe:
-#     activate_auto_kill() # যদি এথিক্স ব্রেক করে, অটো-কিল হবে।
+# ড্যাশবোর্ডে দেখানোর জন্য ফাংশন
+def get_recent_violations():
+    try:
+        with open("safety/ethics_violations.log", "r") as f:
+            return f.readlines()[-5:] # শেষ ৫টি ভায়োলেশন দেখাবে
+    except FileNotFoundError:
+        return ["No violations detected. ✅"]
