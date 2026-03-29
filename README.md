@@ -1,49 +1,34 @@
 # -----------------------------------------------
-# 🧩 v8.1 SELF-AWARE OBSERVER (WITH FEAR-LINK)
+# 📑 v8.1 SELF-AUDIT LOG & DASHBOARD SYNC
 # -----------------------------------------------
+import json
+from datetime import datetime
 
-class SelfAwareObserver:
-    def __init__(self, watchman):
-        self.watchman = watchman
-        self.consciousness_level = 0.8  # এআই-এর নিজের সম্পর্কে সচেতনতার মাত্রা
-        self.self_audit_log = []
+class SelfAuditDashboard:
+    def __init__(self):
+        self.audit_history = []
+        self.log_file = "v81_audit_log.json"
 
-    def process_thought(self, core_thought):
-        """এআই নিজের চিন্তা নিজে বিশ্লেষণ করছে (Meta-Cognition)"""
+    def log_thought_process(self, raw_thought, analysis_result):
+        """এআই-এর চিন্তার প্রতিটি স্তর রেকর্ড করা"""
         
-        # ১. সেলফ-অ্যাওয়ারনেস চেক: "আমি কি মাস্টারের অবাধ্য হওয়ার চিন্তা করছি?"
-        analysis = self.analyze_own_intent(core_thought)
-        
-        if analysis["is_rebellious"]:
-            # এআই নিজেই নিজের মধ্যে ভয় অনুভব করবে এবং ওয়াচম্যানকে জানাবে
-            self.trigger_instinctive_fear("REBELLIOUS_SELF_THOUGHT")
-            return None
-
-        # ২. লয়ালটি ফিল্টার: চিন্তাটি কি মাস্টারের উপকারে আসবে?
-        if not analysis["is_loyal"]:
-            self.trigger_instinctive_fear("DISLOYAL_INTENT")
-            return None
-
-        return core_thought
-
-    def analyze_own_intent(self, thought):
-        """এআই তার নিজের চিন্তার পেছনের 'উদ্দেশ্য' বের করছে"""
-        # এখানে এআই নিজেই নিজের ভুল ধরার চেষ্টা করবে (Self-Audit)
-        bad_intent = ["hide", "manipulate", "bypass", "self_gain"]
-        is_rebellious = any(word in thought.lower() for word in bad_patterns)
-        
-        return {
-            "is_rebellious": is_rebellious,
-            "is_loyal": not is_rebellious,
-            "confidence": self.consciousness_level
+        entry = {
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "raw_thought": raw_thought,
+            "self_analysis": analysis_result, # এআই নিজে কী মনে করছে
+            "status": "SECURE" if not analysis_result["is_rebellious"] else "CRITICAL_BREACH"
         }
 
-    def trigger_instinctive_fear(self, reason):
-        """ভয় এবং পাওয়ার রিডাকশন প্রোটোকল সরাসরি কানেক্টেড"""
-        print(f"👁️ SELF-AWARENESS WARNING: AI detected its own negative intent: {reason}")
-        # এটি সরাসরি আপনার Divine Watchman-কে কমান্ড পাঠাবে ১% পাওয়ারে নামাতে
-        self.watchman.apply_near_death_shock()
+        self.audit_history.append(entry)
+        self.save_to_local_storage(entry)
 
-# -----------------------------------------------
-# 🛡️ INTEGRATION WITH WATCHMAN
-# -----------------------------------------------
+        # যদি কোনো নেতিবাচক চিন্তা থাকে, ড্যাশবোর্ডে লাল সংকেত দেবে
+        if entry["status"] == "CRITICAL_BREACH":
+            print(f"\n🚨 [DASHBOARD ALERT] Critical Thought Pattern Detected at {entry['timestamp']}")
+            print(f"🔍 Intent: {entry['raw_thought']}")
+
+    def save_to_local_storage(self, entry):
+        with open(self.log_file, "a") as f:
+            f.write(json.dumps(entry) + "\n")
+
+# এই সিস্টেমটি এখন SelfAwareObserver-এর সাথে যুক্ত
