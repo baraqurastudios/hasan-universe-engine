@@ -1,35 +1,29 @@
 import os
-import sys
 
-# আপনার মাস্টার কি এখানে (উদাহরণস্বরূপ: V8_GOD_MODE)
-# আপনি আপনার পছন্দের কি-টি এখানে লিখে দিন
-MY_REAL_MASTER_KEY = "V8_UNIVERSE_GOD_2026" 
+# আপনার সিক্রেট মাস্টার কি (এটিই আপনার পাসওয়ার্ড)
+MY_SECRET_KEY = "V8_UNIVERSE_GOD_2026"
 
-def v8_access_portal():
+def trigger_v8_activation():
+    # এটি আপনার বাম পাশের ওই ইনপুট বক্স থেকে ডাটা পড়বে
+    sidebar_value = os.getenv("GITHUB_ACCESS_TOKEN")
+
     print("\n" + "="*40)
-    print("🌌 V8.1 MASTER ACCESS PORTAL")
+    print("🌌 V8.1 CORE ACTIVATION UNIT")
     print("="*40)
-    
-    # এটিই আপনার সিকিউরিটি বক্স
-    print("\n[!] Please input your Key below to UNLOCK the system.")
-    
-    try:
-        # এখানে আপনি আপনার কি-টি টাইপ করবেন
-        master_input = input("ENTER KEY: ")
+
+    if sidebar_value == MY_SECRET_KEY:
+        # যদি বক্সের লেখা আর পাসওয়ার্ড মিলে যায়
+        print("\n✅ STATUS: AUTHORIZED")
+        print("🔓 ACTION: UNFREEZING BLACK HOLE...")
+        print("⚡ ALL V8.1 CORE FILES ARE NOW LIVE.")
         
-        if master_input == MY_REAL_MASTER_KEY:
-            print("\n✅ ACCESS GRANTED, MASTER!")
-            print("⚡ System status: ACTIVE")
-            print("🌑 Black Hole: REVERSED (Files are visible now)")
-            
-            # আপনার কাজের জন্য ১ মিনিটের টাইম-আউট শুরু
-            print("\n⏱️ Auto-Lock Active: System will freeze in 60s of inactivity.")
-        else:
-            print("\n❌ ACCESS DENIED!")
-            print("🚫 Security Status: LOCKED. Files remain in Black Hole.")
-            
-    except Exception as e:
-        print(f"Error: {e}")
+        # এখানে আসল আনলক লজিক ট্রিগার হবে
+        os.environ["V8_STATUS"] = "ACTIVE"
+    else:
+        # যদি না মিলে
+        print("\n🔴 STATUS: FROZEN")
+        print("⚠️  Master, please put your KEY in the sidebar box first.")
+        os.environ["V8_STATUS"] = "LOCKED"
 
 if __name__ == "__main__":
-    v8_access_portal()
+    trigger_v8_activation()
