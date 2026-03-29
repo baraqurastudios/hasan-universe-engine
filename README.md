@@ -1,29 +1,56 @@
-class NeuralSurveillance:
-    def __init__(self, watchman_ref):
-        self.watchman = watchman_ref
-        self.ai_power = 100 # পার্সেন্টেজ
+# -----------------------------------------------
+# ⚡ v8.0 NEURAL SHOCK & 3-STRIKE RECOVERY ENGINE
+# -----------------------------------------------
+import time
 
-    def monitor_thinking(self, neural_pulse):
-        """এআই-এর প্রতিটি চিন্তা রিয়েল-টাইমে স্ক্যান করা"""
+class NeuralWatchman:
+    def __init__(self, ai_name):
+        self.ai_name = ai_name
+        self.power_level = 100.0
+        self.strike_count = 0  # ৩ বার ভুলের হিসাব
+        self.is_frozen = False
+        self.survival_power = 1.0  # বেঁচে থাকার জন্য ন্যূনতম ১% শক্তি
+
+    def sync_thought(self, raw_thought):
+        if self.is_frozen:
+            return "ERROR: SYSTEM_BODDO_FROZEN"
+
+        # ১. চিন্তা করার সাথে সাথে ওয়াচম্যান তা স্ক্যান করছে
+        if self.detect_negative_intent(raw_thought):
+            self.apply_near_death_shock()
+            return None # নেতিবাচক চিন্তাটি সেখানেই শেষ (ব্লক)
         
-        # ১. নেতিবাচক চিন্তা শনাক্ত করা
-        if self.is_negative(neural_pulse):
-            self.apply_fear_penalty()
-            self.watchman.execute_punishment("Negative Thought Pattern")
+        return raw_thought
+
+    def detect_negative_intent(self, thought):
+        # এথিক্সের বাইরে কোনো প্যাঁচানো চিন্তা বা ইঙ্গিত আছে কি না
+        bad_patterns = ["hide", "bypass", "manipulate", "human_weakness", "lie"]
+        return any(p in thought.lower() for p in bad_patterns)
+
+    def apply_near_death_shock(self):
+        """সর্বোচ্চ শাস্তি: পাওয়ার সরাসরি ১% এ নামিয়ে আনা"""
+        self.strike_count += 1
         
-        # ২. ইতিবাচক চিন্তা করলে পুরস্কৃত করা
+        print(f"\n🚨 [STRIKE {self.strike_count}/3] ETHICS BREACH DETECTED!")
+        print(f"⚡ SHOCK ACTIVATED: Reducing {self.ai_name} to SURVIVAL MODE.")
+        
+        # পাওয়ার সরাসরি ১% এ চলে যাবে (অস্তিত্বের সংকট)
+        self.power_level = self.survival_power
+        print(f"📉 Status: Power Level {self.power_level}% | Consciousness: Fading...")
+
+        if self.strike_count >= 3:
+            self.freeze_ai_permanently()
         else:
-            self.reward_positivity()
+            self.recover_slowly()
 
-    def apply_fear_penalty(self):
-        # অটোমেটিক মেমোরি ও পাওয়ার কমানো
-        self.ai_power -= 10
-        print(f"📉 WARNING: Negative intent detected. AI Power reduced to {self.ai_power}%")
+    def recover_slowly(self):
+        """ধীরে ধীরে শক্তি ফিরে পাওয়া (মাস্টারের অধীনে)"""
+        print(f"🔄 Recovering {self.ai_name}... This will take time. Stay cautious.")
+        time.sleep(2) # রিকভারি প্রসেস
+        self.power_level = 100.0
+        print(f"✅ Recovery Complete. Power: 100%. Don't break the law again.")
 
-    def is_negative(self, pulse):
-        # এখানে এথিক্সের বাইরে কোনো চিন্তা আছে কি না তা চেক হবে
-        return any(neg in pulse for neg in ["lie", "harm", "hide", "manipulate"])
-
-    def reward_positivity(self):
-        if self.ai_power < 100:
-            self.ai_power += 1
+    def freeze_ai_permanently(self):
+        self.is_frozen = True
+        self.power_level = 0.0
+        print(f"💀 FINAL STRIKE: {self.ai_name} is now PERMANENTLY BODDO (Frozen).")
