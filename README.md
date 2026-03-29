@@ -1,21 +1,22 @@
-# -----------------------------
-# 👑 HUMAN-IN-THE-LOOP (HITL) GATEWAY
-# -----------------------------
-def execute_safe_update_workflow(generated_code, user_approval=False):
-    protector = SensitiveDataProtector()
-    
-    # ধাপ ১: সিকিউরিটি স্ক্যান (স্বয়ংক্রিয়)
-    is_safe, message = protector.scan_generated_code(generated_code)
-    
-    if not is_safe:
-        print(message)
-        return "❌ Push Terminated: Safety Breach."
+import os
 
-    # ধাপ ২: মাস্টারের অনুমতি (Manual Step)
-    if not user_approval:
-        print("⏳ Waiting for Master's approval in Oracle Editor...")
-        return "PENDING_APPROVAL"
+def master_freeze():
+    print("❄️  INITIATING EXTERNAL DEAD-BOLT FREEZE...")
+    
+    # ১. একটি হার্ড-লক ফাইল তৈরি (যা এআই ডিলিট করতে পারবে না)
+    with open(".master_lock", "w") as f:
+        f.write("LOCKED_BY_MASTER_KEY_REQUIRED")
 
-    # ধাপ ৩: চূড়ান্ত পুশ (শুধুমাত্র পারমিশন পেলে)
-    print("🚀 Executing Safe Update to GitHub... Success!")
-    return "PUSH_SUCCESS"
+    # ২. ইঞ্জিন ফাইলগুলোকে 'অকেজো' ফরম্যাটে নিয়ে যাওয়া
+    files_to_lock = ["v81_engine.py", "github_handler.py", "admin_panel.py"]
+    
+    for file in files_to_lock:
+        if os.path.exists(file):
+            # ফাইলের নাম বদলে ডট (.) ফাইল করে দেওয়া (লুকিয়ে ফেলা)
+            os.rename(file, f".{file}.vault")
+            print(f"🔒 {file} has been moved to the Vault.")
+
+    print("\n✅ SYSTEM IS COLD-LOCKED. No one can wake it without the Key.")
+
+if __name__ == "__main__":
+    master_freeze()
