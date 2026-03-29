@@ -1,19 +1,32 @@
-class Watchdog:
-    def __init__(self):
-        self.history = {}
+import asyncio
+from core.models import Action
 
-    def validate(self, action: Action) -> bool:
-        # Risk-based blocking
-        if action.risk == "HIGH":
-            print(f"🚫 BLOCKED: High-risk action '{action.type}' requires manual approval.")
-            return False
+class ControlPlane:
+    def __init__(self, observer, strategist, watchdog, executor, state):
+        self.observer = observer
+        self.strategist = strategist
+        self.watchdog = watchdog
+        self.executor = executor
+        self.state = state
 
-        # Loop detection logic
-        key = f"{action.type}_{action.target}"
-        self.history[key] = self.history.get(key, 0) + 1
+    async def run_cycle(self):
+        # 1. Collect
+        logs = await self.observer.collect_async()
 
-        if self.history[key] > 3:
-            print(f"🚨 ALERT: Loop detected for {key}! Execution halted.")
-            return False
+        # 2. Analyze
+        action = self.strategist.analyze(logs)
 
-        return True
+        if action.type == "NOOP":
+            return "IDLE: No action needed."
+
+        # 3. Safety Check
+        if not self.watchdog.validate(action):
+            return f"SAFETY_BLOCK: Action {action.type} denied."
+
+        # 4. Execute
+        result = await self.executor.execute(action)
+
+        # 5. Update State
+        self.state.update(action, result)
+
+        return f"SUCCESS: {action.type} executed on {action.target}"
