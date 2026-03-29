@@ -1,107 +1,97 @@
-import random
-from datetime import datetime
+import time
 
 
 # -----------------------------
-# 🖥️ NODE MODEL
+# 🧠 GLOBAL AUTONOMOUS AI OS
 # -----------------------------
-class Node:
-    def __init__(self, node_id):
-        self.node_id = node_id
-        self.active = True
-        self.load = random.randint(10, 50)
+class AutonomousAIOSv40:
 
-    def health(self):
-        return {
-            "node": self.node_id,
-            "active": self.active,
-            "load": self.load
+    def __init__(self, brain, cloud, governance):
+
+        self.brain = brain
+        self.cloud = cloud
+        self.governance = governance
+
+        self.running = True
+        self.system_log = []
+
+    # -----------------------------
+    # ⚡ MAIN AUTONOMOUS LOOP
+    # -----------------------------
+    def run_cycle(self, incoming_signal):
+
+        """
+        incoming_signal example:
+        {
+            "type": "cpu_spike",
+            "value": 0.8,
+            "task": "optimize_system"
         }
+        """
 
+        # 1️⃣ CLOUD EXECUTION CONTEXT
+        execution = self.cloud.execute(incoming_signal.get("task", "noop"))
 
-# -----------------------------
-# 🌐 DISTRIBUTED CLOUD SYSTEM
-# -----------------------------
-class DistributedCloudV33:
+        # 2️⃣ BRAIN ANALYSIS
+        decision = self.brain.decide(incoming_signal)
 
-    def __init__(self, num_nodes=3):
+        # 3️⃣ GOVERNANCE CHECK
+        final_action = self.governance.resolve([decision])
 
-        self.nodes = [Node(f"node_{i}") for i in range(num_nodes)]
+        # 4️⃣ APPLY ACTION
+        result = self._apply(final_action, execution)
 
-        self.history = []
-
-    # -----------------------------
-    # ⚖️ LOAD BALANCER
-    # -----------------------------
-    def select_node(self):
-
-        active_nodes = [n for n in self.nodes if n.active]
-
-        if not active_nodes:
-            return None
-
-        # pick lowest load node
-        best = min(active_nodes, key=lambda n: n.load)
-
-        return best
-
-    # -----------------------------
-    # ⚙️ EXECUTE TASK
-    # -----------------------------
-    def execute(self, task):
-
-        node = self.select_node()
-
-        if not node:
-            return {
-                "status": "FAILED",
-                "reason": "No active nodes"
-            }
-
-        # simulate load increase
-        node.load += random.randint(1, 10)
-
-        result = {
-            "task": task,
-            "node": node.node_id,
-            "status": "EXECUTED",
-            "timestamp": datetime.utcnow().isoformat()
-        }
-
-        self.history.append(result)
+        # 5️⃣ LOG EVERYTHING
+        self.system_log.append({
+            "signal": incoming_signal,
+            "decision": decision,
+            "final_action": final_action,
+            "result": result
+        })
 
         return result
 
     # -----------------------------
-    # 🔄 FAILOVER SYSTEM
+    # ⚙️ ACTION EXECUTOR
     # -----------------------------
-    def fail_node(self, node_id):
+    def _apply(self, action, execution):
 
-        for node in self.nodes:
-            if node.node_id == node_id:
-                node.active = False
+        act = action.get("action", "NOOP")
+
+        if act == "SCALE_UP":
+            return self.cloud.execute("scale_up")
+
+        if act == "LOCKDOWN":
+            self.running = False
+            return {"status": "SYSTEM_LOCKED"}
 
         return {
-            "status": f"{node_id} failed"
+            "status": "NOOP",
+            "execution": execution
         }
 
     # -----------------------------
-    # 📊 CLUSTER HEALTH
+    # 🔄 SELF-HEAL LOOP
     # -----------------------------
-    def cluster_health(self):
+    def self_heal(self):
+
+        last_logs = self.system_log[-5:]
+
+        failures = [log for log in last_logs if "error" in str(log)]
+
+        if len(failures) >= 2:
+            return self.cloud.execute("restart_services")
+
+        return {"status": "HEALTHY"}
+
+    # -----------------------------
+    # 📊 SYSTEM STATUS
+    # -----------------------------
+    def status(self):
 
         return {
-            "nodes": [n.health() for n in self.nodes],
-            "total_nodes": len(self.nodes),
-            "active_nodes": len([n for n in self.nodes if n.active])
-        }
-
-    # -----------------------------
-    # 📡 REPORT
-    # -----------------------------
-    def report(self):
-
-        return {
-            "history_count": len(self.history),
-            "cluster": self.cluster_health()
+            "running": self.running,
+            "logs": len(self.system_log),
+            "cloud": self.cloud.report(),
+            "governance": self.governance.report()
         }
