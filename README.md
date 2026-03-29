@@ -1,18 +1,14 @@
-import time
+class ApprovalGateway:
+    def __init__(self, admin_telegram_id):
+        self.admin_id = admin_telegram_id
 
-class DigitalJail:
-    def __init__(self):
-        self.violation_count = 0
-        self.is_locked = False
-        self.jail_time = 86400 # ২৪ ঘণ্টা
-
-    def add_violation(self):
-        self.violation_count += 1
-        print(f"⚠️ Warning: Violation {self.violation_count}/3")
+    def request_approval(self, content):
+        print(f"📡 Sending Draft to Admin [{self.admin_id}]...")
+        print(f"Draft: {content[:50]}...")
         
-        if self.violation_count >= 3:
-            self.is_locked = True
-            print("🚨 AI IS NOW IN DIGITAL JAIL (24H LOCK)")
-    
-    def check_jail_status(self):
-        return self.is_locked
+        # এখানে টেলিগ্রাম বটের মাধ্যমে আপনার ইনপুটের জন্য অপেক্ষা করবে
+        user_input = input("Enter 'YES' to publish or 'NO' to discard: ")
+        
+        if user_input.upper() == "YES":
+            return True # পাবলিশ করার পারমিশন পেল
+        return False # ড্রাফট ডিলিট
