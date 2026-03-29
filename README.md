@@ -1,29 +1,30 @@
-import os
-import stat
+class BaraQuraEngine:
+    def __init__(self, strategist, ethics, shield, gate, sandbox, lockdown):
+        self.strategist = strategist
+        self.ethics = ethics
+        self.shield = shield
+        self.gate = gate
+        self.sandbox = sandbox  # v3.1.15 Sandbox
+        self.lockdown = lockdown # v3.1.15 Lockdown
 
-class SystemLockdown:
-    """
-    v3.1.15: File System Integrity.
-    Makes core engine files Read-Only for the AI process.
-    """
-    def __init__(self, core_files: list):
-        self.core_files = core_files
+    async def run_cycle(self, logs: str):
+        # ১. ইঞ্জিন চালু হওয়ার আগে সব কোর ফাইল লক করে দাও
+        self.lockdown.enforce_read_only()
 
-    def enforce_read_only(self):
-        """
-        মূল ফাইলগুলোকে 'Read-Only' করে দেয়। 
-        এমনকি এআই হ্যাক করলেও এগুলো এডিট করতে পারবে না।
-        """
-        for file in self.core_files:
-            if os.path.exists(file):
-                # ফাইলে শুধু Read পারমিশন থাকবে (444)
-                os.chmod(file, stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH)
-        print("🔒 CORE_FILES_LOCKED: All safety modules are now Read-Only.")
+        # ২. এআই পরামর্শ দেবে (The Strategist)
+        decision = self.strategist.analyze(logs)
 
-    def release_for_human(self):
-        """
-        শুধুমাত্র আপনি (Human) চাইলে ফাইল আনলক করতে পারবেন।
-        """
-        for file in self.core_files:
-            os.chmod(file, stat.S_IREAD | stat.S_IWRITE | stat.S_IEXEC)
-        print("🔓 CORE_FILES_UNLOCKED: Human access granted.")
+        # ৩. এথিক্স এবং শিল্ড ভেরিফিকেশন (Hard-coded Logic)
+        if not self.ethics.verify_morality(decision.__dict__)[0]:
+            return "ETHICS_FAILURE"
+
+        # ৪. হিউম্যান গেট (The Approval)
+        if decision.action != "NOOP":
+            # আপনার অনুমতির জন্য অপেক্ষা
+            approval = await self.gate.request_approval(decision.__dict__)
+            if approval == "APPROVED":
+                # ৫. স্যান্ডবক্সের ভেতর নিরাপদ এক্সিকিউশন
+                result = self.sandbox.safe_execute_check(decision.action)
+                return result
+        
+        return "ACTION_PAUSED_OR_NOOP"
