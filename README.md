@@ -1,49 +1,61 @@
-import time
+import logging
 
-class Config:
+class StateManager:
+    """সব এজেন্টের জন্য একটি কমন মেমোরি হিসেবে কাজ করবে।"""
     def __init__(self):
-        self.timeout = 5
-        self.max_timeout = 15  # সর্বোচ্চ সীমা
-        self.cooldown_period = 10 # টেস্টের জন্য কম রাখা হয়েছে
-        self.last_stable_config = 5
+        self.current_issue = None
+        self.action_taken = None
+        self.is_valid = False
 
-class AIOptimizer:
-    def __init__(self, config):
-        self.config = config
-        self.failure_history = {}
+class Observer:
+    def observe(self, state):
+        # এখানে তোমার v1.2 এর লগ রিডার কল হবে
+        state.current_issue = "API Latency > 500ms"
+        print(f"👁️  [Observer]: {state.current_issue}")
 
-    def rollback(self):
-        """যদি অপ্টিমাইজেশন কাজ না করে তবে আগের স্থিতিশীল অবস্থায় ফিরবে।"""
-        print("⚠️ Optimization failed to stabilize. Rolling back to last stable config.")
-        self.config.timeout = self.config.last_stable_config
+class Strategist:
+    def decide(self, state):
+        if "Latency" in state.current_issue:
+            state.action_taken = "Enable_Edge_Caching"
+            print(f"🧠 [Strategist]: Proposed Action -> {state.action_taken}")
 
-    def analyze_and_tune(self, service, error_type):
-        key = f"{service}:{error_type}"
-        self.failure_history[key] = self.failure_history.get(key, 0) + 1
+class Executor:
+    def execute(self, state):
+        # এখানে v1.6 এর SafeExecutor কল হবে
+        if state.action_taken:
+            print(f"⚙️  [Executor]: Executing {state.action_taken}...")
+            # স্যান্ডবক্স চেক সিমুলেশন
+            return "Execution_Success"
+        return "No_Action"
 
-        # ১. Cooldown Logic (বিরামহীন রিস্টার্ট না দিয়ে সিস্টেমকে শান্ত হতে দেওয়া)
-        if self.failure_history[key] >= 3:
-            print(f"⏳ [COOLDOWN] Service '{service}' is unstable. Sleeping for {self.config.cooldown_period}s...")
-            time.sleep(self.config.cooldown_period)
-            self.failure_history[key] = 0 # কাউন্টার রিসেট
-            return self.rollback()
+class Validator:
+    def validate(self, state, result):
+        if result == "Execution_Success":
+            state.is_valid = True
+            print("✅ [Validator]: Change Verified & Stable.")
+        else:
+            state.is_valid = False
+            print("❌ [Validator]: Validation Failed! Triggering Rollback...")
 
-        # ২. Self-Optimization (Adaptive Timeout)
-        if "timeout" in error_type.lower():
-            if self.config.timeout < self.config.max_timeout:
-                self.config.timeout += 2
-                print(f"⚙️ [TUNING] Increased {service} timeout to {self.config.timeout}s")
-            else:
-                print(f"🚨 [LIMIT] Max timeout reached for {service}. Optimization limit hit.")
+class GOD_MODE_OS:
+    def __init__(self):
+        self.state = StateManager()
+        self.agents = {
+            "obs": Observer(),
+            "strat": Strategist(),
+            "exec": Executor(),
+            "val": Validator()
+        }
 
-        return self.config
+    def run_autonomous_cycle(self):
+        print("\n--- 🚀 Starting Autonomous Cycle ---")
+        self.agents["obs"].observe(self.state)
+        self.agents["strat"].decide(self.state)
+        result = self.agents["exec"].execute(self.state)
+        self.agents["val"].validate(self.state, result)
+        print("--- 🏁 Cycle Complete ---\n")
 
 # ব্যবহার বিধি
 if __name__ == "__main__":
-    my_config = Config()
-    optimizer = AIOptimizer(my_config)
-
-    # সিমুলেশন: বারবার টাইমআউট এরর হচ্ছে
-    for i in range(5):
-        print(f"\n--- Incident {i+1} ---")
-        optimizer.analyze_and_tune("Payment_Gateway", "Timeout Error")
+    ai_os = GOD_MODE_OS()
+    ai_os.run_autonomous_cycle()
