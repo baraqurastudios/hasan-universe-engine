@@ -1,115 +1,133 @@
+import numpy as np
+from sklearn.ensemble import IsolationForest
 from collections import defaultdict
 from datetime import datetime
 
 
-class SelfLearningLayerV32:
+class MLBrainV32:
     """
-    v3.2 Self-Learning Brain Layer
-    - Learns from system logs
-    - Detects repeating patterns
-    - Flags anomalies
+    v3.2 ML Self-Learning Brain
+    - Uses anomaly detection (Isolation Forest)
+    - Learns patterns from structured logs
+    - Produces risk prediction
     """
 
     def __init__(self):
-        # pattern frequency store
-        self.pattern_db = defaultdict(int)
+        self.logs = []
+        self.pattern_counter = defaultdict(int)
+        self.model = IsolationForest(contamination=0.1, random_state=42)
 
-        # history log (optional memory trace)
-        self.history = []
+        self.trained = False
 
     # -----------------------------
-    # 🧠 INGEST LEARNING DATA
+    # 🧾 INGEST DATA
     # -----------------------------
     def ingest(self, logs: list):
         """
         logs format:
-        [
-            {"type": "cpu_spike", "message": "..."},
-            {"type": "error_burst", "message": "..."}
-        ]
+        {
+            "type": "cpu_spike",
+            "value": 0.8,   # normalized metric (0-1)
+        }
         """
 
         for log in logs:
-            log_type = log.get("type", "unknown")
+            self.logs.append([
+                log.get("value", 0.0)
+            ])
 
-            self.pattern_db[log_type] += 1
-
-            self.history.append({
-                "type": log_type,
-                "time": datetime.utcnow().isoformat()
-            })
+            self.pattern_counter[log.get("type", "unknown")] += 1
 
     # -----------------------------
-    # 🔍 PATTERN DETECTION
+    # 🧠 TRAIN MODEL
     # -----------------------------
-    def detect_patterns(self):
-        patterns = []
+    def train(self):
+        if len(self.logs) < 5:
+            return "Not enough data to train"
 
-        for key, count in self.pattern_db.items():
+        X = np.array(self.logs)
 
-            if count >= 3:
-                severity = "HIGH"
-            elif count == 2:
-                severity = "MEDIUM"
-            else:
-                severity = "LOW"
+        self.model.fit(X)
+        self.trained = True
 
-            patterns.append({
-                "pattern": key,
-                "count": count,
-                "severity": severity
-            })
-
-        return patterns
+        return "Model trained successfully"
 
     # -----------------------------
-    # ⚡ ANOMALY DETECTION
+    # 🔍 ANOMALY DETECTION
     # -----------------------------
     def detect_anomalies(self):
+
+        if not self.trained:
+            return []
+
+        X = np.array(self.logs)
+
+        results = self.model.predict(X)
+
         anomalies = []
 
-        for key, count in self.pattern_db.items():
-
-            # simple anomaly rule (can upgrade to ML later)
-            if count >= 5:
+        for i, r in enumerate(results):
+            if r == -1:
                 anomalies.append({
-                    "type": key,
-                    "status": "ANOMALY_DETECTED",
-                    "reason": "Repeated high-frequency occurrence"
+                    "index": i,
+                    "value": self.logs[i],
+                    "status": "ANOMALY"
                 })
 
         return anomalies
 
     # -----------------------------
-    # 🧠 PREDICTION ENGINE (SIMPLE)
+    # ⚡ RISK SCORING
     # -----------------------------
-    def predict_next_risk(self):
-        if not self.pattern_db:
-            return {"risk": "LOW", "message": "No data yet"}
+    def risk_score(self):
 
-        top_pattern = max(self.pattern_db, key=self.pattern_db.get)
-        count = self.pattern_db[top_pattern]
+        if not self.trained:
+            return {"risk": "UNKNOWN"}
 
-        if count >= 4:
-            return {
-                "risk": "HIGH",
-                "prediction": f"{top_pattern} likely to repeat",
-                "suggestion": "Activate mitigation strategy"
-            }
+        anomalies = len(self.detect_anomalies())
+        total = len(self.logs)
+
+        score = anomalies / total if total > 0 else 0
+
+        if score > 0.4:
+            level = "HIGH"
+        elif score > 0.2:
+            level = "MEDIUM"
+        else:
+            level = "LOW"
 
         return {
-            "risk": "LOW",
-            "prediction": "System stable",
-            "suggestion": "No action needed"
+            "risk_level": level,
+            "score": round(score, 3)
         }
 
     # -----------------------------
-    # 📊 DEBUG / INSIGHT REPORT
+    # 🔮 SIMPLE FORECAST
+    # -----------------------------
+    def forecast(self):
+
+        if not self.pattern_counter:
+            return {"forecast": "NO DATA"}
+
+        top_pattern = max(self.pattern_counter, key=self.pattern_counter.get)
+
+        return {
+            "most_common_issue": top_pattern,
+            "next_likely_event": f"{top_pattern} recurrence possible",
+            "confidence": 0.75
+        }
+
+    # -----------------------------
+    # 📊 FULL REPORT
     # -----------------------------
     def report(self):
+
         return {
-            "patterns": dict(self.pattern_db),
-            "total_events": len(self.history),
+            "trained": self.trained,
+            "total_logs": len(self.logs),
+            "patterns": dict(self.pattern_counter),
             "anomalies": self.detect_anomalies(),
-            "prediction": self.predict_next_risk()
+            "risk": self.risk_score(),
+            "forecast": self.forecast(),
+            "timestamp": datetime.utcnow().isoformat()
         }
