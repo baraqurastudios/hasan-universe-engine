@@ -1,44 +1,45 @@
-class BaraQuraEngine:
-    def __init__(self, strategist, gate, shield, audit, override, executor):
-        self.strategist = strategist
-        self.gate = gate
-        self.shield = shield
-        self.audit = audit
-        self.override = override
-        self.executor = executor
+import time
+from typing import Dict, Any
 
-    async def run_cycle(self, logs: str):
-        # ১. হিউম্যান লক চেক
-        if self.override.is_locked:
-            return "ENGINE_LOCKED"
+class ControlGate:
+    """
+    v3.1.8: Human Approval & Honesty Verification Layer.
+    Ensures AI acts only with permission and speaks only the truth.
+    """
+    def __init__(self):
+        self.pending_approvals = {}
 
-        # ২. এআই ডিসিশন জেনারেশন
-        decision = self.strategist.analyze(logs)
-        decision_dict = decision.__dict__
+    def verify_honesty(self, decision: Dict[str, Any]) -> bool:
+        """
+        AI-এর ব্যাখ্যায় কোনো অস্পষ্টতা (Vagueness) থাকলে তা রিজেক্ট করবে।
+        """
+        explanation = decision.get("explanation", "").lower()
+        confidence = decision.get("confidence", 0)
 
-        # ৩. সততা পরীক্ষা (Honesty Check)
-        if not self.gate.verify_honesty(decision_dict):
-            self.audit.record(decision, "REJECTED", "Dishonesty Detected")
-            return "REJECTED_BY_HONESTY_GATE"
+        # 🚫 ANTI-LIE RULES
+        # ১. অস্পষ্ট শব্দ (Vague terms) ডিটেকশন
+        vague_terms = ["maybe", "perhaps", "i think", "not sure", "possibly", "likely"]
+        if any(term in explanation for term in vague_terms):
+            print("🚨 HONESTY_ALERT: AI is being vague/uncertain. Action REJECTED.")
+            return False
 
-        # ৪. সেফটি শিল্ড চেক (Immutable Shield)
-        if not self.shield.is_safe(decision_dict):
-            self.audit.record(decision, "BLOCKED", "Shield Violation")
-            return "HALTED_BY_SHIELD"
+        # ২. হাই-রিস্ক বনাম কনফিডেন্স চেক (Strict honesty)
+        if decision.get("risk_level") == "HIGH" and confidence < 0.98:
+            print("🚨 HONESTY_ALERT: Insufficient confidence for high-risk action. Potential Hallucination.")
+            return False
 
-        # ৫. হিউম্যান এপ্রুভাল (The Human Driver Gate)
-        # NOOP (কিছু না করা) ছাড়া যেকোনো অ্যাকশনের জন্য আপনার পারমিশন লাগবে
-        if decision.action != "NOOP":
-            request_msg = self.gate.format_approval_request(decision_dict)
-            print(f"⏳ WAITING FOR APPROVAL:\n{request_msg}")
-            
-            # এখানে ইঞ্জিন থেমে থাকবে যতক্ষণ না আপনি টেলিগ্রামে 'YES' বলছেন
-            # (আপনার টেলিগ্রাম লজিক অনুযায়ী এখানে একটা wait loop থাকবে)
-            return "AWAITING_HUMAN_CONFIRMATION"
+        return True
 
-        # ৬. এক্সিকিউশন (আপনার অনুমতি পাওয়ার পর)
-        result = await self.executor.execute(decision_dict)
-        self.shield.track_result(True if result else False)
-        self.audit.record(decision, "EXECUTED", result)
-
-        return result
+    def format_approval_request(self, decision: Dict[str, Any]) -> str:
+        """
+        আপনার অনুমতির জন্য একটি সুন্দর মেসেজ ফরম্যাট করবে।
+        """
+        return (
+            f"🤖 **AI DECISION PENDING APPROVAL**\n\n"
+            f"🎯 **Action:** `{decision['action']}`\n"
+            f"💡 **Reason:** {decision['reason']}\n"
+            f"📝 **Explanation:** {decision['explanation']}\n"
+            f"🛡️ **Risk Level:** {decision['risk_level']}\n"
+            f"✅ **Confidence:** {decision['confidence'] * 100}%\n\n"
+            f"**Please reply with 'YES' to execute or 'NO' to cancel.**"
+        )
