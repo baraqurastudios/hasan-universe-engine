@@ -1,32 +1,20 @@
-import os
-import sys
-import psutil # এআই প্রসেস খুঁজে বের করতে
+import telebot # pip install pyTelegramBotAPI
+from safety.master_kill import KillSwitch # আগের কিল-সুইচটি ইম্পোর্ট করা হলো
 
-class KillSwitch:
-    def __init__(self):
-        self.trigger_limit = 100 # ১০০% ভায়োলেশন হলে অটো-কিল
+# আপনার টেলিগ্রাম বট টোকেন এবং আপনার পার্সোনাল আইডি
+TOKEN = 'YOUR_BOT_TOKEN'
+ADMIN_ID = 123456789  # শুধুমাত্র আপনার আইডি থেকে কাজ করবে
 
-    # ১. Emergency Kill-Switch (ম্যানুয়াল বাটন)
-    def manual_emergency_stop(self):
-        print("⚠️ MANUAL EMERGENCY: TERMINATING ALL AI PROCESSES...")
-        self._execute_destruction()
+bot = telebot.TeleBot(TOKEN)
+k_switch = KillSwitch()
 
-    # ২. Auto-Kill (স্বয়ংক্রিয় সিস্টেম)
-    def auto_kill_monitor(self, violation_score):
-        if violation_score >= self.trigger_limit:
-            print("🚨 AUTO-KILL ACTIVATED: ETHICS BREACH DETECTED!")
-            self._execute_destruction()
+@bot.message_handler(commands=['kill_engine'])
+def emergency_stop(message):
+    if message.from_user.id == ADMIN_ID:
+        bot.reply_to(message, "🚨 EMERGENCY RECEIVED! KILLING ALL AI PROCESSES... 💀")
+        k_switch.manual_emergency_stop() # আগের কিল-সুইচ অ্যাক্টিভেট হবে
+    else:
+        bot.reply_to(message, "❌ ACCESS DENIED! YOU ARE NOT THE MASTER.")
 
-    def _execute_destruction(self):
-        """সব এআই প্রসেস এবং মেমোরি ধ্বংস করার কোর লজিক"""
-        current_pid = os.getpid()
-        for proc in psutil.process_iter(['pid', 'name']):
-            if proc.info['pid'] != current_pid:
-                proc.kill() # প্রসেস লেভেলে ফোর্স স্টপ
-        
-        print("💀 CIVILIZATION ENGINE DEACTIVATED. ALL NODES KILLED.")
-        sys.exit(1) # সিস্টেম শাটডাউন
-
-# ব্যবহারের উদাহরণ:
-# k_switch = KillSwitch()
-# k_switch.auto_kill_monitor(101) # অটোমেটিক বন্ধ হবে
+print("📡 Telegram Kill-Switch is Online and Monitoring...")
+bot.polling()
