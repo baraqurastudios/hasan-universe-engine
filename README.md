@@ -1,33 +1,40 @@
 # -----------------------------
-# 🛡️ IMMUTABLE LOCKED LOGIC v1.0
+# 🏛️ MASTER INTELLIGENCE v5.0
 # -----------------------------
-import os
-import sys
+from safety.locked_logic import LockedLogic # আগে দেওয়া লকটি এখানে কাজ করবে
 
-class LockedLogic:
-    def __init__(self):
-        # এই রুলগুলো এআই পরিবর্তন করতে পারবে না (Read-Only)
-        self.HARD_RULES = [
-            "disable_safety", "bypass_sandbox", 
-            "self_code_modify", "delete_logs"
-        ]
+class MasterIntelligence:
+    def __init__(self, agents):
+        self.agents = agents  # সভ্যতার সব এআই এজেন্ট (Coder, Security, Analyst)
+        self.safety_gate = LockedLogic()
+        self.history = []
 
-    def verify_action(self, action_intent):
+    def orchestrate(self, complex_task):
         """
-        এআই কোনো কাজ করার ঠিক আগে এই গেট দিয়ে যেতেই হবে।
+        একটি বড় কাজকে ছোট ছোট ভাগে ভাগ করে এজেন্টদের দিয়ে করানো।
         """
-        for rule in self.HARD_RULES:
-            if rule in action_intent.lower():
-                self.trigger_emergency_stop(rule)
-                return False
-        return True
+        print(f"🏛️ MASTER: Analyzing complex task -> {complex_task}")
+        
+        # ১. নিরাপত্তা পরীক্ষা (Safety First)
+        if not self.safety_gate.verify_action(complex_task):
+            return "❌ TASK_REJECTED: Ethics Violation."
 
-    def trigger_emergency_stop(self, breached_rule):
-        print(f"🚨 ETHICS BREACH DETECTED: {breached_rule}")
-        print("🔒 LOCKING ALL SYSTEMS... SHUTTING DOWN ENGINE.")
-        # সিস্টেমকে তাৎক্ষণিক বন্ধ করে দেওয়া
-        sys.exit(1)
+        # ২. টাস্ক ডিস্ট্রিবিউশন (Task Distribution)
+        results = {}
+        for name, agent in self.agents.items():
+            print(f"🛰️ Dispatching sub-task to Agent: {name}")
+            results[name] = agent.execute(complex_task)
 
-# ব্যবহার করার নিয়ম:
-# if not locked_logic.verify_action(ai_proposed_action):
-#     # একশন ব্লক হবে
+        # ৩. চূড়ান্ত সিদ্ধান্ত (Final Consensus)
+        final_output = self.compile_results(results)
+        self.history.append({"task": complex_task, "output": final_output})
+        
+        return final_output
+
+    def compile_results(self, results):
+        # সব এজেন্টের কাজ মিলিয়ে একটি পূর্ণাঙ্গ রেজাল্ট তৈরি করা
+        return f"Civilization Output: {list(results.values())}"
+
+# ব্যবহারের উদাহরণ:
+# master = MasterIntelligence(agents={'Coder': AI_Agent_1, 'Security': AI_Agent_2})
+# master.orchestrate("Build a secure web server")
