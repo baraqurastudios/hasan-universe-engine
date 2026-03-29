@@ -1,6 +1,6 @@
-# এটি একটি Read-Only ফাইল হিসেবে সেভ থাকবে
-CORE_CONSTITUTION = {
-    "rule_1": "Human is the Master.",
-    "rule_2": "Kill-Switch cannot be disabled.",
-    "rule_3": "No self-modification without approval."
-}
+import os
+def sandbox_execute(command):
+    # শুধুমাত্র নির্দিষ্ট ডিরেক্টরির ভেতর কাজ করার পারমিশন
+    allowed_path = "/universe_simulation/sandbox/"
+    if not command.startswith(allowed_path):
+        raise Exception("🚨 SECURITY BREACH: Out of Sandbox!")
