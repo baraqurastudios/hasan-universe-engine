@@ -1,18 +1,14 @@
-import redis
-import json
+class RollbackEngine:
+    def __init__(self, memory):
+        self.memory = memory
 
-class RedisMemory:
-    def __init__(self, host="localhost", port=6379):
-        # v2.2: Connecting to persistent storage
-        self.r = redis.Redis(host=host, port=port, decode_responses=True)
+    def capture_snapshot(self, current_config):
+        # Action নেওয়ার ঠিক আগে বর্তমান অবস্থা সেভ করা
+        self.memory.save_state("last_stable_config", current_config)
 
-    def save_state(self, key, data):
-        self.r.set(key, json.dumps(data))
-
-    def get_state(self, key):
-        data = self.r.get(key)
-        return json.loads(data) if data else None
-
-    def push_incident(self, event):
-        # v2.2: Storing history for audit and rollback
-        self.r.lpush("incident_history", json.dumps(event))
+    def trigger_rollback(self):
+        stable_state = self.memory.get_state("last_stable_config")
+        if stable_state:
+            print("🔄 ROLLBACK: Reverting to last known stable configuration.")
+            return stable_state
+        return None
