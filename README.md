@@ -1,15 +1,11 @@
-import time
+class HumanOverride:
+    def __init__(self):
+        self.is_locked = False
 
-class AuditSystem:
-    def __init__(self, memory):
-        self.memory = memory
+    def activate_lock(self):
+        self.is_locked = True
+        return "🔒 ENGINE_LOCKED: Autonomous cycle suspended by Admin."
 
-    def record(self, decision_obj, status, result):
-        # v3.1: Storing full decision object with timestamp
-        entry = {
-            "timestamp": time.time(),
-            "decision": decision_obj.__dict__,
-            "status": status,
-            "result": result
-        }
-        self.memory.push_history(entry)
+    def release_lock(self):
+        self.is_locked = False
+        return "🔓 ENGINE_UNLOCKED: Resuming autonomy."
