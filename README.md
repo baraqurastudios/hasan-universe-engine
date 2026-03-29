@@ -1,89 +1,107 @@
-class GovernanceLayerV325:
-    """
-    v3.2.5 Autonomous Governance System
-    - Controls other AI layers
-    - Resolves conflicts
-    - Enforces system-wide rules
-    """
+import random
+from datetime import datetime
 
-    def __init__(self):
 
-        # system policies
-        self.policies = {
-            "max_risk": 0.7,
-            "allow_scale": True,
-            "emergency_mode": False
+# -----------------------------
+# 🖥️ NODE MODEL
+# -----------------------------
+class Node:
+    def __init__(self, node_id):
+        self.node_id = node_id
+        self.active = True
+        self.load = random.randint(10, 50)
+
+    def health(self):
+        return {
+            "node": self.node_id,
+            "active": self.active,
+            "load": self.load
         }
 
-        self.override_log = []
+
+# -----------------------------
+# 🌐 DISTRIBUTED CLOUD SYSTEM
+# -----------------------------
+class DistributedCloudV33:
+
+    def __init__(self, num_nodes=3):
+
+        self.nodes = [Node(f"node_{i}") for i in range(num_nodes)]
+
+        self.history = []
 
     # -----------------------------
-    # 📜 UPDATE POLICY
+    # ⚖️ LOAD BALANCER
     # -----------------------------
-    def update_policy(self, key, value):
+    def select_node(self):
 
-        self.policies[key] = value
+        active_nodes = [n for n in self.nodes if n.active]
 
-        self.override_log.append({
-            "action": "policy_update",
-            "key": key,
-            "value": value
-        })
+        if not active_nodes:
+            return None
+
+        # pick lowest load node
+        best = min(active_nodes, key=lambda n: n.load)
+
+        return best
 
     # -----------------------------
-    # ⚖️ CONFLICT RESOLVER
+    # ⚙️ EXECUTE TASK
     # -----------------------------
-    def resolve(self, decisions: list):
+    def execute(self, task):
 
-        """
-        decisions format:
-        [
-            {"action": "SCALE_UP", "confidence": 0.9},
-            {"action": "NOOP", "confidence": 0.6}
-        ]
-        """
+        node = self.select_node()
 
-        if not decisions:
-            return {"action": "NOOP", "reason": "no input"}
-
-        # pick highest confidence
-        best = max(decisions, key=lambda x: x.get("confidence", 0))
-
-        # governance check
-        if self.policies["emergency_mode"]:
+        if not node:
             return {
-                "action": "LOCKDOWN",
-                "reason": "Emergency mode active"
+                "status": "FAILED",
+                "reason": "No active nodes"
             }
 
-        if best["confidence"] > self.policies["max_risk"]:
-            return {
-                "action": best["action"],
-                "reason": "approved by governance"
-            }
+        # simulate load increase
+        node.load += random.randint(1, 10)
+
+        result = {
+            "task": task,
+            "node": node.node_id,
+            "status": "EXECUTED",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+        self.history.append(result)
+
+        return result
+
+    # -----------------------------
+    # 🔄 FAILOVER SYSTEM
+    # -----------------------------
+    def fail_node(self, node_id):
+
+        for node in self.nodes:
+            if node.node_id == node_id:
+                node.active = False
 
         return {
-            "action": "NOOP",
-            "reason": "blocked by governance policy"
+            "status": f"{node_id} failed"
         }
 
     # -----------------------------
-    # 🚨 SYSTEM OVERRIDE
+    # 📊 CLUSTER HEALTH
     # -----------------------------
-    def emergency_override(self):
-
-        self.policies["emergency_mode"] = True
+    def cluster_health(self):
 
         return {
-            "status": "EMERGENCY MODE ACTIVATED"
+            "nodes": [n.health() for n in self.nodes],
+            "total_nodes": len(self.nodes),
+            "active_nodes": len([n for n in self.nodes if n.active])
         }
 
     # -----------------------------
-    # 📊 STATUS REPORT
+    # 📡 REPORT
     # -----------------------------
     def report(self):
 
         return {
-            "policies": self.policies,
-            "overrides": len(self.override_log)
+            "history_count": len(self.history),
+            "cluster": self.cluster_health()
         }
