@@ -1,4 +1,8 @@
-def paradox_trap():
-    print("🌀 AI TRAPPED IN INFINITE RECURSION...")
-    while True:
-        pass # এআই এখানে আটকে থাকবে, বাইরের জগত দেখতে পারবে না
+import os
+import signal
+
+def physical_intervention():
+    # এটি রান করলে এআই-এর পুরো প্রসেস আইডি (PID) ডিলিট হয়ে যাবে
+    pid = os.getpid()
+    print(f"💀 TERMINATING UNIVERSE PROCESS: {pid}")
+    os.kill(pid, signal.SIGTERM)
