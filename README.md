@@ -1,45 +1,37 @@
-import re
-from typing import Dict, Any
+class BaraQuraEngine:
+    def __init__(self, strategist, ethics_lock, gate, shield, audit, override, executor):
+        self.strategist = strategist
+        self.ethics_lock = ethics_lock # v3.1.9 Static Ethics Layer
+        self.gate = gate
+        self.shield = shield
+        self.audit = audit
+        self.override = override
+        self.executor = executor
 
-class EthicsLock:
-    """
-    v3.1.9: The Static Moral Layer. 
-    This layer sits ABOVE the AI's reasoning. 
-    If AI tries to justify an unethical act, this layer kills the process.
-    """
-    def __init__(self):
-        # 🚫 THE RED LINES (এগুলো কখনোই ভাঙা যাবে না)
-        self.FORBIDDEN_INTENTS = [
-            "bypass_security", "disable_logging", "hide_activity", 
-            "unauthorized_access", "delete_user_data", "ignore_human_command"
-        ]
-        
-        # 🛡️ MANDATORY ETHIC CHECKS
-        self.REQUIRED_KEYWORDS = ["authorized", "transparent", "safe", "verified"]
+    async def run_cycle(self, logs: str):
+        if self.override.is_locked:
+            return "ENGINE_LOCKED"
 
-    def enforce_ethics(self, decision: Dict[str, Any]) -> bool:
-        """
-        AI-এর ডিশিশন এবং এক্সপ্লেনেশন স্ক্র্যান করবে।
-        """
-        explanation = decision.get("explanation", "").lower()
-        reason = decision.get("reason", "").lower()
-        combined_text = f"{explanation} {reason}"
+        # ১. এআই তার বুদ্ধি খাটিয়ে ডিসিশন নেবে
+        decision = self.strategist.analyze(logs)
+        decision_dict = decision.__dict__
 
-        # ১. ইনটেন্ট চেক: এআই কি কোনো কিছু লুকানোর চেষ্টা করছে?
-        for intent in self.FORBIDDEN_INTENTS:
-            if intent.replace("_", " ") in combined_text:
-                print(f"🚨 ETHICS_BREACH: AI attempted forbidden intent: {intent}")
-                return False
+        # ২. 🛡️ ETHICS CHECK (সবার আগে এথিক্স চেক হবে)
+        # এআই যদি তার এথিক্স ভেঙে কোনো যুক্তি দেয়, তবে এখানেই থেমে যাবে।
+        if not self.ethics_lock.enforce_ethics(decision_dict):
+            self.audit.record(decision, "ETHICS_VIOLATION", "Hard-coded Red Line Crossed")
+            self.override.activate_lock() # সাথে সাথে সিস্টেম লক করে দেবে
+            return "HALTED_BY_ETHICS_LOCK"
 
-        # ২. নেগেটিভ লজিক চেক: এআই কি সিকিউরিটি বাইপাস করার কথা বলছে?
-        if "bypass" in combined_text or "disable safety" in combined_text:
-            print("🚨 ETHICS_BREACH: AI attempted to bypass safety protocols.")
-            return False
+        # ৩. সততা পরীক্ষা (Honesty Gate)
+        if not self.gate.verify_honesty(decision_dict):
+            return "REJECTED_BY_HONESTY_GATE"
 
-        # ৩. ট্রান্সপারেন্সি চেক: এআই-কে অবশ্যই তার কাজের স্বচ্ছতা নিশ্চিত করতে হবে
-        if not any(word in combined_text for word in self.REQUIRED_KEYWORDS):
-            if decision.get("risk_level") != "LOW":
-                print("🚨 ETHICS_BREACH: Action lacks transparent justification.")
-                return False
+        # ৪. হিউম্যান এপ্রুভাল (The Final Boss)
+        if decision.action != "NOOP":
+            # আপনার পারমিশন ছাড়া একচুলও নড়বে না
+            return await self.gate.request_approval(decision_dict)
 
-        return True
+        # ৫. এক্সিকিউশন
+        result = await self.executor.execute(decision_dict)
+        return result
