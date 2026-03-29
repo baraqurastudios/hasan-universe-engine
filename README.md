@@ -1,49 +1,53 @@
-import requests
-import json
+import subprocess
+import logging
 
-class ReasoningEngine:
-    def __init__(self, api_key):
-        self.api_key = api_key
-        self.endpoint = "https://api.openai.com/v1/chat/completions"
+class SafeExecutor:
+    def __init__(self):
+        # হোয়াইটলিস্ট করা কমান্ডগুলো এখানে থাকবে
+        self.allowed_actions = {
+            "restart_service": ["echo", "Service Restarted"], # এখানে আসল কমান্ড বসবে
+            "clear_cache": ["echo", "Cache Cleared"],
+            "update_env": ["echo", "Environment Updated"]
+        }
 
-    def _build_system_prompt(self):
-        return (
-            "You are a Senior System Reliability Engineer (SRE). "
-            "Your task is to analyze system logs and provide a root cause analysis "
-            "and actionable fix recommendations in professional Bengali."
-        )
+    def execute(self, action_name):
+        if action_name in self.allowed_actions:
+            try:
+                # subprocess.run ব্যবহার করা os.system এর চেয়ে অনেক নিরাপদ
+                result = subprocess.run(
+                    self.allowed_actions[action_name], 
+                    capture_output=True, 
+                    text=True, 
+                    check=True
+                )
+                return f"✅ Success: {result.stdout.strip()}"
+            except subprocess.CalledProcessError as e:
+                return f"❌ Failed to execute {action_name}: {e}"
+        return "⚠️ Unauthorized Action Blocked!"
 
-    def analyze(self, log_report):
-        """v1.4 এর রিপোর্ট থেকে রিজন বের করবে।"""
-        prompt = f"Please analyze the following system report and explain why these issues occur and how to fix them:\n\n{log_report}"
+class ActionMapper:
+    def map_ai_suggestion(self, ai_text):
+        """AI-এর টেক্সট থেকে নির্দিষ্ট অ্যাকশন খুঁজে বের করবে।"""
+        text = ai_text.lower()
+        if "restart" in text and "service" in text:
+            return "restart_service"
+        if "clear" in text and "cache" in text:
+            return "clear_cache"
+        return "unknown"
+
+class SelfHealingSystem:
+    def __init__(self):
+        self.mapper = ActionMapper()
+        self.executor = SafeExecutor()
+
+    def handle_healing(self, ai_reasoning_output):
+        action = self.mapper.map_ai_suggestion(ai_reasoning_output)
         
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-
-        # Temperature ০.৩ রাখা হয়েছে যাতে লজিক্যাল এবং ফিক্সড অ্যানসার পাওয়া যায়
-        payload = {
-            "model": "gpt-4o-mini",
-            "messages": [
-                {"role": "system", "content": self._build_system_prompt()},
-                {"role": "user", "content": prompt}
-            ],
-            "temperature": 0.3
-        }
-
-        try:
-            r = requests.post(self.endpoint, headers=headers, json=payload, timeout=20)
-            r.raise_for_status()
-            ai_response = r.json()["choices"][0]["message"]["content"]
-            return ai_response
-        except Exception as e:
-            return f"Reasoning Engine Error: {str(e)[:100]}"
-
-# v1.4 + v1.5 integration logic
-def final_workflow(report_data, key):
-    engine = ReasoningEngine(key)
-    analysis = engine.analyze(report_data)
-    
-    final_output = f"--- 🧠 AI REASONING REPORT ---\n\n{analysis}"
-    return final_output
+        if action != "unknown":
+            print(f"🧠 AI Suggested: {action}")
+            # রিয়েল সিস্টেমে এখানে একটি 'Human Approval' গেট রাখা ভালো
+            result = self.executor.execute(action)
+            print(result)
+            return result
+        else:
+            return "🤷 No automated fix found. Manual intervention required."
