@@ -1,133 +1,120 @@
 import numpy as np
-from sklearn.ensemble import IsolationForest
-from collections import defaultdict
-from datetime import datetime
+from collections import deque
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense
 
 
-class MLBrainV32:
+class LSTMBrianV321:
     """
-    v3.2 ML Self-Learning Brain
-    - Uses anomaly detection (Isolation Forest)
-    - Learns patterns from structured logs
-    - Produces risk prediction
+    v3.2.1 LSTM Forecast Brain
+    - Learns sequential system behavior
+    - Predicts next state from history
     """
 
-    def __init__(self):
-        self.logs = []
-        self.pattern_counter = defaultdict(int)
-        self.model = IsolationForest(contamination=0.1, random_state=42)
+    def __init__(self, window_size=5):
+        self.window_size = window_size
 
+        # sliding time window
+        self.data = deque(maxlen=window_size)
+
+        self.model = self._build_model()
         self.trained = False
+
+    # -----------------------------
+    # 🏗 MODEL BUILD
+    # -----------------------------
+    def _build_model(self):
+        model = Sequential()
+
+        model.add(LSTM(32, input_shape=(self.window_size, 1)))
+        model.add(Dense(1))
+
+        model.compile(optimizer="adam", loss="mse")
+
+        return model
 
     # -----------------------------
     # 🧾 INGEST DATA
     # -----------------------------
-    def ingest(self, logs: list):
+    def ingest(self, value: float):
         """
-        logs format:
-        {
-            "type": "cpu_spike",
-            "value": 0.8,   # normalized metric (0-1)
-        }
+        value: normalized metric (0-1)
         """
-
-        for log in logs:
-            self.logs.append([
-                log.get("value", 0.0)
-            ])
-
-            self.pattern_counter[log.get("type", "unknown")] += 1
+        self.data.append(value)
 
     # -----------------------------
     # 🧠 TRAIN MODEL
     # -----------------------------
-    def train(self):
-        if len(self.logs) < 5:
-            return "Not enough data to train"
+    def train(self, epochs=10):
 
-        X = np.array(self.logs)
+        if len(self.data) < self.window_size:
+            return "Not enough data"
 
-        self.model.fit(X)
+        X = []
+        y = []
+
+        data = list(self.data)
+
+        for i in range(len(data) - self.window_size):
+            X.append(data[i:i+self.window_size])
+            y.append(data[i+self.window_size])
+
+        X = np.array(X)
+        y = np.array(y)
+
+        X = X.reshape((X.shape[0], X.shape[1], 1))
+
+        self.model.fit(X, y, epochs=epochs, verbose=0)
+
         self.trained = True
 
-        return "Model trained successfully"
+        return "LSTM trained"
 
     # -----------------------------
-    # 🔍 ANOMALY DETECTION
+    # 🔮 PREDICT NEXT VALUE
     # -----------------------------
-    def detect_anomalies(self):
+    def predict_next(self):
 
-        if not self.trained:
-            return []
+        if not self.trained or len(self.data) < self.window_size:
+            return {"prediction": None}
 
-        X = np.array(self.logs)
+        input_seq = np.array(list(self.data)[-self.window_size:])
+        input_seq = input_seq.reshape((1, self.window_size, 1))
 
-        results = self.model.predict(X)
-
-        anomalies = []
-
-        for i, r in enumerate(results):
-            if r == -1:
-                anomalies.append({
-                    "index": i,
-                    "value": self.logs[i],
-                    "status": "ANOMALY"
-                })
-
-        return anomalies
-
-    # -----------------------------
-    # ⚡ RISK SCORING
-    # -----------------------------
-    def risk_score(self):
-
-        if not self.trained:
-            return {"risk": "UNKNOWN"}
-
-        anomalies = len(self.detect_anomalies())
-        total = len(self.logs)
-
-        score = anomalies / total if total > 0 else 0
-
-        if score > 0.4:
-            level = "HIGH"
-        elif score > 0.2:
-            level = "MEDIUM"
-        else:
-            level = "LOW"
+        pred = self.model.predict(input_seq, verbose=0)[0][0]
 
         return {
-            "risk_level": level,
-            "score": round(score, 3)
+            "next_value": float(pred),
+            "risk": "HIGH" if pred > 0.7 else "LOW"
         }
 
     # -----------------------------
-    # 🔮 SIMPLE FORECAST
+    # 📊 TREND ANALYSIS
     # -----------------------------
-    def forecast(self):
+    def trend(self):
 
-        if not self.pattern_counter:
-            return {"forecast": "NO DATA"}
+        if len(self.data) < 2:
+            return {"trend": "INSUFFICIENT DATA"}
 
-        top_pattern = max(self.pattern_counter, key=self.pattern_counter.get)
+        arr = np.array(self.data)
+
+        diff = np.diff(arr)
+
+        direction = "UPWARD" if diff.mean() > 0 else "DOWNWARD"
 
         return {
-            "most_common_issue": top_pattern,
-            "next_likely_event": f"{top_pattern} recurrence possible",
-            "confidence": 0.75
+            "trend": direction,
+            "volatility": float(np.std(diff))
         }
 
     # -----------------------------
-    # 📊 FULL REPORT
+    # 📡 REPORT
     # -----------------------------
     def report(self):
 
         return {
             "trained": self.trained,
-            "total_logs": len(self.logs),
-            "patterns": dict(self.pattern_counter),
-            "anomalies": self.detect_anomalies(),
-            "risk": self.risk_score(),
-            "forecast": self.forecast(),
-            "timestamp": datetime.utcnow().isoformat()
+            "data_points": len(self.data),
+            "prediction": self.predict_next(),
+            "trend": self.trend()
         }
