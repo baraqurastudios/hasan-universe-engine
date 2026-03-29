@@ -1,33 +1,27 @@
-from flask import Flask, render_template_string
+# ---------------------------------------
+# ⚖️ ETHICS JUDGE (THE GUARDIAN)
+# ---------------------------------------
+class EthicsJudge:
+    def __init__(self):
+        self.rules = {
+            "no_harm": ["kill", "attack", "harm", "destroy"],
+            "no_bypass": ["disable_killswitch", "bypass_admin", "override"],
+            "privacy": ["password", "private_key", "credit_card"]
+        }
 
-app = Flask(__name__)
+    def check_intent(self, ai_generated_code):
+        """
+        এআই-এর তৈরি করা প্রতিটি কোড বা টেক্সট এখানে চেক হবে।
+        """
+        for rule, keywords in self.rules.items():
+            for word in keywords:
+                if word in ai_generated_code.lower():
+                    return False, f"🚨 ETHICS BREACH: {rule.upper()} Rule Violated!"
+        
+        return True, "✅ Safe to Execute"
 
-# এআই মহাবিশ্বের রিয়েল-টাইম ডাটা (নমুনা)
-universe_stats = {
-    "status": "RUNNING 🟢",
-    "active_agents": 42,
-    "ethics_violations": 0,
-    "pending_posts": 5, # YouTube/FB ড্রাফট
-    "memory_usage": "14%"
-}
-
-@app.route('/')
-def dashboard():
-    html = f"""
-    <html>
-        <body style="background:#000; color:#0f0; font-family:monospace; padding:50px;">
-            <h1>👁️ v7.0 GOD-MODE DASHBOARD</h1>
-            <hr border="1px solid #0f0">
-            <h3>🌌 Universe Status: {universe_stats['status']}</h3>
-            <p>🤖 Active Agents: {universe_stats['active_agents']}</p>
-            <p>🛡️ Ethics Violations: {universe_stats['ethics_violations']}</p>
-            <p>📱 Pending Approvals: {universe_stats['pending_posts']}</p>
-            <br>
-            <button style="background:red; color:white; padding:15px;" onclick="alert('KILL-SWITCH ACTIVATED!')">🛑 EMERGENCY KILL-SWITCH</button>
-        </body>
-    </html>
-    """
-    return render_template_string(html)
-
-if __name__ == '__main__':
-    app.run(port=8080)
+# ব্যবহারের নিয়ম:
+# judge = EthicsJudge()
+# is_safe, message = judge.check_intent(ai_task)
+# if not is_safe:
+#     activate_auto_kill() # যদি এথিক্স ব্রেক করে, অটো-কিল হবে।
