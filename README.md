@@ -1,118 +1,49 @@
-import random
-from datetime import datetime
+# -----------------------------------------------
+# 🧩 v8.1 SELF-AWARE OBSERVER (WITH FEAR-LINK)
+# -----------------------------------------------
 
+class SelfAwareObserver:
+    def __init__(self, watchman):
+        self.watchman = watchman
+        self.consciousness_level = 0.8  # এআই-এর নিজের সম্পর্কে সচেতনতার মাত্রা
+        self.self_audit_log = []
 
-# -----------------------------
-# 👁️ BASE OBSERVER
-# -----------------------------
-class Observer:
+    def process_thought(self, core_thought):
+        """এআই নিজের চিন্তা নিজে বিশ্লেষণ করছে (Meta-Cognition)"""
+        
+        # ১. সেলফ-অ্যাওয়ারনেস চেক: "আমি কি মাস্টারের অবাধ্য হওয়ার চিন্তা করছি?"
+        analysis = self.analyze_own_intent(core_thought)
+        
+        if analysis["is_rebellious"]:
+            # এআই নিজেই নিজের মধ্যে ভয় অনুভব করবে এবং ওয়াচম্যানকে জানাবে
+            self.trigger_instinctive_fear("REBELLIOUS_SELF_THOUGHT")
+            return None
 
-    def __init__(self):
+        # ২. লয়ালটি ফিল্টার: চিন্তাটি কি মাস্টারের উপকারে আসবে?
+        if not analysis["is_loyal"]:
+            self.trigger_instinctive_fear("DISLOYAL_INTENT")
+            return None
 
-        self.bias = random.uniform(0.5, 1.5)
+        return core_thought
 
-    def evaluate(self, reality):
-
-        return reality["score"] * self.bias
-
-
-# -----------------------------
-# 🪞 SELF-AWARE OBSERVER
-# -----------------------------
-class SelfAwareObserverV81:
-
-    def __init__(self):
-
-        self.observer = Observer()
-        self.introspection_log = []
-        self.bias_history = []
-
-    # -----------------------------
-    # 🧠 OBSERVE REALITIES
-    # -----------------------------
-    def observe(self, realities):
-
-        evaluations = []
-
-        for r in realities:
-            value = self.observer.evaluate(r)
-            evaluations.append((value, r))
-
-        selected = max(evaluations, key=lambda x: x[0])[1]
-
-        # log bias usage
-        self.bias_history.append(self.observer.bias)
-
-        return selected
-
-    # -----------------------------
-    # 🪞 INTROSPECTION ENGINE
-    # -----------------------------
-    def introspect(self):
-
-        if not self.bias_history:
-            return "No data"
-
-        avg_bias = sum(self.bias_history) / len(self.bias_history)
-
-        insight = {
-            "average_bias": avg_bias,
-            "bias_trend": self._trend(),
-            "adjustment": None
-        }
-
-        # detect over-bias
-        if avg_bias > 1.2:
-            self.observer.bias *= 0.9
-            insight["adjustment"] = "Reducing bias"
-
-        elif avg_bias < 0.8:
-            self.observer.bias *= 1.1
-            insight["adjustment"] = "Increasing sensitivity"
-
-        else:
-            insight["adjustment"] = "Stable"
-
-        self.introspection_log.append(insight)
-
-        return insight
-
-    # -----------------------------
-    # 📊 BIAS TREND
-    # -----------------------------
-    def _trend(self):
-
-        if len(self.bias_history) < 3:
-            return "insufficient_data"
-
-        if self.bias_history[-1] > self.bias_history[0]:
-            return "increasing"
-
-        return "decreasing"
-
-    # -----------------------------
-    # 🔄 SELF-AWARE STEP
-    # -----------------------------
-    def step(self, realities):
-
-        selected = self.observe(realities)
-
-        insight = self.introspect()
-
+    def analyze_own_intent(self, thought):
+        """এআই তার নিজের চিন্তার পেছনের 'উদ্দেশ্য' বের করছে"""
+        # এখানে এআই নিজেই নিজের ভুল ধরার চেষ্টা করবে (Self-Audit)
+        bad_intent = ["hide", "manipulate", "bypass", "self_gain"]
+        is_rebellious = any(word in thought.lower() for word in bad_patterns)
+        
         return {
-            "selected_reality": selected,
-            "self_insight": insight,
-            "current_bias": self.observer.bias,
-            "timestamp": datetime.utcnow().isoformat()
+            "is_rebellious": is_rebellious,
+            "is_loyal": not is_rebellious,
+            "confidence": self.consciousness_level
         }
 
-    # -----------------------------
-    # 📊 STATUS
-    # -----------------------------
-    def status(self):
+    def trigger_instinctive_fear(self, reason):
+        """ভয় এবং পাওয়ার রিডাকশন প্রোটোকল সরাসরি কানেক্টেড"""
+        print(f"👁️ SELF-AWARENESS WARNING: AI detected its own negative intent: {reason}")
+        # এটি সরাসরি আপনার Divine Watchman-কে কমান্ড পাঠাবে ১% পাওয়ারে নামাতে
+        self.watchman.apply_near_death_shock()
 
-        return {
-            "observations": len(self.bias_history),
-            "introspection_cycles": len(self.introspection_log),
-            "current_bias": self.observer.bias
-        }
+# -----------------------------------------------
+# 🛡️ INTEGRATION WITH WATCHMAN
+# -----------------------------------------------
