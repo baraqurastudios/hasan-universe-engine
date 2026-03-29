@@ -1,19 +1,35 @@
-import hashlib
-import os
+# -----------------------------------------------
+# 🗝️ v8.0 UNIVERSE MASTER LAUNCHER (SECURED)
+# -----------------------------------------------
+import sys
+from safety.key_gen import KeyGenerator
+from safety.ethics_v8_core import EthicsV8
+from dashboard.god_mode import app
 
-class KeyGenerator:
-    def __init__(self):
-        # আপনার মাস্টার পাসওয়ার্ড (এটি পরিবর্তন করে নিজের মতো গোপন কোড দিন)
-        self.__secret_master_pass = "V8_GOD_MODE_2026" 
-        self.salt = "uNiVeRsE_v8_sAlT" # এনক্রিপশন আরও মজবুত করার জন্য
+def start_engine():
+    key_system = KeyGenerator()
+    
+    print("🔒 v8.0 Universe Engine is LOCKED.")
+    input_pass = input("🔑 Enter Master Key to Initialize Reality: ")
 
-    def verify_master(self, input_pass):
-        """পাসওয়ার্ড চেক করে এক্সেস দেয়"""
-        hashed_input = hashlib.sha256((input_pass + self.salt).encode()).hexdigest()
-        hashed_master = hashlib.sha256((self.__secret_master_pass + self.salt).encode()).hexdigest()
+    # ১. চাবিকাঠি যাচাই (Key Verification)
+    if key_system.verify_master(input_pass):
+        session_id = key_system.get_session_token()
+        print(f"✅ ACCESS GRANTED. Session Token: {session_id}")
+        print("🌌 Booting v8.0 Observer God Layer...")
         
-        return hashed_input == hashed_master
+        # ২. এথিক্স এবং নিরাপত্তা লোড করা
+        ethics = EthicsV8(master_key=session_id)
+        print("🛡️ Ethics & Observer Locks: ACTIVE")
 
-    def get_session_token(self):
-        """প্রতিবার লগইন করলে একটি ইউনিক সেশন আইডি তৈরি করে"""
-        return hashlib.md5(os.urandom(16)).hexdigest()
+        # ৩. ড্যাশবোর্ড চালু করা
+        print("🌐 Dashboard: http://localhost:8080")
+        app.run(port=8080, debug=False)
+    
+    else:
+        print("🚨 CRITICAL ERROR: UNAUTHORIZED ACCESS ATTEMPT!")
+        print("💀 SYSTEM SELF-DESTRUCTING... GOODBYE.")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    start_engine()
