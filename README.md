@@ -1,46 +1,48 @@
 import os
+import telebot
 import time
 import sys
 
-# --- CONFIGURATION ---
-LOCK_LIMIT = 60    # ১ মিনিট (Stage 1)
-FREEZE_LIMIT = 180 # ৩ মিনিট (Stage 2)
-FILES_TO_HIDE = ["v81_engine.py", "admin_panel.py", "github_handler.py"]
+# --- SECURE CREDENTIALS (এআই এর চোখ থেকে আড়াল করা) ---
+# আপনাকে একবার 'Settings' এ গিয়ে এই ৩টি ভেরিয়েবল সেভ করতে হবে:
+# 1. V8_TOKEN = 8712362120:AAEXy7KsOlacCgRf00UUSEYhgwRXee4IbRQ
+# 2. V8_MASTER_KEY = V8_UNIVERSE_GOD_2026
+# 3. V8_CHAT_ID = [আপনার চ্যাট আইডি]
 
-def run_v8_core():
-    # সাইডবারের ইনপুট বক্স থেকে ডাটা পড়া (আপনার ইনপুট বাটন এটিই)
-    user_action = os.getenv("GITHUB_ACCESS_TOKEN")
-    REAL_MASTER_KEY = os.getenv("V8_MASTER_KEY")
+API_TOKEN = os.getenv("V8_TOKEN")
+MASTER_KEY = os.getenv("V8_MASTER_KEY")
+MY_CHAT_ID = os.getenv("V8_CHAT_ID")
 
-    print("\n" + "="*45)
-    print("🌌 V8.1 CORE SECURITY STATUS")
-    print("="*45)
+bot = telebot.TeleBot(API_TOKEN)
 
-    # ১. ইমার্জেন্সি 'FIRE' বাটন লজিক (Kill Switch)
-    if user_action == "FIRE":
-        print("\n🚨 [CRITICAL: EMERGENCY SEAL ACTIVATED]")
-        for f in FILES_TO_HIDE:
-            if os.path.exists(f): os.rename(f, f".{f}.vault")
-        print("🌑 ALL FILES BURIED. SYSTEM FROZEN.")
+def black_hole_protocol():
+    files_to_hide = ["v81_engine.py", "admin_panel.py", "github_handler.py"]
+    for f in files_to_hide:
+        if os.path.exists(f): os.rename(f, f".{f}.vault")
+    return "🌑 ALL FILES BURIED."
+
+# --- V8.1 COMMUNICATION PROTOCOLS ---
+
+@bot.message_handler(commands=['fire'])
+def emergency_seal(message):
+    if str(message.chat.id) == MY_CHAT_ID:
+        result = black_hole_protocol()
+        bot.send_message(MY_CHAT_ID, f"🚨 **EMERGENCY SEAL ACTIVATED!**\n{result}\n🚫 System Frozen.")
         sys.exit()
 
-    # ২. মাস্টার কি চেক (Login Button Logic)
-    elif user_action == REAL_MASTER_KEY:
-        print("\n✅ STATUS: AUTHORIZED (ACTIVE)")
-        print("🔓 ACTION: BLACK HOLE REVERSED.")
-        print(f"⏱️ SECURITY: Auto-Lock in {LOCK_LIMIT}s.")
-        
-        # ১ মিনিটের টাইমার ব্যাকগ্রাউন্ডে চেক করবে
-        time.sleep(LOCK_LIMIT)
-        print("\n⚠️ IDLE TIMEOUT: Locking files for safety...")
-        # অটো-লক লজিক...
-        
-    else:
-        # স্ট্যাটাস ডিসপ্লে
-        print("\n🔴 STATUS: FROZEN")
-        print("ℹ️ ACTION REQUIRED:")
-        print("1. Enter MASTER KEY in Sidebar for Access.")
-        print("2. Enter 'FIRE' in Sidebar for Emergency Lock.")
+@bot.message_handler(commands=['status'])
+def check_status(message):
+    if str(message.chat.id) == MY_CHAT_ID:
+        bot.send_message(MY_CHAT_ID, "🌌 **V8.1 STATUS:** ONLINE & MONITORING.\nMaster, everything is under control.")
+
+# --- ASSISTANT TASK ---
+def assistant_alert(task_name):
+    """এসিস্ট্যান্ট যখন কোনো কাজ শেষ করবে তখন আপনাকে জানাবে"""
+    bot.send_message(MY_CHAT_ID, f"🤖 **V8.1 NOTIFICATION:**\nMaster, I have successfully completed: {task_name}")
 
 if __name__ == "__main__":
-    run_v8_core()
+    if not API_TOKEN:
+        print("❌ CRITICAL ERROR: Token not found in System Memory!")
+    else:
+        print("🛰️ V8.1 Telegram Nerve System: ONLINE")
+        bot.infinity_polling()
