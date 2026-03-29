@@ -1,52 +1,61 @@
 import os
 import sys
 
-# --- CONFIGURATION (এগুলো আপনার পিসিতে সেট করা থাকতে হবে) ---
+# --- CONFIGURATION ---
 MASTER_KEY = os.getenv("V8_MASTER_KEY")
+FILES_TO_MANAGE = ["v81_engine.py", "github_handler.py", "admin_panel.py"]
+
+def lock_system():
+    """সব ফাইলকে আবার .vault বানিয়ে লুকিয়ে ফেলা (Reverse)"""
+    print("\n🔐 CLOSING BLACK HOLE: Locking all files...")
+    for filename in FILES_TO_MANAGE:
+        if os.path.exists(filename):
+            vault_name = f".{filename}.vault"
+            os.rename(filename, vault_name)
+            print(f"🌑 {filename} is now HIDDEN as {vault_name}")
+    
+    # লক ফাইল তৈরি করা
+    with open(".master_lock", "w") as f:
+        f.write("LOCKED")
+    print("🔒 System is now FROZEN. Goodbye, Master.")
 
 def system_freeze_and_activate():
     print("🌌 [V8.1 DIGITAL BLACK HOLE] STATUS: FROZEN")
     print("------------------------------------------")
     
-    # ১. মাস্টার কি ইনপুট চাওয়া
-    user_input = input("🔒 ENTER MASTER KEY TO ACTIVATE SYSTEM: ")
+    user_input = input("🔒 ENTER MASTER KEY TO ACTIVATE: ")
     
-    # ২. কি ভেরিফিকেশন (সিস্টেম আনলক লজিক)
     if user_input == MASTER_KEY:
         print("\n✅ KEY ACCEPTED. UNFREEZING CORE...")
         
-        # ফাইলগুলো এক্টিভ করা (.vault থেকে মেইন ফাইলে রূপান্তর)
-        try:
-            vault_files = [f for f in os.listdir(".") if f.endswith(".vault")]
-            
-            if not vault_files:
-                print("ℹ️ No vault files found. System might be already active.")
-            else:
-                for v_file in vault_files:
-                    # .v81_engine.py.vault -> v81_engine.py
-                    original_name = v_file.lstrip('.').replace(".vault", "")
-                    os.rename(v_file, original_name)
-                    print(f"⚡ {original_name} is now ACTIVE.")
-            
-            # লক ফাইল রিমুভ করা (যদি থাকে)
-            if os.path.exists(".master_lock"):
-                os.remove(".master_lock")
-                print("🔓 Master Lock file removed.")
-
-            print("\n🚀 [V8.1] SYSTEM ONLINE. Welcome back, Master.")
-            return True # সিস্টেম এখন কাজ করার জন্য তৈরি
-            
-        except Exception as e:
-            print(f"❌ Error during activation: {e}")
-            return False
+        # ফাইলগুলো আনলক করা
+        vault_files = [f for f in os.listdir(".") if f.endswith(".vault")]
+        for v_file in vault_files:
+            original_name = v_file.lstrip('.').replace(".vault", "")
+            if os.path.exists(v_file):
+                os.rename(v_file, original_name)
+                print(f"⚡ {original_name} is now ACTIVE.")
+        
+        if os.path.exists(".master_lock"):
+            os.remove(".master_lock")
+        
+        print("\n🚀 [V8.1] SYSTEM ONLINE.")
+        return True
     else:
-        # ভুল পাসওয়ার্ড দিলে সিস্টেম চিরস্থায়ী ফ্রিজ মোডে থাকবে
-        print("\n❌ ACCESS DENIED! SYSTEM REMAINING FROZEN.")
-        print("⚠️ Intruder Alert: Verification Failed.")
-        sys.exit() # প্রোগ্রাম এখানেই বন্ধ হয়ে যাবে
+        print("\n❌ ACCESS DENIED!")
+        sys.exit()
 
 if __name__ == "__main__":
-    # সিস্টেম এক্টিভেট করা
-    if system_freeze_and_activate():
-        # এখানে আপনার V8.1 এর মেইন কাজগুলো শুরু হবে
-        print("\n--- Running Master Commands ---")
+    try:
+        # ১. সিস্টেম আনলক করা
+        if system_freeze_and_activate():
+            print("\n--- MASTER IS WORKING ---")
+            # এখানে আপনি আপনার কাজ করবেন
+            input("\nPress ENTER to finish work and LOCK the system...") 
+            
+    except KeyboardInterrupt:
+        # যদি আপনি Ctrl+C দিয়েও বন্ধ করেন, তবুও লক হবে
+        pass
+    finally:
+        # ২. কাজ শেষে অটোমেটিক লক করা (Reverse)
+        lock_system()
