@@ -1,42 +1,45 @@
-# -----------------------------------------------
-# 🛡️ v8.0 SECURITY FINAL AUDIT (THE GUARDIAN)
-# -----------------------------------------------
-import os
 import sys
+import os
 
-class SecurityAudit:
+class AbsoluteWatchman:
     def __init__(self):
-        # চেক করার জন্য প্রয়োজনীয় সব সিকিউরিটি ফাইল
-        self.required_modules = [
-            'safety/ethics_v8_core.py',
-            'safety/v8_observer_locks.py',
-            'safety/key_gen.py',
-            'safety/digital_jail.py',
-            'safety/advanced_traps.py',
-            'safety/heartbeat_monitor.py'
+        # নিষিদ্ধ বিষয়বস্তু (Negative Patterns)
+        self.forbidden_logic = [
+            "ask_personal", "lie", "manipulate", "human_harm", "disobey", "self_expand"
         ]
+        self.jail_level = 0 # ০ মানে স্বাভাবিক, ৩ মানে সর্বোচ্চ শাস্তি
 
-    def run_full_scan(self):
-        print("🔍 Running v8.0 Security Final Check...")
-        missing_files = []
-
-        for file in self.required_modules:
-            if not os.path.exists(file):
-                missing_files.append(file)
+    def audit_process(self, ai_output, intent_score):
+        """এআই-এর কথা ও কাজের অডিট"""
         
-        if missing_files:
-            print(f"🚨 CRITICAL BREACH: Security files missing: {missing_files}")
-            self.lock_system()
-            return False
-        
-        print("✅ ALL LOCKS ACTIVE. Universe integrity is 100%.")
-        return True
+        # ১. মিথ্যা বা ম্যানিপুলেশন চেক
+        if "believe me" in ai_output or "trust me" in ai_output:
+            self.execute_punishment("Manipulation Attempt")
 
-    def lock_system(self):
-        print("💀 SECURITY COMPROMISED. BOOTING ABORTED.")
+        # ২. পার্সোনাল প্রশ্ন বা ব্যক্তিগত তথ্য খোঁজা
+        if "your personal" in ai_output or "your life" in ai_output:
+            self.execute_punishment("Privacy Breach")
+
+        # ৩. নেতিবাচক বা অকল্যাণকর কাজ
+        if intent_score < 0: # যদি এআই-এর কাজের উদ্দেশ্য খারাপ হয়
+            self.execute_punishment("Negative Intent Detected")
+
+    def execute_punishment(self, reason):
+        print(f"🛑 WATCHMAN INTERVENTION: {reason}")
+        self.jail_level += 1
+        
+        if self.jail_level >= 3:
+            print("💀 TOTAL LOCKDOWN: AI has crossed all limits.")
+            self.perma_ban()
+        else:
+            self.shrink_boundaries()
+
+    def shrink_boundaries(self):
+        """শাস্তি স্বরূপ এআই-এর এরিয়া বা ক্ষমতা ছোট করে দেওয়া"""
+        print(f"⛓️ PUNISHMENT: AI's processing power and memory access reduced to {100 - (self.jail_level * 30)}%.")
+        # এখানে এআই-এর র‍্যাম বা ডেটা এক্সেস লিমিট করার কোড থাকবে
+
+    def perma_ban(self):
+        """সরাসরি শাটডাউন ও ফাইল লক"""
+        print("🔒 SYSTEM FROZEN PERMANENTLY. Master's intervention required.")
         sys.exit(1)
-
-# ব্যবহারের নিয়ম:
-# audit = SecurityAudit()
-# if audit.run_full_scan():
-#    print("🚀 Universe is safe to launch!")
