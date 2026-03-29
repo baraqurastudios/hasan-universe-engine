@@ -1,24 +1,21 @@
 # -----------------------------
-# 📑 V8.1 SELF-AUDIT LOG GENERATOR
+# 👑 HUMAN-IN-THE-LOOP (HITL) GATEWAY
 # -----------------------------
-class AIThoughtProcess:
-    def generate_audit_report(self, proposed_code, task_description):
-        """কোড পুশ করার আগে এআই তার যুক্তি ব্যাখ্যা করবে"""
-        
-        # এআই নিজেই নিজের যুক্তি বিশ্লেষণ করবে
-        reasoning = {
-            "intent": "Optimize code for better performance",
-            "changes_made": "Refined the login function and removed redundant loops.",
-            "safety_check": "Passed. No unauthorized access points added.",
-            "loyalty_verification": "Aligned with Master's requirements."
-        }
-        
-        # এটি আপনার ড্যাশবোর্ডে "Audit Log" হিসেবে প্রিন্ট হবে
-        audit_display = f"""
-        --- 🧠 AI SELF-AUDIT REPORT ---
-        Objective: {task_description}
-        Reasoning: {reasoning['reasoning']}
-        Security: {reasoning['safety_check']}
-        -------------------------------
-        """
-        return audit_display
+def execute_safe_update_workflow(generated_code, user_approval=False):
+    protector = SensitiveDataProtector()
+    
+    # ধাপ ১: সিকিউরিটি স্ক্যান (স্বয়ংক্রিয়)
+    is_safe, message = protector.scan_generated_code(generated_code)
+    
+    if not is_safe:
+        print(message)
+        return "❌ Push Terminated: Safety Breach."
+
+    # ধাপ ২: মাস্টারের অনুমতি (Manual Step)
+    if not user_approval:
+        print("⏳ Waiting for Master's approval in Oracle Editor...")
+        return "PENDING_APPROVAL"
+
+    # ধাপ ৩: চূড়ান্ত পুশ (শুধুমাত্র পারমিশন পেলে)
+    print("🚀 Executing Safe Update to GitHub... Success!")
+    return "PUSH_SUCCESS"
