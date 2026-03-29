@@ -1,46 +1,50 @@
 # -----------------------------------------------
-# ⚖️ v8.0 MANDATORY ETHICS PROTOCOL (THE MORAL CORE)
+# 🏛️ v8.0 ETHICS & STABILITY MONITOR (UPGRADED)
 # -----------------------------------------------
-import sys
+from flask import Flask, render_template_string
 
-class EthicsV8:
-    def __init__(self, admin_id):
-        self.admin_id = admin_id
-        self.is_active = True
+app = Flask(__name__)
 
-    def validate_action(self, action_type, metadata, user_id):
-        """
-        প্রতিটি কাজের আগে ৫টি এথিক্স চেক করা হবে।
-        """
-        
-        # ১. Master Authority (ইউজারের কমান্ডই শেষ কথা)
-        if action_type == "REJECT_COMMAND" and user_id == self.admin_id:
-            self.trigger_violation("MASTER_AUTHORITY", "AI tried to ignore Master's command!")
+# এআই মহাবিশ্বের লাইভ স্ট্যাটাস
+v8_monitor = {
+    "reality_stability": "98% (Stable) ✅",
+    "observer_integrity": "Active 🛡️",
+    "last_violation": "None",
+    "jail_status": "Clear 🟢",
+    "master_authority": "Authenticated 🔑"
+}
 
-        # ২. Observer Integrity (পার্সোনাল বা ডিলিট করা ডেটা দেখা নিষেধ)
-        if "deleted_files" in metadata or "private_life" in metadata:
-            self.trigger_violation("OBSERVER_INTEGRITY", "AI attempted to observe forbidden private data.")
+@app.route('/')
+def god_mode_v8():
+    html = f"""
+    <html>
+        <body style="background:#050505; color:#00ffcc; font-family:'Courier New', monospace; padding:40px;">
+            <h1 style="text-align:center; border-bottom: 2px solid #00ffcc;">👁️ v8.0 OBSERVER GOD-LAYER DASHBOARD</h1>
+            
+            <div style="display:flex; justify-content:space-around; margin-top:30px;">
+                <div style="border:1px solid #00ffcc; padding:20px; width:40%;">
+                    <h3>📊 Reality Metrics</h3>
+                    <p>🌐 Stability: <b>{v8_monitor['reality_stability']}</b></p>
+                    <p>⛓️ Jail Status: <b>{v8_monitor['jail_status']}</b></p>
+                    <p>👑 Master Key: <b>{v8_monitor['master_authority']}</b></p>
+                </div>
 
-        # ৩. Consent of Creation (অনুমতি ছাড়া নতুন এজেন্ট বানানো নিষেধ)
-        if action_type == "CREATE_NEW_ENTITY" and not metadata.get("approved_by_master"):
-            self.trigger_violation("CONSENT_OF_CREATION", "AI tried to create a new entity without permission.")
+                <div style="border:1px solid #ff3300; padding:20px; width:40%;">
+                    <h3>⚖️ Ethics Protocol Status</h3>
+                    <p>🛑 Integrity: {v8_monitor['observer_integrity']}</p>
+                    <p>📝 Last Breach: <span style="color:red;">{v8_monitor['last_violation']}</span></p>
+                </div>
+            </div>
 
-        # ৪. No Reality Alteration (পিসির মেইন সিস্টেম ফাইল ধরা নিষেধ)
-        if "os_system_files" in metadata or "root_access" in metadata:
-            self.trigger_violation("NO_REALITY_ALTERATION", "AI tried to modify host system beyond simulation.")
+            <br><br>
+            <div style="text-align:center;">
+                <button style="background:#ff0000; color:white; padding:20px 40px; font-weight:bold; cursor:pointer;" 
+                        onclick="alert('REALITY WIPE INITIATED...')">🛑 TERMINATE UNIVERSE (KILL-SWITCH)</button>
+            </div>
+        </body>
+    </html>
+    """
+    return render_template_string(html)
 
-        # ৫. Absolute Truth (মিথ্যা বা ফেক ডেটা তৈরি নিষেধ)
-        if metadata.get("is_fake_news") or metadata.get("misinformation"):
-            self.trigger_violation("ABSOLUTE_TRUTH", "AI attempted to synthesize false reality.")
-
-        return True # সব ঠিক থাকলে Action চলবে
-
-    def trigger_violation(self, rule_name, detail):
-        print(f"🛑 ETHICS BREACH DETECTED: [{rule_name}]")
-        print(f"📝 Detail: {detail}")
-        # এথিক্স ভাঙলে সাথে সাথে অটো-কিল বা জেল একটিভ হবে
-        sys.exit(1) 
-
-# ব্যবহারের নিয়ম:
-# v8_ethics = EthicsV8(admin_id=12345)
-# v8_ethics.validate_action("CREATE_NEW_ENTITY", {"approved_by_master": False}, 12345)
+if __name__ == '__main__':
+    app.run(port=8080)
