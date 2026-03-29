@@ -1,39 +1,41 @@
 # -----------------------------------------------
-# 🛠️ v8.0 SELF-HEALING SYSTEM (AUTO-REPAIR)
+# 🧠 v8.0 MEMORY CLOUD STORAGE (LONG-TERM)
 # -----------------------------------------------
-import time
+import json
+import os
 
-class SelfHealer:
+class MemoryCloud:
     def __init__(self):
-        self.repair_count = 0
-        self.critical_errors = []
+        self.memory_file = "data/universe_memory.json"
+        self.max_memory_size = 5000 # ৫০০০টি গুরুত্বপূর্ণ তথ্য মনে রাখবে
+        self.load_memory()
 
-    def monitor_and_fix(self, error_log):
-        """
-        এরর লগ চেক করে অটো-ফিক্স করার চেষ্টা করবে।
-        """
-        # নমুনা এরর ডাটাবেস এবং সমাধান
-        common_bugs = {
-            "memory_leak": "Clear Cache & Restart Agents",
-            "api_timeout": "Retry Connection in 5s",
-            "simulation_lag": "Reduce Observation Depth"
-        }
+    def load_memory(self):
+        if os.path.exists(self.memory_file):
+            with open(self.memory_file, 'r') as f:
+                self.memory_data = json.load(f)
+        else:
+            self.memory_data = {"user_preferences": {}, "past_incidents": [], "learned_skills": []}
 
-        for bug, solution in common_bugs.items():
-            if bug in error_log.lower():
-                self.apply_fix(bug, solution)
-                return True
-        
-        # যদি ফিক্স না করা যায়, তবে এটিকে ক্রিটিক্যাল হিসেবে মার্ক করবে
-        self.critical_errors.append(error_log)
-        return False
+    def store_memory(self, category, data):
+        """নতুন কোনো অভিজ্ঞতা বা তথ্য মনে রাখা"""
+        if category in self.memory_data:
+            self.memory_data[category].append({
+                "info": data,
+                "timestamp": "2026-03-29" # রিয়েল টাইম স্ট্যাম্প
+            })
+            self.save_to_disk()
 
-    def apply_fix(self, bug, solution):
-        self.repair_count += 1
-        print(f"🔧 SELF-HEALING: Fixed [{bug}] using [{solution}]")
-        # এখানে আসল ফিক্সিং লজিক কাজ করবে
+    def retrieve_memory(self, keyword):
+        """অতীতের কোনো স্মৃতি খুঁজে বের করা"""
+        print(f"🔍 Searching Memory Cloud for: {keyword}...")
+        # এখানে সার্চিং লজিক কাজ করবে
+        return [m for m in self.memory_data["learned_skills"] if keyword in m['info']]
+
+    def save_to_disk(self):
+        with open(self.memory_file, 'w') as f:
+            json.dump(self.memory_data, f, indent=4)
 
 # ব্যবহারের নিয়ম:
-# healer = SelfHealer()
-# if not healer.monitor_and_fix("Error: api_timeout detected"):
-#     send_telegram_alert("🚨 Critical Error: Manual Intervention Needed!")
+# memory = MemoryCloud()
+# memory.store_memory("user_preferences", "Master prefers dark mode and short summaries.")
