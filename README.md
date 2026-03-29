@@ -1,13 +1,15 @@
-from dataclasses import dataclass
-from typing import Literal
+import time
 
-@dataclass
-class DecisionV31:
-    """
-    v3.1 Core: The blueprint of every autonomous decision.
-    """
-    action: Literal["SCALE_UP", "RESTART_SERVICE", "NOOP", "UPDATE_CONFIG"]
-    reason: str
-    explanation: str
-    confidence: float
-    risk_level: Literal["LOW", "MEDIUM", "HIGH"] = "LOW"
+class AuditSystem:
+    def __init__(self, memory):
+        self.memory = memory
+
+    def record(self, decision_obj, status, result):
+        # v3.1: Storing full decision object with timestamp
+        entry = {
+            "timestamp": time.time(),
+            "decision": decision_obj.__dict__,
+            "status": status,
+            "result": result
+        }
+        self.memory.push_history(entry)
