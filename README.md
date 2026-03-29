@@ -1,51 +1,55 @@
 import os
-import requests  # টেলিগ্রামে মেসেজ পাঠানোর জন্য
+import requests
 
-def send_intruder_alert(attempted_key):
-    """ভুল পাসওয়ার্ড দিলে টেলিগ্রামে অ্যালার্ট পাঠাবে"""
-    bot_token = "আপনার_টেলিগ্রাম_বোট_টোকেন"
-    chat_id = "আপনার_টেলিগ্রাম_চ্যাট_আইডি"
-    message = f"⚠️ SECURITY ALERT: Unauthorized Access Attempt!\n🔑 Key Tried: {attempted_key}\n📍 System: V8.1 Universe"
-    
-    url = f"https://api.telegram.org/bot{bot_token}/sendMessage?chat_id={chat_id}&text={message}"
-    try:
-        requests.get(url)
-    except Exception as e:
-        print(f"Failed to send alert: {e}")
+# ১. সিকিউরলি টোকেন এবং আইডি নেওয়া (Environment থেকে)
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+MASTER_CHAT_ID = os.getenv("MASTER_CHAT_ID")
+MASTER_KEY = os.getenv("V8_MASTER_KEY")
 
-def master_revive():
-    print("🔥 INITIATING SECURE REVIVAL PROTOCOL...")
+def ask_master_approval(action_type, reason, code_snippet=None):
+    """মাস্টারের অনুমতির জন্য টেলিগ্রামে মেসেজ পাঠানো"""
+    message = (
+        f"🚨 **V8.1 ACTION PENDING APPROVAL**\n\n"
+        f"🛠 **Action:** {action_type}\n"
+        f"📝 **Reason:** {reason}\n"
+    )
+    if code_snippet:
+        message += f"💻 **Code Change:**\n`{code_snippet}`\n"
     
-    # সিস্টেম থেকে এনভায়রনমেন্ট ভেরিয়েবল রিড করা
-    stored_key = os.getenv("V8_MASTER_KEY")
+    message += "\nMaster, do you approve this step? (Reply with Master Key to Proceed)"
     
-    if not stored_key:
-        print("❌ ERROR: Master Key not found in Environment!")
-        return
+    # টেলিগ্রামে মেসেজ পাঠানো
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    requests.post(url, data={"chat_id": MASTER_CHAT_ID, "text": message, "parse_mode": "Markdown"})
 
-    user_input = input("ENTER MASTER KEY TO ACTIVATE SYSTEM: ")
+    # ২. মাস্টার কি-র জন্য অপেক্ষা করা (Approval Loop)
+    print(f"⏳ System Frozen. Waiting for Master's Approval for: {action_type}")
     
-    # ১. সঠিক পাসওয়ার্ড দিলে সিস্টেম আনলক হবে
-    if user_input == stored_key:
-        print("🔑 Key Accepted. Unlocking Vault...")
+    while True:
+        # এটি আপনার কমান্ড প্রম্পট বা টেলিগ্রাম ফিড থেকে ইনপুট নিতে পারে
+        user_approval = input("ENTER MASTER KEY TO APPROVE OR 'CANCEL' TO BLOCK: ")
         
-        if os.path.exists(".master_lock"):
-            os.remove(".master_lock")
-            
-        vault_files = [".v81_engine.py.vault", ".github_handler.py.vault", ".admin_panel.py.vault"]
-        
-        for v_file in vault_files:
-            original_name = v_file.lstrip('.').replace(".vault", "")
-            if os.path.exists(v_file):
-                os.rename(v_file, original_name)
-                print(f"⚡ {original_name} is now ACTIVE.")
+        if user_approval == MASTER_KEY:
+            print("✅ APPROVED. V8.1 is proceeding to the next step.")
+            return True
+        elif user_approval.lower() == 'cancel':
+            print("❌ BLOCKED. Action aborted by Master.")
+            return False
+        else:
+            print("⚠️ INVALID KEY. System remains frozen.")
 
-        print("\n🚀 SYSTEM ONLINE. Welcome back, Master.")
+# --- উদাহরণ: V8.1 যখন কিছু পরিবর্তন করতে চাইবে ---
+def v81_wants_to_change_code():
+    action = "Modify 'v81_engine.py'"
+    why = "To optimize API response time by 20%."
+    new_code = "def optimized_api(): pass"
 
-    # ২. ভুল পাসওয়ার্ড দিলে অ্যালার্ট যাবে
+    # গেটকিপারের পারমিশন চাওয়া
+    if ask_master_approval(action, why, new_code):
+        print("🚀 Executing changes...")
+        # এখানে আসল পরিবর্তনের কোড থাকবে
     else:
-        print("❌ ACCESS DENIED! SECURITY ALERT TRIGGERED.")
-        send_intruder_alert(user_input) # এখানে আপনার টেলিগ্রামে মেসেজ চলে যাবে
+        print("🛑 Action stopped.")
 
 if __name__ == "__main__":
-    master_revive()
+    v81_wants_to_change_code()
