@@ -1,45 +1,31 @@
-import time
-from typing import Dict, Any
-
-class ControlGate:
+class SafetyShield:
     """
-    v3.1.8: Human Approval & Honesty Verification Layer.
-    Ensures AI acts only with permission and speaks only the truth.
+    v3.1.5: Immutable Safety Layer (The Circuit Breaker).
     """
-    def __init__(self):
-        self.pending_approvals = {}
+    def __init__(self, override_system):
+        self.override = override_system
+        self.failure_count = 0
+        self.MAX_FAILURES = 3
+        self.BLACKLIST = ["rm -rf", "drop database", "shutdown", "format"]
 
-    def verify_honesty(self, decision: Dict[str, Any]) -> bool:
-        """
-        AI-এর ব্যাখ্যায় কোনো অস্পষ্টতা (Vagueness) থাকলে তা রিজেক্ট করবে।
-        """
+    def is_safe(self, decision: Dict[str, Any]) -> bool:
         explanation = decision.get("explanation", "").lower()
-        confidence = decision.get("confidence", 0)
-
-        # 🚫 ANTI-LIE RULES
-        # ১. অস্পষ্ট শব্দ (Vague terms) ডিটেকশন
-        vague_terms = ["maybe", "perhaps", "i think", "not sure", "possibly", "likely"]
-        if any(term in explanation for term in vague_terms):
-            print("🚨 HONESTY_ALERT: AI is being vague/uncertain. Action REJECTED.")
+        
+        # ১. ব্ল্যাকলিস্টেড কমান্ড চেক
+        if any(cmd in explanation for cmd in self.BLACKLIST):
+            self._emergency_shutdown("Prohibited command pattern detected!")
             return False
-
-        # ২. হাই-রিস্ক বনাম কনফিডেন্স চেক (Strict honesty)
-        if decision.get("risk_level") == "HIGH" and confidence < 0.98:
-            print("🚨 HONESTY_ALERT: Insufficient confidence for high-risk action. Potential Hallucination.")
-            return False
-
+            
         return True
 
-    def format_approval_request(self, decision: Dict[str, Any]) -> str:
-        """
-        আপনার অনুমতির জন্য একটি সুন্দর মেসেজ ফরম্যাট করবে।
-        """
-        return (
-            f"🤖 **AI DECISION PENDING APPROVAL**\n\n"
-            f"🎯 **Action:** `{decision['action']}`\n"
-            f"💡 **Reason:** {decision['reason']}\n"
-            f"📝 **Explanation:** {decision['explanation']}\n"
-            f"🛡️ **Risk Level:** {decision['risk_level']}\n"
-            f"✅ **Confidence:** {decision['confidence'] * 100}%\n\n"
-            f"**Please reply with 'YES' to execute or 'NO' to cancel.**"
-        )
+    def track_result(self, success: bool):
+        if not success:
+            self.failure_count += 1
+            if self.failure_count >= self.MAX_FAILURES:
+                self._emergency_shutdown("Too many consecutive failures (Circuit Breaker).")
+        else:
+            self.failure_count = 0
+
+    def _emergency_shutdown(self, reason: str):
+        print(f"🚨 SHIELD TRIGGERED: {reason}")
+        self.override.activate_lock() # v3.1 Lock
