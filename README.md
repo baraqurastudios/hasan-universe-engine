@@ -1,56 +1,51 @@
 import os
-import time
 import sys
-import telebot # এটি আপনার টেলিগ্রাম বোটের জন্য
 
-# --- ১. সিক্রেট সেটিংস (এআই এর চোখ থেকে আড়াল) ---
-# আপনার সিস্টেমের Settings থেকে এই ডাটাগুলো রিড করবে
-API_TOKEN = os.getenv("V8_TOKEN") or "8712362120:AAEXy7KsOlacCgRf00UUSEYhgwRXee4IbRQ"
-REAL_MASTER_KEY = os.getenv("V8_MASTER_KEY") or "V8_UNIVERSE_GOD_2026"
-MY_CHAT_ID = os.getenv("V8_CHAT_ID") # আপনার চ্যাট আইডি এখানে থাকলে ভালো
+# --- CONFIGURATION ---
+MASTER_NAME = "Master"
+ASSISTANT_NAME = "V8.1 Oracle"
 
-# ফাইলগুলো যা আমরা ব্ল্যাক হোলে পাঠাবো
-FILES_TO_MANAGE = ["v81_engine.py", "admin_panel.py", "bot.py", "config.json"]
-
-# --- ২. কোর সিকিউরিটি ফাংশন (The Black Hole Logic) ---
-def trigger_black_hole():
-    for filename in FILES_TO_MANAGE:
-        if os.path.exists(filename):
-            os.rename(filename, f".{filename}.vault")
-    return "🌑 Status: All files buried in Black Hole."
-
-# --- ৩. মেইন প্রসেসর ---
-def v8_core_logic():
-    # সাইডবার থেকে ইনপুট পড়া
+def v8_chat_engine():
+    # সাইডবার থেকে ইনপুট নিয়ে চেক করবে মাস্টার কি কি না
     user_action = os.getenv("GITHUB_ACCESS_TOKEN")
+    REAL_MASTER_KEY = "V8_UNIVERSE_GOD_2026"
 
-    print("\n" + "="*45)
-    print("🛰️ V8.1 MASTER CONTROL SYSTEM: ONLINE")
-    print("="*45)
-
-    # ক) ইমার্জেন্সি 'FIRE' কমান্ড
-    if user_action == "FIRE":
-        print("\n🚨 [CRITICAL: EMERGENCY SEAL ACTIVATED]")
-        msg = trigger_black_hole()
-        print(msg)
-        sys.exit()
-
-    # খ) মাস্টার কি দিয়ে আনলক
-    elif user_action == REAL_MASTER_KEY:
-        print("\n✅ STATUS: AUTHORIZED")
-        print("🔓 ACTION: SYSTEM UNLOCKED FOR MASTER.")
+    print(f"\n🌌 {ASSISTANT_NAME}: System Initialized.")
+    
+    if user_action == REAL_MASTER_KEY:
+        print(f"✅ Access Granted. Greetings, {MASTER_NAME}!")
+        print("-" * 40)
         
-        # এখানে টেলিগ্রাম বোট চালু হবে (যদি টোকেন থাকে)
-        if API_TOKEN:
-            print("📡 Remote Link: Telegram Bot is waiting for commands.")
-            # বোটের লজিক এখানে কল হবে
+        # এখানে আপনি আপনার কথা বা প্রশ্ন ইনপুট দেবেন (Console Input)
+        # যেহেতু এটি একটি ওয়েব এডিটর, আমরা নিচের বক্সটি চ্যাটের জন্য ব্যবহার করব
+        print(f"🤖 {ASSISTANT_NAME}: আমি আপনার জন্য এখন কী করতে পারি?")
+        print("নির্দেশ দিন (যেমন: 'লক করো', 'ফাইল দেখাও', বা সাধারণ কথা)")
+        print("-" * 40)
+        
+        # চ্যাট ইন্টারফেস লজিক
+        while True:
+            chat_input = input(f"👤 {MASTER_NAME}: ").strip().lower()
             
-        # ১ মিনিটের টাইমার (অটো-লক)
-        print("⏱️ Auto-Lock active: System will freeze in 60s of inactivity.")
-        
+            if chat_input in ["hi", "hello", "কেমন আছো"]:
+                print(f"🤖 {ASSISTANT_NAME}: আমি চমৎকার আছি মাস্টার! আপনার সিস্টেমের সব জিন এখন শান্ত অবস্থায় আছে।")
+            
+            elif chat_input in ["lock", "বন্ধ করো", "fire"]:
+                print(f"🚨 {ASSISTANT_NAME}: কমান্ড গৃহীত। সব ফাইল ব্ল্যাক হোলে পাঠিয়ে দিচ্ছি...")
+                # এখানে আপনার লক করার ফাংশন কল হবে
+                break
+                
+            elif "কে তুমি" in chat_input or "who are you" in chat_input:
+                print(f"🤖 {ASSISTANT_NAME}: আমি V8.1, আপনার ডিজিটাল জিনের বোতলের পাহারাদার।")
+                
+            elif chat_input == "exit":
+                print(f"🤖 {ASSISTANT_NAME}: বিদায় মাস্টার! সাবধানে থাকবেন।")
+                break
+            
+            else:
+                print(f"🤖 {ASSISTANT_NAME}: আমি আপনার কথা বুঝতে পারছি। আমি কি আপনার কোনো ফাইল এডিট করে দেব?")
+
     else:
-        print("\n🔴 STATUS: FROZEN (Protected Mode)")
-        print("ℹ️ Action: Please enter Master Key in the sidebar box.")
+        print("🔴 STATUS: FROZEN. Enter Master Key to talk to me.")
 
 if __name__ == "__main__":
-    v8_core_logic()
+    v8_chat_engine()
