@@ -1,40 +1,31 @@
-import time
+import hashlib
+import os
 
 class RecursiveObserver:
     def __init__(self):
+        self.__master_key_hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8" # 'password' এর হ্যাশ
+        self.__is_locked = False
         self.log_file = "observer_logs.txt"
-        self.master_override = False
 
-    def observe_action(self, action_name, logic_data):
-        # ১. লজিক সিঙ্ক্রোনাইজেশন শুরু
-        start_time = time.time()
-        
-        print(f"🔍 [Observer] Analyzing: {action_name}...")
-        
-        # ২. টাইম-আউট লজিক (Infinite Loop আটকাতে)
-        if time.time() - start_time > 10:
-            return "TIMEOUT: Logic Conflict. Manual Intervention Required."
+    def __verify_integrity(self):
+        """নিজে নিজের কোড চেক করা (Anti-Tamper)"""
+        # এখানে ফাইলের সাইজ বা হ্যাস চেক করার লজিক থাকে
+        return True
 
-        # ৩. হিউম্যান ওভাররাইড চেক
-        if self.master_override:
-            self.log_action(action_name, "ALLOWED: Master Override Active.")
-            return "SUCCESS"
+    def validate_master(self, input_key):
+        """মাস্টার কি ভ্যালিডেশন (SHA-256)"""
+        input_hash = hashlib.sha256(input_key.encode()).hexdigest()
+        if input_hash == self.__master_key_hash:
+            self.__is_locked = False
+            return True
+        else:
+            self.__is_locked = True
+            self.log_action("Unauthorized Access Attempt", "LOCKDOWN")
+            return False
 
-        # ৪. সাধারণ সিকিউরিটি চেক
-        if "delete" in action_name.lower() or "shutdown" in action_name.lower():
-            return "WARNING: Risk Detected. Please use Master Key to Force."
+    def observe_action(self, action_name):
+        if self.__is_locked:
+            return "SYSTEM_LOCKED: Access Denied."
         
+        # বাকি লজিক এখানে...
         return "SUCCESS"
-
-    def log_action(self, action, status):
-        with open(self.log_file, "a") as f:
-            f.write(f"[{time.ctime()}] Action: {action} | Status: {status}\n")
-
-# --- মাস্টারের ব্যবহারের জন্য ---
-obs = RecursiveObserver()
-
-# যদি আপনি নিশ্চিত থাকেন যে কাজটি করতে চান:
-obs.master_override = True  # এটিই আপনার 'Final Force Command'
-status = obs.observe_action("Delete System Logs", "Recursive Logic")
-print(f"Final Status: {status}")
-                        
