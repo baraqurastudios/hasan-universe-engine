@@ -1,8 +1,19 @@
-def v8_system_clean():
-    # এরর মুছে সিস্টেমকে ফ্রেশ করা
-    print("✨ BaraQura V8.1 System: Cleaning syntax errors...")
-    print("✅ System Status: Stable and Ready.")
+import os
+
+def activate_v8_intelligence():
+    # বোটের মেমোরি এবং আইকিউ কনফিগারেশন
+    ai_config = {
+        "engine_brain": "Neural-V8",
+        "intelligence_level": "Adaptive",
+        "personality": "Professional Assistant",
+        "voice_engine": "Active (Ready)"
+    }
+    
+    print(f"🧠 Neural Link: {ai_config['engine_brain']} is now LIVE.")
+    print(f"⚙️ Personality: {ai_config['personality']} set for Master.")
+    print("✨ AI Status: Listening for triggers...")
+    
     return True
 
 if __name__ == "__main__":
-    v8_system_clean()
+    activate_v8_intelligence()
