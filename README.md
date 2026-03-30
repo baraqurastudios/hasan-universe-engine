@@ -1,39 +1,28 @@
 import os
 
-def v8_intel_engine():
-    # মাস্টার কী এবং আপনার ইনপুট রিড করা
-    user_input = os.getenv("GITHUB_ACCESS_TOKEN", "").lower()
+# আপনার আসল গিটহাব টোকেনটি এখানে একবার সেভ করে নিন
+# যাতে বার বার টোকেন বক্সে লিখতে না হয়
+MY_REAL_TOKEN = "আপনার_আসল_টোকেন_এখানে_দিন"
+
+def v8_vocal_engine():
+    # এটি আপনার ইনপুট পড়ার একটি অল্টারনেটিভ ওয়ে
+    # আমরা এখন 'README.md' ফাইলের প্রথম লাইনটি ব্যবহার করব কথা বলার জন্য
+    try:
+        with open("README.md", "r") as f:
+            lines = f.readlines()
+            # প্রথম লাইনে যা লিখবেন সেটা হবে আপনার কমান্ড
+            master_msg = lines[0].strip().lower() if lines else ""
+    except:
+        master_msg = ""
+
+    print("🌌 V8.1 Oracle: Listening via README interface.")
     
-    print("🌌 V8.1 Oracle: Diagnostic Mode Active.")
-    print("-" * 40)
-
-    # ১. যদি আপনি ইঞ্জিনের সমস্যা নিয়ে কথা বলতে চান
-    if "problem" in user_input or "issue" in user_input or "ভুল" in user_input:
-        print("🤖 V8.1: মাস্টার, আমি ইঞ্জিনের লজিক চেক করছি...")
-        
-        # এখানে সে চেক করবে কোনো ফাইল মিসিং কি না
-        critical_files = ["v81_engine.py", "bot.py"]
-        missing_files = [f for f in critical_files if not os.path.exists(f)]
-        
-        if missing_files:
-            print(f"⚠️ পাওয়া গেছে! এই ফাইলগুলো মিসিং: {missing_files}")
-            print("পরামর্শ: ফাইলগুলো .vault থেকে বের করুন অথবা নতুন করে তৈরি করুন।")
-        else:
-            print("✅ কোডের স্ট্রাকচার ঠিক আছে। আপনি কি লাইব্রেরি এরর পাচ্ছেন?")
-            print("পরামর্শ: 'pip install pyTelegramBotAPI' চেক করুন।")
-
-    # ২. সাধারণ চ্যাট এবং কোডিং আলাপ
-    elif "write code" in user_input or "কোড লেখো" in user_input:
-        print("🤖 V8.1: আমি কোড লিখতে প্রস্তুত। আপনি কি নতুন কোনো সিকিউরিটি লেয়ার চান?")
-        print("নির্দেশ দিন, আমি আপনার জন্য স্ক্রিপ্ট তৈরি করে দিচ্ছি।")
-
-    # ৩. যদি কোনো ইনপুট না থাকে
-    elif user_input == "status":
+    if "status" in master_msg:
         print("🤖 V8.1: ইঞ্জিন সচল। হার্টবিট চেক: স্বাভাবিক।")
-
+    elif "fire" in master_msg:
+        print("🚨 V8.1: Emergency Seal Initiated!")
     else:
-        print(f"🤖 V8.1: আমি আপনার বার্তা '{user_input}' পেয়েছি।")
-        print("মাস্টার, ইঞ্জিনের সমস্যা বা নতুন কোড নিয়ে কিছু বলতে চাইলে এখানে লিখুন।")
+        print("🤖 V8.1: মাস্টার, README.md ফাইলের প্রথম লাইনে আপনার প্রশ্ন লিখুন।")
 
 if __name__ == "__main__":
-    v8_intel_engine()
+    v8_vocal_engine()
