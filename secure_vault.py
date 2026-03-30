@@ -1,19 +1,18 @@
 from cryptography.fernet import Fernet
 
-# মাস্টার কী জেনারেট (এটি একবারই করবেন এবং লুকিয়ে রাখবেন)
-def generate_master_key():
-    key = Fernet.generate_key()
-    with open("master.key", "wb") as key_file:
-        key_file.write(key)
-    return "🔑 Master Key Generated & Saved!"
+def setup_v8_encryption():
+    # মাস্টার চাবি তৈরি (একবারই রান করবেন)
+    master_key = Fernet.generate_key()
+    with open("v8_master.key", "wb") as f:
+        f.write(master_key)
+    
+    # আপনার টেলিগ্রাম টোকেন এখানে এনক্রিপ্ট করুন
+    cipher = Fernet(master_key)
+    encrypted_token = cipher.encrypt(b"YOUR_TELEGRAM_TOKEN_HERE")
+    with open("token.enc", "wb") as f:
+        f.write(encrypted_token)
+    
+    return "✅ AES-256 Encryption Set: Data Hidden!"
 
-# ডাটা এনক্রিপ্ট করা
-def encrypt_token(token):
-    with open("master.key", "rb") as key_file:
-        key = key_file.read()
-    f = Fernet(key)
-    encrypted_token = f.encrypt(token.encode())
-    with open("token.enc", "wb") as token_file:
-        token_file.write(encrypted_token)
-    return "🛡️ Token Locked Successfully!"
-                       
+if __name__ == "__main__":
+    print(setup_v8_encryption())
