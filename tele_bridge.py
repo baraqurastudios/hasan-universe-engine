@@ -6,13 +6,14 @@ CHAT_ID = "6700361740"
 
 def send_v8_notification(message):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    # পেলোড ঠিকভাবে ডিফাইন করা হয়েছে
     payload = {"chat_id": CHAT_ID, "text": f"🛰️ V8.1 Alert\n------------------\n{message}"}
     try:
-        response = requests.post(url, data=payload)
+        response = requests.post(url, json=payload) # এখানে json=payload ব্যবহার করা নিরাপদ
         return response.json()
     except Exception as e:
         print(f"❌ Telegram Error: {e}")
         return None
 
 if __name__ == "__main__":
-    send_v8_notification("মাস্টার, আপনার সিস্টেম এখন পুরোপুরি অনলাইন!")
+    send_v8_notification("মাস্টার, আপনার সিস্টেম এখন ১০০% অনলাইন!")
