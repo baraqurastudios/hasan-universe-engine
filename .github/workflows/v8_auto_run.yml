@@ -1,0 +1,22 @@
+name: V8.1 Manual Spark
+
+on:
+  push:
+    branches: [ main ]  # কোড সেভ করলেই রান হবে
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:      # গিটহাব থেকে ম্যানুয়ালি রান করার বাটন
+
+jobs:
+  run-tele-bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install Requests
+        run: pip install requests
+      - name: Force Start
+        run: python tele_bridge.py
