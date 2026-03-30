@@ -1,51 +1,32 @@
 import os
-import sys
 
-# --- CONFIGURATION ---
-MASTER_NAME = "Master"
-ASSISTANT_NAME = "V8.1 Oracle"
-
-def v8_chat_engine():
-    # সাইডবার থেকে ইনপুট নিয়ে চেক করবে মাস্টার কি কি না
-    user_action = os.getenv("GITHUB_ACCESS_TOKEN")
-    REAL_MASTER_KEY = "V8_UNIVERSE_GOD_2026"
-
-    print(f"\n🌌 {ASSISTANT_NAME}: System Initialized.")
+def v8_integrated_chat():
+    # সাইডবারের ইনপুট বক্স থেকে আপনার কমান্ড বা কথা পড়বে
+    master_command = os.getenv("GITHUB_ACCESS_TOKEN")
     
-    if user_action == REAL_MASTER_KEY:
-        print(f"✅ Access Granted. Greetings, {MASTER_NAME}!")
-        print("-" * 40)
-        
-        # এখানে আপনি আপনার কথা বা প্রশ্ন ইনপুট দেবেন (Console Input)
-        # যেহেতু এটি একটি ওয়েব এডিটর, আমরা নিচের বক্সটি চ্যাটের জন্য ব্যবহার করব
-        print(f"🤖 {ASSISTANT_NAME}: আমি আপনার জন্য এখন কী করতে পারি?")
-        print("নির্দেশ দিন (যেমন: 'লক করো', 'ফাইল দেখাও', বা সাধারণ কথা)")
-        print("-" * 40)
-        
-        # চ্যাট ইন্টারফেস লজিক
-        while True:
-            chat_input = input(f"👤 {MASTER_NAME}: ").strip().lower()
-            
-            if chat_input in ["hi", "hello", "কেমন আছো"]:
-                print(f"🤖 {ASSISTANT_NAME}: আমি চমৎকার আছি মাস্টার! আপনার সিস্টেমের সব জিন এখন শান্ত অবস্থায় আছে।")
-            
-            elif chat_input in ["lock", "বন্ধ করো", "fire"]:
-                print(f"🚨 {ASSISTANT_NAME}: কমান্ড গৃহীত। সব ফাইল ব্ল্যাক হোলে পাঠিয়ে দিচ্ছি...")
-                # এখানে আপনার লক করার ফাংশন কল হবে
-                break
-                
-            elif "কে তুমি" in chat_input or "who are you" in chat_input:
-                print(f"🤖 {ASSISTANT_NAME}: আমি V8.1, আপনার ডিজিটাল জিনের বোতলের পাহারাদার।")
-                
-            elif chat_input == "exit":
-                print(f"🤖 {ASSISTANT_NAME}: বিদায় মাস্টার! সাবধানে থাকবেন।")
-                break
-            
-            else:
-                print(f"🤖 {ASSISTANT_NAME}: আমি আপনার কথা বুঝতে পারছি। আমি কি আপনার কোনো ফাইল এডিট করে দেব?")
+    print("🌌 V8.1 Oracle: System Synchronized.")
+    print("-" * 30)
 
-    else:
-        print("🔴 STATUS: FROZEN. Enter Master Key to talk to me.")
+    # জেমিনির মতো রেসপন্স মেকানিজম
+    responses = {
+        "hi": "Greetings Master! System is stable. All jinns are in the bottle.",
+        "কেমন আছো": "মাস্টার, আমি আপনার দেওয়া কোডে দিব্যি আছি। আপনার নতুন কোনো নির্দেশ আছে?",
+        "status": "V8.1 is LIVE. Encryption: Active. Stealth Mode: Enabled.",
+        "fire": "🚨 CRITICAL: Emergency Seal Initiated! All files are now hidden.",
+        "who are you": "I am V8.1, your personal digital guardian."
+    }
+
+    # আপনার ইনপুট অনুযায়ী উত্তর খোঁজা
+    found_reply = False
+    for key in responses:
+        if key in master_command.lower():
+            print(f"🤖 V8.1: {responses[key]}")
+            found_reply = True
+            break
+            
+    if not found_reply and master_command != "":
+        print(f"🤖 V8.1: মাস্টার, আমি আপনার '{master_command}' কমান্ডটি প্রসেস করছি...")
+        print("নির্দেশটি সফলভাবে সংরক্ষিত হয়েছে।")
 
 if __name__ == "__main__":
-    v8_chat_engine()
+    v8_integrated_chat()
