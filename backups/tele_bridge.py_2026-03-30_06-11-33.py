@@ -1,0 +1,1 @@
+"Rewrite tele_bridge.py accurately. Use BOT_TOKEN = '8712362120:AAEXy7KsOlacCgRf00UUSEYhgwRXee4IbRQ' and CHAT_ID = '6700361740'. Add a function send_v8_notification(message) that uses requests.post to send message as JSON."
