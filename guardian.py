@@ -1,28 +1,24 @@
 import os
 import json
-import sys
+from tele_bridge import send_v8_notification # টেলিগ্রাম কানেক্ট করা হলো
+
+MASTER_KEY = "V8_UNIVERSE_GOD_2026"
 
 def activate_guardian():
-    MASTER_KEY = "V8_UNIVERSE_GOD_2026"
     INPUT_KEY = os.getenv("GITHUB_ACCESS_TOKEN")
     
-    print("🛡️ V8.1 Guardian: Security Check in Progress...")
-
     if INPUT_KEY == MASTER_KEY:
-        print("✅ Access Verified. Core Files Unlocked.")
-        # এখানে আপনার সব ফাইল নরমাল থাকবে
+        print("✅ Identity Confirmed.")
+        if os.path.exists(".hidden_bible.v8"):
+            os.rename(".hidden_bible.v8", "character_bible.json")
+            send_v8_notification("মাস্টার, আপনি লগইন করেছেন। ফাইল আনলক করা হয়েছে।")
     else:
-        print("🚨 ALERT: Unauthorized Access Detected!")
-        print("🔒 Initiating Stealth Mode... Hiding critical assets.")
+        # অনুপ্রবেশকারী ধরলে ফোনে মেসেজ যাবে
+        send_v8_notification("🚨 সাবধান! কেউ আপনার সিস্টেমে ভুল টোকেন দিয়ে ঢোকার চেষ্টা করছে!")
         
-        # আপনার ক্যারেক্টার ডাটা এবং ইঞ্জিন হাইড করার লজিক
-        try:
-            if os.path.exists("character_bible.json"):
-                os.rename("character_bible.json", ".hidden_bible.v8")
-            print("🌑 System is now INVISIBLE.")
-        except Exception as e:
-            print(f"⚠️ Error in hiding: {e}")
+        if os.path.exists("character_bible.json"):
+            os.rename("character_bible.json", ".hidden_bible.v8")
+            print("🔒 System Locked & Hidden.")
 
 if __name__ == "__main__":
     activate_guardian()
-          
