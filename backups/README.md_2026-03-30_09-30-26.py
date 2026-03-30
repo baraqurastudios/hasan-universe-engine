@@ -1,0 +1,1 @@
+"Update the file selector to scan hidden directories. Specifically, fetch and display '.github/workflows/v8_auto_run.yml' in the dropdown list."
