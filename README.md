@@ -1,14 +1,13 @@
-import os
-
-def update_file_explorer():
-    print("🔍 Refreshing Repository Explorer...")
-    # হিডেন ডিরেক্টরি স্ক্যান করার লজিক
-    hidden_path = ".github/workflows/v8_auto_run.yml"
-    if os.path.exists(hidden_path):
-        print(f"✅ Found hidden asset: {hidden_path}")
-    else:
-        print("❌ Asset not found in current view.")
-    return True
+def activate_v8_cyber_interface():
+    # ইঞ্জিনের ভেতর থেকে ডার্ক মোড এবং সায়ান থিম ফোর্সিং
+    ui_config = {
+        "theme": "High-Tech Cyberpunk",
+        "primary_color": "#00f2ff",
+        "bg_color": "#0a192f",
+        "glow": True
+    }
+    print(f"🚀 V8.1 UI Status: {ui_config['theme']} mode activating...")
+    return ui_config
 
 if __name__ == "__main__":
-    update_file_explorer()
+    activate_v8_cyber_interface()
