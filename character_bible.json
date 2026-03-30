@@ -1,17 +1,14 @@
 {
-  "system_config": {
-    "engine_version": "V8.1",
-    "background_tasks": [
-      {
-        "name": "Hourly Telegram Check",
-        "file": ".github/workflows/main.yml",
-        "type": "github-action",
-        "status": "Active"
-      }
-    ],
-    "file_explorer": {
-      "visible_extensions": [".py", ".md", ".json", ".yml"],
-      "allow_hidden_folders": true
-    }
+  "v8_database": {
+    "config": {
+      "master_key_status": "Active",
+      "system_uptime": "2026-03-30T13:10:00Z",
+      "telegram_logs": []
+    },
+    "connections": {
+      "analyzer": "v8_analyzer.py",
+      "bridge": "tele_bridge.py"
+    },
+    "security_level": "High"
   }
 }
