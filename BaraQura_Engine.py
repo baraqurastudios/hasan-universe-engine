@@ -2,12 +2,11 @@ import streamlit as st
 import json
 import os
 
-# ১. টাইটেল এবং UI সেটআপ
-st.set_page_config(page_title="BaraQura Engine V8.2", page_icon="🛡️")
+# ১. UI সেটআপ (পাসওয়ার্ড বক্সের ডিজাইন)
 st.title("🛡️ BaraQura Universe Engine V8.2")
 st.subheader("Black Hole Security Protocol")
 
-# ২. কনফিগ ফাইল লোড করার স্মার্ট ফাংশন
+# ২. কনফিগ ফাইল লোড করা
 def load_config():
     # ফাইলটি যেখানেই থাকুক খুঁজে বের করার চেষ্টা
     config_file = "v82_config.json"
@@ -24,20 +23,24 @@ config_data = load_config()
 # ৩. ভেরিফিকেশন লজিক
 if config_data:
     try:
+        # config ফাইল থেকে পাসওয়ার্ড নেওয়া হচ্ছে
         master_key = config_data["security_layer"]["master_key_hash"]
         
+        # ইউজার ইনপুট নেওয়ার বক্স তৈরি
         user_input = st.text_input("Enter Master Key to Access Engine:", type="password")
 
+        # আনলক বাটন
         if st.button("Unlock System"):
             if user_input == master_key:
                 st.success("🔓 Access Granted. Welcome, Operator.")
                 st.balloons()
                 st.write("---")
                 st.info("System Status: ONLINE")
-                st.write("Master, your V8.2 Core is now fully functional.")
+                st.write("Master, your V8.2 Core is now fully functional and verified.")
             else:
                 st.error("⚠️ Invalid Master Key! Black Hole Mode Active.")
     except Exception as e:
         st.error(f"Config Structure Error: {e}")
 else:
-    st.warning("⚠️ Waiting for Vault... Please ensure 'v82_config.json' is present.")
+    # ফাইল খুঁজে না পেলে এই মেসেজ দেখাবে
+    st.warning("⚠️ Waiting for Vault... Please ensure 'v82_config.json' is present in the main folder.")
