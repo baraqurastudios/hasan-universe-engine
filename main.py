@@ -1,24 +1,39 @@
 import streamlit as st
+import os
+import sys
 import logging
+from datetime import datetime
 
-# Proper imports (IMPORTANT)
-from core.engine import Engine
-from database.db_manager import DatabaseManager
-from security.guardian import SecurityManager
-from interface.worker import Interface
+# --- ১. সিস্টেম পাথ সেটআপ (যাতে ফোল্ডারগুলো থেকে ইমপোর্ট কাজ করে) ---
+folders = ['security', 'core', 'database', 'interface', 'config']
+for folder in folders:
+    folder_path = os.path.join(os.getcwd(), folder)
+    if folder_path not in sys.path:
+        sys.path.append(folder_path)
 
-# -------------------------
-# Logging Setup
-# -------------------------
+# --- ২. লগিং সিস্টেম সেটআপ ---
+if not os.path.exists('logs'):
+    os.makedirs('logs')
+
 logging.basicConfig(
     filename='logs/system.log',
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    filemode='a'
 )
 
-# -------------------------
-# Streamlit UI Config
-# -------------------------
+# --- ৩. মডিউল ইমপোর্ট ---
+try:
+    from core.engine import Engine
+    from database.db_manager import DatabaseManager
+    from security.guardian import SecurityManager
+    from interface.worker import Interface
+    logging.info("All modules imported successfully")
+except Exception as e:
+    logging.error(f"Import Error: {e}")
+    st.error(f"❌ Module Import Failed: {e}")
+
+# --- ৪. Streamlit UI কনফিগারেশন ---
 st.set_page_config(
     page_title="BaraQura Engine V8.2",
     page_icon="🛡️",
@@ -28,25 +43,19 @@ st.set_page_config(
 st.title("🛡️ BaraQura Engine V8.2")
 st.info("System initialized with professional architecture")
 
-# -------------------------
-# Initialize System
-# -------------------------
+# --- ৫. সিস্টেম ইনিশিয়ালাইজেশন ---
 try:
     security = SecurityManager()
     db = DatabaseManager()
     core = Engine()
     ui = Interface()
-
     logging.info("System modules initialized successfully")
-
 except Exception as e:
     logging.error(f"Initialization Error: {e}")
-    st.error("❌ System initialization failed!")
+    st.error(f"❌ System initialization failed: {e}")
     st.stop()
 
-# -------------------------
-# User Input Section
-# -------------------------
+# --- ৬. ইউজার ইনপুট ও প্রসেসিং ---
 user_input = st.text_input("Enter your input:")
 
 if st.button("Run Engine"):
@@ -58,21 +67,20 @@ if st.button("Run Engine"):
         # Security check
         if not security.validate(user_input):
             st.error("🚫 Access Denied!")
-            logging.warning("Blocked unsafe input")
+            logging.warning(f"Blocked unsafe input: {user_input}")
             st.stop()
 
         # Process
         result = core.process(user_input)
 
-        # Save
+        # Save to Database
         db.save(result)
 
         # Output
         st.success("✅ Result:")
         st.write(result)
-
         logging.info("Execution successful")
 
     except Exception as e:
         logging.error(f"Runtime Error: {e}")
-        st.error("❌ Something went wrong!")
+        st.error(f"❌ Something went wrong: {e}")
