@@ -4,17 +4,15 @@ import os
 import requests
 import base64
 
-# ১. সেশন স্টেট (লগইন এবং চ্যাট মেমোরি)
+# ১. সেশন স্টেট
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
 if "chat_history" not in st.session_state:
     st.session_state["chat_history"] = []
 
-# ২. কথা বলার ফাংশন (Text-to-Speech) - ফিক্সড ভার্সন
+# ২. কথা বলার ফাংশন
 def speak(text):
-    # Google TTS API ব্যবহার করে অডিও তৈরি
     audio_url = f"https://translate.google.com/translate_tts?ie=UTF-8&q={text}&tl=bn&client=tw-ob"
-    # এখানে 'unsafe_allow_status' এর বদলে 'unsafe_allow_html' ব্যবহার করা হয়েছে
     st.markdown(f'<audio src="{audio_url}" autoplay hidden></audio>', unsafe_allow_html=True)
 
 # ৩. মূল লজিক শুরু
@@ -29,37 +27,50 @@ if st.session_state["authenticated"]:
 
     elif menu == "AI Assistant (Chat)":
         st.header("💬 Talk to BaraQura Engine")
-        st.write("মাস্টার, আমি আপনার কথা শোনার জন্য প্রস্তুত।")
-
+        
         user_msg = st.chat_input("Say something to your engine...")
         
         if user_msg:
-            # ইঞ্জিন যা উত্তর দেবে
-            response_text = f"মাস্টার, আমি আপনার '{user_msg}' কমান্ডটি পেয়েছি। আমি এটি নিয়ে কাজ করছি।"
+            msg_lower = user_msg.lower()
             
-            # মেমোরিতে সেভ
+            # --- কথোপকথন ও কমান্ড আলাদা করার লজিক ---
+            if "hi" in msg_lower or "hello" in msg_lower or "কেমন আছো" in msg_lower:
+                response_text = "হ্যালো মাস্টার! আমি ভালো আছি। আপনার দিনটি কেমন যাচ্ছে?"
+            
+            elif "কে তুমি" in msg_lower or "তোমার নাম কি" in msg_lower:
+                response_text = "আমি বারাকুরা ইউনিভার্স ইঞ্জিন ভার্সন ৮.২। আমি আপনার ব্যক্তিগত এআই সহকারী।"
+            
+            elif "status" in msg_lower or "অবস্থা" in msg_lower:
+                response_text = "মাস্টার, সিস্টেমের সব মডিউল বর্তমানে অনলাইন এবং সুরক্ষিত আছে।"
+            
+            elif "কমান্ড" in msg_lower or "command" in msg_lower:
+                response_text = "মাস্টার, আপনি আমাকে গিটহাবে কোড আপডেট করার বা সিস্টেম লক করার কমান্ড দিতে পারেন।"
+            
+            else:
+                # যদি কোনো নির্দিষ্ট কি-ওয়ার্ড না পায়
+                response_text = f"মাস্টার, আমি আপনার '{user_msg}' বিষয়টি বুঝতে পেরেছি। আপনি কি এটি নিয়ে আরও কিছু বলতে চান?"
+
+            # মেমোরিতে সেভ এবং কথা বলা
             st.session_state["chat_history"].append({"role": "user", "content": user_msg})
             st.session_state["chat_history"].append({"role": "assistant", "content": response_text})
-            
-            # কথা বলা শুরু করবে (অডিও প্লে হবে)
             speak(response_text)
 
-        # চ্যাট হিস্ট্রি দেখানো
+        # চ্যাট হিস্ট্রি প্রদর্শন
         for message in st.session_state["chat_history"]:
             with st.chat_message(message["role"]):
                 st.write(message["content"])
 
     elif menu == "GitHub Code Editor":
-        # আপনার রিপোজিটরি এবং টোকেন দিয়ে কোড এডিট করার আগের মডিউলটি এখানে অটোমেটিক কাজ করবে
         st.header("🚀 GitHub Remote Access")
-        st.info("আপনার ফাইলগুলো এখান থেকে সরাসরি এডিট করুন।")
+        # আগের গিটহাব এডিটর কোড এখানে থাকবে
+        st.info("এখান থেকে আপনি কোড পুশ করতে পারবেন।")
 
     if st.sidebar.button("Logout"):
         st.session_state["authenticated"] = False
         st.rerun()
 
 else:
-    # লগইন লেয়ার
+    # লগইন লেয়ার (পাসওয়ার্ড প্রোটেকশন)
     st.title("🛡️ BaraQura Universe Engine V8.2")
     user_input = st.text_input("Enter Master Key:", type="password")
     if st.button("Unlock System"):
