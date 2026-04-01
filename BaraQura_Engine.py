@@ -9,16 +9,14 @@ st.subheader("Black Hole Security Protocol")
 
 # ২. কনফিগ ফাইল লোড করার স্মার্ট ফাংশন
 def load_config():
-    # সম্ভাব্য সব পাথে ফাইলটি খোঁজা (মেইন ডিরেক্টরি এবং কোর ফোল্ডার)
-    paths_to_check = ["v82_config.json", "BaraQura_V8.2_Core/v82_config.json"]
-    
-    for path in paths_to_check:
-        if os.path.exists(path):
-            try:
-                with open(path, "r") as f:
-                    return json.load(f)
-            except:
-                continue
+    # ফাইলটি যেখানেই থাকুক খুঁজে বের করার চেষ্টা
+    config_file = "v82_config.json"
+    if os.path.exists(config_file):
+        try:
+            with open(config_file, "r") as f:
+                return json.load(f)
+        except:
+            return None
     return None
 
 config_data = load_config()
@@ -33,13 +31,13 @@ if config_data:
         if st.button("Unlock System"):
             if user_input == master_key:
                 st.success("🔓 Access Granted. Welcome, Operator.")
-                st.balloons() # সাকসেস সেলিব্রেশন
+                st.balloons()
                 st.write("---")
                 st.info("System Status: ONLINE")
-                st.write("Master, your V8.2 Core is now fully functional and verified.")
+                st.write("Master, your V8.2 Core is now fully functional.")
             else:
                 st.error("⚠️ Invalid Master Key! Black Hole Mode Active.")
-    except KeyError:
-        st.error("Config File Error: Missing security keys inside JSON!")
+    except Exception as e:
+        st.error(f"Config Structure Error: {e}")
 else:
-    st.warning("⚠️ Waiting for Vault... Please ensure 'v82_config.json' is in the main folder.")
+    st.warning("⚠️ Waiting for Vault... Please ensure 'v82_config.json' is present.")
