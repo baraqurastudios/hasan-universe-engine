@@ -1,35 +1,78 @@
 import streamlit as st
-import os
-import sys
+import logging
 
-# ১. টাইটেল সেটআপ (BaraQura Engine V8.2 UI)
-st.set_page_config(page_title="BaraQura Engine V8.2", page_icon="🛡️", layout="wide")
+# Proper imports (IMPORTANT)
+from core.engine import Engine
+from database.db_manager import DatabaseManager
+from security.guardian import SecurityManager
+from interface.worker import Interface
 
-# ২. সিস্টেম পাথ সেটআপ (যাতে পাইথন ফোল্ডারের ভেতরের ফাইলগুলো খুঁজে পায়)
-# এই অংশটি আপনার নতুন তৈরি করা ৫টি ফোল্ডারকে পাইথনের সাথে কানেক্ট করবে
-folders = ['security', 'core', 'database', 'interface', 'config']
-for folder in folders:
-    folder_path = os.path.join(os.getcwd(), folder)
-    if folder_path not in sys.path:
-        sys.path.append(folder_path)
+# -------------------------
+# Logging Setup
+# -------------------------
+logging.basicConfig(
+    filename='logs/system.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
-# ৩. মেইন ইঞ্জিন ফাইল রান করার লজিক
-engine_file = "BaraQura_Engine.py"
+# -------------------------
+# Streamlit UI Config
+# -------------------------
+st.set_page_config(
+    page_title="BaraQura Engine V8.2",
+    page_icon="🛡️",
+    layout="wide"
+)
 
 st.title("🛡️ BaraQura Engine V8.2")
-st.info("System initializing with organized directory structure...")
+st.info("System initialized with professional architecture")
 
-if os.path.exists(engine_file):
+# -------------------------
+# Initialize System
+# -------------------------
+try:
+    security = SecurityManager()
+    db = DatabaseManager()
+    core = Engine()
+    ui = Interface()
+
+    logging.info("System modules initialized successfully")
+
+except Exception as e:
+    logging.error(f"Initialization Error: {e}")
+    st.error("❌ System initialization failed!")
+    st.stop()
+
+# -------------------------
+# User Input Section
+# -------------------------
+user_input = st.text_input("Enter your input:")
+
+if st.button("Run Engine"):
     try:
-        # মেইন ইঞ্জিন ফাইলের কোড রান করানো হচ্ছে
-        with open(engine_file, "r", encoding="utf-8") as f:
-            code = f.read()
-            # ফোল্ডার পাথে ফাইলগুলো যুক্ত থাকায় এখন exec(code) দিলে ভেতরের ফাইলগুলোও কাজ করবে
-            exec(code)
+        if not user_input:
+            st.warning("⚠️ Please enter input!")
+            st.stop()
+
+        # Security check
+        if not security.validate(user_input):
+            st.error("🚫 Access Denied!")
+            logging.warning("Blocked unsafe input")
+            st.stop()
+
+        # Process
+        result = core.process(user_input)
+
+        # Save
+        db.save(result)
+
+        # Output
+        st.success("✅ Result:")
+        st.write(result)
+
+        logging.info("Execution successful")
+
     except Exception as e:
-        # ইঞ্জিন ফেইল হলে এই মেসেজ দেখাবে
-        st.error(f"❌ Engine Failure: {e}")
-        st.warning("পরামর্শ: নিশ্চিত করুন যে সব ফাইল সঠিক ফোল্ডারে আছে এবং কোনো ইমপোর্ট এরর নেই।")
-else:
-    # ফাইল খুঁজে না পেলে এই মেসেজ দেখাবে
-    st.error(f"❌ Error: {engine_file} not found in root directory!")
+        logging.error(f"Runtime Error: {e}")
+        st.error("❌ Something went wrong!")
