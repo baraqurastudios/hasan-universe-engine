@@ -2,13 +2,12 @@ import streamlit as st
 import json
 import os
 
-# ১. UI সেটআপ (পাসওয়ার্ড বক্সের ডিজাইন)
-st.title("🛡️ BaraQura Universe Engine V8.2")
-st.subheader("Black Hole Security Protocol")
+# ১. সেশন স্টেট চেক (লগইন স্ট্যাটাস ধরে রাখার জন্য)
+if "authenticated" not in st.session_state:
+    st.session_state["authenticated"] = False
 
-# ২. কনফিগ ফাইল লোড করা
+# ২. কনফিগ ফাইল লোড করার ফাংশন
 def load_config():
-    # ফাইলটি যেখানেই থাকুক খুঁজে বের করার চেষ্টা
     config_file = "v82_config.json"
     if os.path.exists(config_file):
         try:
@@ -18,29 +17,42 @@ def load_config():
             return None
     return None
 
-config_data = load_config()
+# ৩. মূল লজিক শুরু
+if st.session_state["authenticated"]:
+    # --- এখানে আপনার অ্যাপের মেইন ড্যাশবোর্ড ---
+    st.title("🛡️ BaraQura Universe Dashboard")
+    st.success("Welcome, Master. System is fully ONLINE.")
+    
+    st.sidebar.title("Engine Controls")
+    if st.sidebar.button("Logout"):
+        st.session_state["authenticated"] = False
+        st.rerun()
 
-# ৩. ভেরিফিকেশন লজিক
-if config_data:
-    try:
-        # config ফাইল থেকে পাসওয়ার্ড নেওয়া হচ্ছে
-        master_key = config_data["security_layer"]["master_key_hash"]
-        
-        # ইউজার ইনপুট নেওয়ার বক্স তৈরি
-        user_input = st.text_input("Enter Master Key to Access Engine:", type="password")
+    st.write("---")
+    st.info("আপনার ইঞ্জিনের মূল মডিউলগুলো এখানে যোগ করা যাবে।")
+    # আপনি আপনার অ্যাপের বাকি ফিচারগুলো এখানে যুক্ত করতে পারেন।
 
-        # আনলক বাটন
-        if st.button("Unlock System"):
-            if user_input == master_key:
-                st.success("🔓 Access Granted. Welcome, Operator.")
-                st.balloons()
-                st.write("---")
-                st.info("System Status: ONLINE")
-                st.write("Master, your V8.2 Core is now fully functional and verified.")
-            else:
-                st.error("⚠️ Invalid Master Key! Black Hole Mode Active.")
-    except Exception as e:
-        st.error(f"Config Structure Error: {e}")
 else:
-    # ফাইল খুঁজে না পেলে এই মেসেজ দেখাবে
-    st.warning("⚠️ Waiting for Vault... Please ensure 'v82_config.json' is present in the main folder.")
+    # --- এখানে পাসওয়ার্ড প্রোটেকশন লেয়ার ---
+    st.title("🛡️ BaraQura Universe Engine V8.2")
+    st.subheader("Black Hole Security Protocol")
+
+    config_data = load_config()
+
+    if config_data:
+        try:
+            master_key = config_data["security_layer"]["master_key_hash"]
+            
+            user_input = st.text_input("Enter Master Key to Access Engine:", type="password")
+
+            if st.button("Unlock System"):
+                if user_input == master_key:
+                    st.session_state["authenticated"] = True
+                    st.balloons()
+                    st.rerun()  # এটি সরাসরি ড্যাশবোর্ডে নিয়ে যাবে
+                else:
+                    st.error("⚠️ Invalid Master Key! Access Denied.")
+        except Exception as e:
+            st.error(f"Config Structure Error: {e}")
+    else:
+        st.warning("⚠️ 'v82_config.json' ফাইলটি খুঁজে পাওয়া যাচ্ছে না। অনুগ্রহ করে চেক করুন।")
