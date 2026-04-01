@@ -1,18 +1,21 @@
-def sync_neural_to_telegram():
-    # এআই ব্রেইন এবং টেলিগ্রাম কানেক্টিভিটি লজিক
-    sync_config = {
-        "connection_type": "Secure-Webhook",
-        "neural_link": "Active",
-        "token_security": "Encrypted",
-        "auto_reply": "Enabled"
-    }
-    
-    print("📡 Connectivity: Linking Neural Brain to Telegram...")
-    print(f"🔒 Security: Token is {sync_config['token_security']} and Isolated.")
-    print(f"🤖 Chat Engine: Auto-Reply {sync_config['auto_reply']} for Master.")
-    print("✅ Sync Success: Your AI Assistant is now waiting for messages.")
-    
-    return "Telegram Linked"
+import streamlit as st
+import os
 
-if __name__ == "__main__":
-    sync_neural_to_telegram()
+# ১. টাইটেল সেটআপ (যাতে ব্ল্যাক স্ক্রিন না দেখায়)
+st.set_page_config(page_title="BaraQura Engine V8.2", page_icon="🛡️")
+
+# ২. মেইন ইঞ্জিন ফাইলটি খোঁজা এবং রান করা
+engine_file = "BaraQura_Engine.py"
+
+if os.path.exists(engine_file):
+    try:
+        # মেইন ইঞ্জিন ফাইলের কোড রান করানো হচ্ছে
+        with open(engine_file, "r", encoding="utf-8") as f:
+            code = f.read()
+            exec(code)
+    except Exception as e:
+        # ইঞ্জিন ফেইল হলে এই মেসেজ দেখাবে
+        st.error(f"Engine Failure: {e}")
+else:
+    # ফাইল খুঁজে না পেলে এই মেসেজ দেখাবে
+    st.error(f"Error: {engine_file} not found in root directory!")
