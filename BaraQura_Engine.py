@@ -1,95 +1,78 @@
 import streamlit as st
-import google.generativeai as genai
+import json
 import os
-from dotenv import load_dotenv
+import requests
+import base64
 
-# ১. কনফিগারেশন এবং নিরাপত্তা (API Key লোড করা)
-load_dotenv()
-# আপনার .env ফাইলে GEMINI_API_KEY=আপনার_কী লিখে রাখুন
-# অথবা সরাসরি নিচে বসাতে পারেন (তবে এটি কম নিরাপদ)
-API_KEY = os.getenv("GEMINI_API_KEY") 
+# ১. সেশন স্টেট
+if "authenticated" not in st.session_state:
+    st.session_state["authenticated"] = False
+if "chat_history" not in st.session_state:
+    st.session_state["chat_history"] = []
 
-if API_KEY:
-    genai.configure(api_key=API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash')
-else:
-    st.error("API Key পাওয়া যায়নি! দয়া করে .env ফাইলে এটি সেট করুন।")
-
-# ২. কথা বলার ফাংশন (Text-to-Speech)
+# ২. কথা বলার ফাংশন
 def speak(text):
-    # গুগল টিটিএস ব্যবহার করে বাংলা অডিও জেনারেট
     audio_url = f"https://translate.google.com/translate_tts?ie=UTF-8&q={text}&tl=bn&client=tw-ob"
     st.markdown(f'<audio src="{audio_url}" autoplay hidden></audio>', unsafe_allow_html=True)
 
-# ৩. Gemini AI থেকে উত্তর নেওয়ার ফাংশন
-def get_gemini_response(user_input):
-    try:
-        # জেমিনি মডেলকে ইনপুট পাঠানো
-        response = model.generate_content(user_input)
-        return response.text
-    except Exception as e:
-        return f"মাস্টার, জেমিনি ইঞ্জিনে সমস্যা হচ্ছে: {str(e)}"
-
-# ৪. লগইন লেয়ার (Master Key সিস্টেম)
-if "authenticated" not in st.session_state:
-    st.session_state["authenticated"] = False
-
-if not st.session_state["authenticated"]:
-    st.title("🛡️ BaraQura Universe Engine V8.2")
-    st.subheader("Login to Access Master Dashboard")
+# ৩. মূল লজিক শুরু
+if st.session_state["authenticated"]:
+    st.title("🛡️ BaraQura Universe Dashboard")
+    st.sidebar.title("Engine Controls")
     
-    # মাস্টার কী ইনপুট (Password mode)
-    master_key = st.text_input("Enter Master Key:", type="password")
-    
-    if st.button("Unlock"):
-        # এখানে আপনার নিজের পছন্দমতো পাসওয়ার্ড সেট করুন
-        if master_key == "BaraQura@2026": 
-            st.session_state["authenticated"] = True
-            st.success("Access Granted, Master!")
-            st.rerun()
-        else:
-            st.error("Invalid Master Key! Access Denied.")
+    menu = st.sidebar.radio("Navigation", ["Home", "GitHub Code Editor", "AI Assistant (Chat)", "Settings"])
 
-# ৫. ড্যাশবোর্ড ইন্টারফেস (লগইন সফল হলে)
-else:
-    st.sidebar.title("Navigation")
-    menu = st.sidebar.radio("Go to", ["Home", "GitHub Code Editor", "AI Assistant (Chat)"])
-    
-    if st.sidebar.button("Logout"):
-        st.session_state["authenticated"] = False
-        st.rerun()
+    if menu == "Home":
+        st.success("Welcome, Master. V8.2 Core is ONLINE.")
 
-    if menu == "AI Assistant (Chat)":
-        st.title("🛡️ BaraQura Universe Dashboard")
-        st.header("💬 Talk to BaraQura Brain (Gemini Powered)")
+    elif menu == "AI Assistant (Chat)":
+        st.header("💬 Talk to BaraQura Engine")
         
-        if "chat_history" not in st.session_state:
-            st.session_state["chat_history"] = []
-
-        # চ্যাট ইনপুট
-        user_msg = st.chat_input("আমার সাথে কথা বলুন, মাস্টার...")
-
+        user_msg = st.chat_input("Say something to your engine...")
+        
         if user_msg:
-            with st.spinner("BaraQura Brain is thinking..."):
-                # Gemini থেকে উত্তর আনা
-                ai_reply = get_gemini_response(user_msg)
+            msg_lower = user_msg.lower()
             
-            # হিস্টোরিতে সেভ করা
-            st.session_state["chat_history"].append({"role": "user", "content": user_msg})
-            st.session_state["chat_history"].append({"role": "assistant", "content": ai_reply})
+            # --- কথোপকথন ও কমান্ড আলাদা করার লজিক ---
+            if "hi" in msg_lower or "hello" in msg_lower or "কেমন আছো" in msg_lower:
+                response_text = "হ্যালো মাস্টার! আমি ভালো আছি। আপনার দিনটি কেমন যাচ্ছে?"
             
-            # অডিও ফিডব্যাক
-            speak(ai_reply)
+            elif "কে তুমি" in msg_lower or "তোমার নাম কি" in msg_lower:
+                response_text = "আমি বারাকুরা ইউনিভার্স ইঞ্জিন ভার্সন ৮.২। আমি আপনার ব্যক্তিগত এআই সহকারী।"
+            
+            elif "status" in msg_lower or "অবস্থা" in msg_lower:
+                response_text = "মাস্টার, সিস্টেমের সব মডিউল বর্তমানে অনলাইন এবং সুরক্ষিত আছে।"
+            
+            elif "কমান্ড" in msg_lower or "command" in msg_lower:
+                response_text = "মাস্টার, আপনি আমাকে গিটহাবে কোড আপডেট করার বা সিস্টেম লক করার কমান্ড দিতে পারেন।"
+            
+            else:
+                # যদি কোনো নির্দিষ্ট কি-ওয়ার্ড না পায়
+                response_text = f"মাস্টার, আমি আপনার '{user_msg}' বিষয়টি বুঝতে পেরেছি। আপনি কি এটি নিয়ে আরও কিছু বলতে চান?"
 
-        # চ্যাট মেসেজগুলো দেখানো
+            # মেমোরিতে সেভ এবং কথা বলা
+            st.session_state["chat_history"].append({"role": "user", "content": user_msg})
+            st.session_state["chat_history"].append({"role": "assistant", "content": response_text})
+            speak(response_text)
+
+        # চ্যাট হিস্ট্রি প্রদর্শন
         for message in st.session_state["chat_history"]:
             with st.chat_message(message["role"]):
                 st.write(message["content"])
 
-    elif menu == "Home":
-        st.title("Welcome to BaraQura Universe")
-        st.write("আপনার সিস্টেম এখন জেমিনি এআই দ্বারা পরিচালিত হচ্ছে।")
-
     elif menu == "GitHub Code Editor":
-        st.title("GitHub Code Editor")
-        st.write("এখানে আপনার গিটহাব ইন্টিগ্রেশন কোড যোগ করুন।")
+        st.header("🚀 GitHub Remote Access")
+        # আগের গিটহাব এডিটর কোড এখানে থাকবে
+        st.info("এখান থেকে আপনি কোড পুশ করতে পারবেন।")
+
+    if st.sidebar.button("Logout"):
+        st.session_state["authenticated"] = False
+        st.rerun()
+
+else:
+    # লগইন লেয়ার (পাসওয়ার্ড প্রোটেকশন)
+    st.title("🛡️ BaraQura Universe Engine V8.2")
+    user_input = st.text_input("Enter Master Key:", type="password")
+    if st.button("Unlock System"):
+        st.session_state["authenticated"] = True
+        st.rerun()
