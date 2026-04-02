@@ -1,71 +1,90 @@
 import streamlit as st
 import os
+import sys
 import json
+import time
 
-# --- ১. পেজ সেটআপ ---
+# ১. পাথ কনফিগারেশন (core ফোল্ডারকে চেনানো)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(BASE_DIR, 'core'))
+
+# ২. মডিউল ইমপোর্ট
+try:
+    from engine import Engine
+except ImportError:
+    st.error("Engine module not found in core folder!")
+
+# ৩. পেজ সেটআপ
 st.set_page_config(page_title="BaraQura V8.2 Dashboard", layout="wide")
 
-# ডার্ক ইন্টারফেস স্টাইল
-st.markdown("""
-    <style>
-    .main { background-color: #0e1117; color: #ffffff; }
-    .stMetric { background-color: #1f2937; padding: 15px; border-radius: 10px; border: 1px solid #3b82f6; }
-    </style>
-    """, unsafe_allow_html=True)
-
-# --- ২. সেশন ম্যানেজমেন্ট ---
+# ৪. সেশন স্টেট (ডাটা মনে রাখার জন্য)
 if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
+if 'logs' not in st.session_state:
+    st.session_state.logs = []
+if 'engine_active' not in st.session_state:
+    st.session_state.engine_active = False
 
-# --- ৩. ইন্টারফেস লজিক ---
+# --- ইন্টারফেস লজিক ---
 if not st.session_state.authenticated:
     st.title("🤖 BaraQura V8.2: Terminal Access")
-    
-    # ইনপুট ফিল্ড
-    master_key_input = st.text_input("Enter Master Command / Key:", type="password")
+    master_key_input = st.text_input("Enter Master Key:", type="password")
     
     if st.button("🚀 Unlock System"):
-        config_path = os.path.join(os.getcwd(), "config", "v82_config.json")
+        config_path = "config/v82_config.json"
         try:
-            with open(config_path, 'r', encoding='utf-8') as f:
-                config_data = json.load(f)
-                correct_key = config_data['security_layer']['master_key_hash']
-            
-            # কি চেক করা
-            if master_key_input == correct_key:
-                st.session_state.authenticated = True
-                st.rerun()
-            else:
-                st.error("❌ ভুল চাবি! আপনার চেষ্টা বাকি আছে।")
+            with open(config_path, 'r') as f:
+                data = json.load(f)
+                if master_key_input == data['security_layer']['master_key_hash']:
+                    st.session_state.authenticated = True
+                    st.rerun()
+                else:
+                    st.error("Access Denied!")
         except Exception as e:
-            st.error(f"⚠️ সিস্টেম এরর: কনফিগ ফাইল পাওয়া যাচ্ছে না। ({e})")
+            st.error(f"Error: {e}")
 
 else:
-    # লগইন সফল হলে ড্যাশবোর্ড
+    # ড্যাশবোর্ড শুরু
     st.title("🔓 BaraQura System Online")
-    st.markdown("---")
     
+    # টপ ম্যাট্রিক্স (আপনার প্রফিট এবং নোড)
     try:
-        config_path = os.path.join(os.getcwd(), "config", "v82_config.json")
-        with open(config_path, 'r', encoding='utf-8') as f:
+        with open("config/v82_config.json", 'r') as f:
             data = json.load(f)
         
-        st.subheader("📊 Empire Analytics Summary")
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            st.metric(label="Total Profit", value=f"${data['empire_assets']['total_profit']:,}")
-        with col2:
-            st.metric(label="Active Nodes", value=data['empire_assets']['active_nodes'])
-        with col3:
-            st.metric(label="System Tag", value=data['system_info']['system_tag'])
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Total Profit", f"${data['empire_assets']['total_profit']:,}")
+        c2.metric("Active Nodes", data['empire_assets']['active_nodes'])
+        c3.metric("System Status", "ACTIVE" if st.session_state.engine_active else "IDLE")
+    except:
+        pass
+
+    st.markdown("---")
+
+    # --- ইঞ্জিন কন্ট্রোল সেকশন ---
+    col_cmd, col_log = st.columns([1, 2])
+
+    with col_cmd:
+        st.subheader("🕹️ Core Control")
+        if st.button("⚡ POWER ON ENGINE", use_container_width=True):
+            st.session_state.engine_active = True
+            # লগ জেনারেট করা
+            st.session_state.logs.append(">>> Initializing BaraQura Engine V8.2...")
+            st.session_state.logs.append(">>> Security Handshake: COMPLETE")
+            st.session_state.logs.append(">>> Loading Neural Assets...")
+            st.session_state.logs.append(">>> System Status: ONLINE")
             
-        st.markdown("---")
-        st.info(f"ইঞ্জিন ভার্সন: {data['system_info']['engine_version']} | কোডনেম: {data['system_info']['codename']}")
-        
-        if st.button("🔴 Secure Logout"):
-            st.session_state.authenticated = False
-            st.rerun()
-            
-    except Exception as e:
-        st.error(f"❌ ডাটা লোড এরর: {e}")
+        if st.button("🛑 SHUTDOWN", use_container_width=True):
+            st.session_state.engine_active = False
+            st.session_state.logs.append(">>> Shutting down systems safely...")
+            st.session_state.logs.append(">>> Engine Offline.")
+
+    with col_log:
+        st.subheader("📜 System Logs")
+        # লগ বক্স (ডার্ক স্টাইল)
+        log_text = "\n".join(st.session_state.logs[-10:]) # শেষ ১০টি লগ দেখাবে
+        st.code(log_text if log_text else "Waiting for command...", language="bash")
+
+    if st.button("Logout"):
+        st.session_state.authenticated = False
+        st.rerun()
