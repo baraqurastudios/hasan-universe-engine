@@ -4,52 +4,55 @@ import sys
 import logging
 from datetime import datetime
 
-# --- ১. পাথ সেটআপ (যাতে সব ফোল্ডারের ফাইল খুঁজে পায়) ---
+# --- ১. পাথ সেটআপ (যাতে ইমপোর্ট এরর না হয়) ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
-folders = ['security', 'core', 'database', 'interface']
-for folder in folders:
+# সাব-ফোল্ডারগুলোকে সিস্টেম পাথে যুক্ত করা
+for folder in ['security', 'core', 'database', 'interface']:
     path = os.path.join(current_dir, folder)
     if path not in sys.path:
         sys.path.append(path)
 
-# --- ২. লগিং ---
-if not os.path.exists('logs'): os.makedirs('logs')
-logging.basicConfig(filename='logs/system.log', level=logging.INFO, format='%(asctime)s - %(message)s')
-
-# --- ৩. মডিউল ইমপোর্ট ---
+# --- ২. মডিউল ইমপোর্ট (সুরক্ষিত পদ্ধতি) ---
 try:
+    # সরাসরি ক্লাস ইমপোর্ট করার চেষ্টা
+    from engine import Engine
+    from guardian import SecurityManager
+    
+    # অপশনাল মডিউল
+    try: from db_manager import DatabaseManager
+    except: DatabaseManager = None
+    try: from worker import Interface
+    except: Interface = None
+except ImportError:
+    # যদি সরাসরি না পায়, তবে ফোল্ডার পাথ সহ ট্রাই করবে
     from core.engine import Engine
     from security.guardian import SecurityManager
-    # ডাটাবেস ও ইন্টারফেস যদি থাকে তবে ইমপোর্ট হবে
-    try: from database.db_manager import DatabaseManager
-    except: DatabaseManager = None
-    try: from interface.worker import Interface
-    except: Interface = None
-except ImportError as e:
-    st.error(f"❌ মডিউল লোড এরর: {e}")
-    st.stop()
+    DatabaseManager = None
+    Interface = None
 
-# --- ৪. UI কনফিগারেশন ---
+# --- ৩. UI কনফিগারেশন ---
 st.set_page_config(page_title="BaraQura V8.2", page_icon="🤖", layout="wide")
 st.title("🤖 BaraQura V8.2: The Omni-Intelligence")
 st.markdown("---")
 
-# --- ৫. সেশন স্টেট ইনিশিয়ালাইজেশন ---
+# --- ৪. সেশন স্টেট ---
 if 'initialized' not in st.session_state:
     try:
         st.session_state.security = SecurityManager()
         st.session_state.core = Engine()
         if DatabaseManager: st.session_state.db = DatabaseManager()
-        if Interface: st.session_state.ui = Interface()
         st.session_state.initialized = True
     except Exception as e:
-        st.error(f"❌ ইনিশিয়ালাইজেশন এরর: {e}")
+        st.error(f"❌ সিস্টেম লোড এরর: {e}")
         st.stop()
 
-# --- ৬. ইন্টারফেস ---
+# --- ৫. ইন্টারফেস ---
 with st.sidebar:
     st.header("⚙️ System Status")
-    st.success("Core: Online")
+    if os.path.exists(".hidden_vault_locked"):
+        st.error("Status: BLACK HOLE")
+    else:
+        st.success("Core: Online")
     st.info(f"Time: {datetime.now().strftime('%H:%M:%S')}")
 
 user_input = st.text_input("Enter Master Command / Key:", type="password")
@@ -59,14 +62,17 @@ if st.button("🚀 Run Command"):
         st.warning("⚠️ কি প্রদান করুন!")
     else:
         try:
-            # সিকিউরিটি ভ্যালিডেশন
+            # ১. সিকিউরিটি ভ্যালিডেশন (Guardian)
             if st.session_state.security.validate(user_input):
                 with st.spinner("Processing..."):
+                    # ২. কোর প্রসেসিং (Engine)
                     result = st.session_state.core.process(user_input)
-                    # ডাটাবেস থাকলে সেভ হবে
-                    if hasattr(st.session_state, 'db'): st.session_state.db.save(result)
-                    st.success("✅ Execution Successful")
                     st.write(result)
+                    
+                    if "🔓" in result:
+                        st.success("✅ Access Granted")
+                    elif "🚨" in result or "🌌" in result:
+                        st.error("⛔ System Lockdown")
             else:
                 st.error("🚫 Access Denied!")
         except Exception as e:
