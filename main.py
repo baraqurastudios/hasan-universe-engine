@@ -16,17 +16,22 @@ for folder in folders:
 if not os.path.exists('logs'): os.makedirs('logs')
 logging.basicConfig(filename='logs/system.log', level=logging.INFO, format='%(asctime)s - %(message)s')
 
-# --- ৩. মডিউল ইমপোর্ট ---
-# এখানে আমরা সরাসরি ইমপোর্ট করার চেষ্টা করব যাতে এররটি ধরা যায়
+# --- ৩. মডিউল ইমপোর্ট (সরাসরি পাথ থেকে) ---
 try:
     from core.engine import Engine
     from database.db_manager import DatabaseManager
     from security.guardian import SecurityManager
     from interface.worker import Interface
 except ImportError as e:
-    st.error(f"❌ মডিউল লোড হচ্ছে না: {e}")
-    st.info("টিপস: core/engine.py ফাইলে Engine ক্লাসটি আছে কি না চেক করুন।")
-    st.stop()
+    # যদি সাধারণ ইমপোর্টে কাজ না হয়, তবে অল্টারনেটিভ পাথ ট্রাই করবে
+    try:
+        from engine import Engine
+        from db_manager import DatabaseManager
+        from guardian import SecurityManager
+        from worker import Interface
+    except Exception as inner_e:
+        st.error(f"❌ Critical Module Missing: {e}")
+        st.stop()
 
 # --- ৪. UI কনফিগারেশন ---
 st.set_page_config(page_title="BaraQura V8.2", page_icon="🤖", layout="wide")
