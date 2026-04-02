@@ -2,55 +2,75 @@ import streamlit as st
 import os
 import json
 
-# অ্যাপ কনফিগারেশন
-st.set_page_config(page_title="BaraQura V8.2 Dashboard", layout="wide")
+# --- ১. পেজ সেটআপ ---
+st.set_page_config(page_title="BaraQura V8.2 Dashboard", layout="wide", initial_sidebar_state="collapsed")
 
-# সেশন চেক
-if 'auth' not in st.session_state:
-    st.session_state.auth = False
+# স্টাইল সেট করা (ডার্ক থিম লুকের জন্য)
+st.markdown("""
+    <style>
+    .main { background-color: #0e1117; color: #ffffff; }
+    .stMetric { background-color: #1f2937; padding: 15px; border-radius: 10px; border: 1px solid #3b82f6; }
+    </style>
+    """, unsafe_allow_status_code=True)
 
-# ১. লগইন লজিক (সহজভাবে)
-if not st.session_state.auth:
-    st.title("🤖 BaraQura V8.2: Terminal Access")
-    key = st.text_input("Enter Master Key:", type="password")
+# --- ২. সেশন ম্যানেজমেন্ট ---
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+
+# --- ৩. ইন্টারফেস লজিক ---
+if not st.session_state.authenticated:
+    st.title("🤖 BaraQura V8.2: Omni-Intelligence")
+    st.info("সিস্টেমটি সচল করতে আপনার মাস্টার কি (Master Key) ব্যবহার করুন।")
     
-    if st.button("Unlock System"):
-        # সরাসরি আপনার config ফাইল থেকে পাসওয়ার্ড চেক
+    # ইনপুট ফিল্ড
+    master_key_input = st.text_input("Enter Master Command / Key:", type="password")
+    
+    if st.button("🚀 Unlock System"):
+        # কনফিগ ফাইল থেকে সরাসরি যাচাই করা
         config_path = os.path.join(os.getcwd(), "config", "v82_config.json")
         try:
-            with open(config_path, 'r') as f:
-                data = json.load(f)
-                master_key = data['security_layer']['master_key_hash']
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config_data = json.load(f)
+                correct_key = config_data['security_layer']['master_key_hash']
             
-            if key == master_key:
-                st.session_state.auth = True
+            if master_key_input == correct_key:
+                st.session_state.authenticated = True
+                st.success("✅ Access Granted!")
                 st.rerun()
             else:
-                st.error("Access Denied!")
+                st.error("❌ ভুল চাবি! আপনার চেষ্টা বাকি আছে: ৩ বার") #
         except Exception as e:
-            st.error(f"Config Error: {e}")
+            st.error(f"⚠️ সিস্টেম এরর: কনফিগ ফাইল লোড করা যাচ্ছে না। ({e})")
 
-# ২. ড্যাশবোর্ড (যদি লগইন সাকসেস হয়)
 else:
-    st.success("🔓 System Online: BaraQura Omni-Intelligence")
+    # লগইন সফল হলে যা দেখাবে (ড্যাশবোর্ড)
+    st.title("🔓 BaraQura System Online")
+    st.markdown("---")
     
     try:
-        # ডাটা লোড
+        # ডাটা পড়া
         config_path = os.path.join(os.getcwd(), "config", "v82_config.json")
-        with open(config_path, 'r') as f:
+        with open(config_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
+        
+        # ড্যাশবোর্ড ম্যাট্রিক্স
+        st.subheader("📊 Empire Analytics Summary")
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric(label="Total Profit", value=f"${data['empire_assets']['total_profit']:,}")
+        with col2:
+            st.metric(label="Active Nodes", value=data['empire_assets']['active_nodes'])
+        with col3:
+            st.metric(label="System Tag", value=data['system_info']['system_tag'])
             
-        st.subheader("📊 Empire Analytics")
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Total Profit", f"${data['empire_assets']['total_profit']}")
-        c2.metric("Active Nodes", data['empire_assets']['active_nodes'])
-        c3.metric("System Tag", data['system_info']['system_tag'])
-        
         st.markdown("---")
-        st.info("আপনার core/ ফোল্ডারের ফাইলগুলো সুরক্ষিত আছে। সিস্টেমটি এখন শুধু এই ড্যাশবোর্ড রান করছে।")
+        st.success(f"ইঞ্জিন ভার্সন: {data['system_info']['engine_version']} | কোডনেম: {data['system_info']['codename']}")
         
-        if st.button("Secure Logout"):
-            st.session_state.auth = False
+        # লগআউট বাটন
+        if st.button("🔴 Secure Logout"):
+            st.session_state.authenticated = False
             st.rerun()
+            
     except Exception as e:
-        st.error(f"Dashboard Load Error: {e}")
+        st.error(f"❌ ড্যাশবোর্ড ডাটা লোড করতে সমস্যা: {e}")
