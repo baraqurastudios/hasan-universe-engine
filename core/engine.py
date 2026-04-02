@@ -15,6 +15,7 @@ class Engine:
             if os.path.exists(self.config_file):
                 with open(self.config_file, 'r') as f:
                     data = json.load(f)
+                    # আপনার JSON স্ট্রাকচার অনুযায়ী কি নেওয়া হচ্ছে
                     return data.get("security_layer", {}).get("master_key_hash", "1234")
             return "1234"
         except Exception as e:
@@ -55,7 +56,7 @@ class Engine:
         try:
             if os.path.exists(self.config_file):
                 os.rename(self.config_file, ".black_hole_vault")
-                # একটি গোপন লক ফাইল তৈরি করা যাতে রিস্টার্ট দিলেও কাজ না করে
+                # গোপন লক ফাইল তৈরি
                 with open(".hidden_vault_locked", "w") as f:
                     f.write("SYSTEM_SEIZED")
                 logging.critical("🌌 BLACK HOLE SECURITY TRIGGERED!")
