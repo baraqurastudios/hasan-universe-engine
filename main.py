@@ -5,16 +5,21 @@ import logging
 from datetime import datetime
 
 # --- ১. পাথ সেটআপ (যাতে ইমপোর্ট এরর না হয়) ---
-current_dir = os.path.dirname(os.path.abspath(__file__))
-# সব সাব-ফোল্ডারকে সিস্টেমে চিনিয়ে দেওয়া
-for folder in ['security', 'core', 'database', 'interface']:
-    path = os.path.join(current_dir, folder)
-    if path not in sys.path:
-        sys.path.append(path)
+# এটি আপনার নতুন যুক্ত করা অংশ যা আরও শক্তিশালী করা হয়েছে
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 
-# --- ২. মডিউল ইমপোর্ট ---
+# সাব-ফোল্ডারগুলোকে যুক্ত করা (core, security, database, interface)
+folders = ['core', 'security', 'database', 'interface']
+for folder in folders:
+    folder_path = os.path.join(BASE_DIR, folder)
+    if folder_path not in sys.path:
+        sys.path.insert(0, folder_path)
+
+# --- ২. মডিউল ইমপোর্ট (সুরক্ষিত পদ্ধতি) ---
 try:
-    # সরাসরি ক্লাস ইমপোর্ট (যেহেতু পাথ উপরে অ্যাড করা হয়েছে)
+    # সরাসরি ক্লাস ইমপোর্ট (যেহেতু পাথ ইনসার্ট করা হয়েছে)
     from engine import Engine
     from guardian import SecurityManager
     
@@ -24,7 +29,7 @@ try:
     try: from worker import Interface
     except: Interface = None
 except ImportError:
-    # অল্টারনেটিভ ইমপোর্ট পদ্ধতি
+    # অল্টারনেটিভ ইমপোর্ট পদ্ধতি (ব্যাকআপ হিসেবে)
     from core.engine import Engine
     from security.guardian import SecurityManager
     DatabaseManager = None
@@ -46,14 +51,17 @@ if 'initialized' not in st.session_state:
         st.error(f"❌ সিস্টেম লোড এরর: {e}")
         st.stop()
 
-# --- ৫. সাইডবার স্ট্যাটাস ---
+# --- ৫. সাইডবার স্ট্যাটাস (ব্ল্যাক হোল চেক) ---
 with st.sidebar:
     st.header("⚙️ System Status")
-    # ব্ল্যাক হোল সক্রিয় কি না চেক
-    if os.path.exists(".hidden_vault_locked") or os.path.exists(".black_hole_vault"):
+    # আপনার ব্ল্যাক হোল সিস্টেম সক্রিয় কি না তা এখানে চেক হবে
+    is_locked = os.path.exists(".hidden_vault_locked") or os.path.exists(".black_hole_vault")
+    
+    if is_locked:
         st.error("Status: BLACK HOLE ACTIVATED")
     else:
         st.success("Core: Online")
+    
     st.info(f"Time: {datetime.now().strftime('%H:%M:%S')}")
 
 # --- ৬. মেইন ইন্টারফেস ---
@@ -69,12 +77,16 @@ if st.button("🚀 Run Command"):
                 with st.spinner("Processing..."):
                     # ২. Engine প্রসেসিং (পাসওয়ার্ড এবং ব্ল্যাক হোল চেক)
                     result = st.session_state.core.process(user_input)
-                    st.write(result)
                     
+                    # আউটপুট দেখানো
                     if "🔓" in result:
                         st.success("✅ Access Granted")
+                        st.write(result)
                     elif "🚨" in result or "🌌" in result:
                         st.error("⛔ System Lockdown")
+                        st.write(result)
+                    else:
+                        st.info(result)
             else:
                 st.error("🚫 Access Denied or System Terminated!")
         except Exception as e:
