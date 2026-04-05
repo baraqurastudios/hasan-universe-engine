@@ -17,12 +17,12 @@ if 'start_time' not in st.session_state: st.session_state.start_time = time.time
 if 'sleep_mode' not in st.session_state: st.session_state.sleep_mode = False
 if 'deployed_codes' not in st.session_state: st.session_state.deployed_codes = set()
 
-# --- ২. সিকিউরিটি গেটওয়ে (Hacker Alarm & Black Hole) ---
+# --- ২. সিকিউরিটি গেটওয়ে (৩ বার ভুল = ৪ নম্বরে ব্ল্যাকহোল) ---
 def check_access():
     if st.session_state.system_status == "BLACK_HOLE":
         st.markdown("<h1 style='color:red; text-align:center;'>🌌 SYSTEM ABSORBED BY BLACK HOLE</h1>", unsafe_allow_html=True)
         st.error("🚨 HACKER ALARM: KILL SWITCH ACTIVATED.")
-        if st.button("Emergency Revive"):
+        if st.button("Emergency Revive", key="revive_btn"):
             st.session_state.system_status = "ACTIVE"
             st.session_state.wrong_attempts = 0
             st.rerun()
@@ -39,7 +39,7 @@ def check_access():
                     st.rerun()
                 else:
                     st.session_state.wrong_attempts += 1
-                    if st.session_state.wrong_attempts >= 3: # ৩ বার ভুলের পর ৪ নম্বর বারে ব্ল্যাকহোল
+                    if st.session_state.wrong_attempts >= 3: # ৪ নম্বর চেষ্টায় ব্ল্যাকহোল
                         st.session_state.system_status = "BLACK_HOLE"
                     st.rerun()
         st.stop()
@@ -56,25 +56,25 @@ total_leads = db.cursor.fetchone()[0]
 cpu_load = 5 + (total_leads * 0.5)
 mem_load = 12 + (total_leads * 1.2)
 
-# --- সাইডবার (Command Center) ---
+# --- ৪. সাইডবার (Command Center) ---
 st.sidebar.title("🛡️ Command Center")
 
 # ১. Active Status & Sleep Mode
 if not st.session_state.sleep_mode:
     st.sidebar.success("Status: ACTIVE")
-    if st.sidebar.button("💤 Activate Sleep Mode"):
+    if st.sidebar.button("💤 Activate Sleep Mode", key="sleep_on"):
         st.session_state.sleep_mode = True
         st.rerun()
 else:
     st.sidebar.warning("Status: SLEEPING")
-    if st.sidebar.button("☀️ Wake Up System"):
+    if st.sidebar.button("☀️ Wake Up System", key="sleep_off"):
         st.session_state.sleep_mode = False
         st.rerun()
 
 # ২. চ্যাটবট লাইভ কাউন্টার
 st.sidebar.info(f"👥 Active Chats: {total_leads} People")
 
-# ৪. System Load Breakdown
+# ৫. System Load Breakdown
 with st.sidebar.expander("📊 System Load Breakdown", expanded=True):
     st.write(f"CPU usage: {cpu_load}%")
     st.progress(min(cpu_load/100, 1.0))
@@ -83,12 +83,12 @@ with st.sidebar.expander("📊 System Load Breakdown", expanded=True):
 
 # ৭. Exit Logout (নিচে)
 st.sidebar.markdown("---")
-if st.sidebar.button("🚪 Logout & Exit System", use_container_width=True):
+if st.sidebar.button("🚪 Logout & Exit System", use_container_width=True, key="logout_btn"):
     st.session_state.authenticated = False
     st.session_state.wrong_attempts = 0
     st.rerun()
 
-# --- মেইন কন্টেন্ট ---
+# --- ৫. মেইন কন্টেন্ট ---
 if st.session_state.sleep_mode:
     st.title("💤 System is in Sleep Mode")
     st.info("AI Engine and Database connections are paused.")
@@ -97,51 +97,43 @@ else:
 
     with menu[0]:
         st.header("BaraQura Selling Machine")
-        u_msg = st.text_area("Master Message")
-        if st.button("Send Message"):
+        u_msg = st.text_area("Master Message", key="engine_msg")
+        if st.button("Send Message", key="send_msg_main"):
             res = engine.generate_response("admin", "Master", u_msg)
             st.info(f"AI: {res}")
 
     with menu[1]:
         st.header("Developer Console")
         
-        # ৭. File Dropdown Menu
-        file_option = st.selectbox("Select File to Update", ["main.py", "database/db_manager.py", "core/engine.py", "security/auth.py"])
+        # ড্রপডাউন মেনু (File Selection)
+        file_option = st.selectbox("Select File to Update", 
+                                  ["main.py", "database/db_manager.py", "core/engine.py", "security/auth.py"], 
+                                  key="dev_file_select")
         
         st.write(f"Editing: `{file_option}`")
-        dev_code = st.text_area("Paste Update Code Here", height=250)
+        dev_code = st.text_area("Paste Update Code Here", height=250, key="dev_code_area")
         
-        if st.button("🚀 Save & Deploy Code"):
-            # ৯. ডুপ্লিকেট চেক (একই কোড ২ বার বসবে না)
+        if st.button("🚀 Save & Deploy Code", key="deploy_btn"):
             code_hash = hash(dev_code.strip())
             
+            # এরর চেক ও ডুপ্লিকেট প্রিভেনশন
             if not dev_code.strip():
-                st.warning("Please paste some code first!")
+                st.warning("কোড বক্স খালি!")
             elif code_hash in st.session_state.deployed_codes:
-                st.error("❌ এই কোডটি ইতিমধ্যে সিস্টেমে আছে। ডুপ্লিকেট কোড গ্রহণ করা হবে না।")
+                st.error("❌ এই কোডটি ইতিমধ্যে সিস্টেমে আছে। ডুপ্লিকেট গ্রহণ করা হবে না।")
             elif "import" not in dev_code and "def" not in dev_code:
                 st.error("❌ Syntax Error: এটি সঠিক পাইথন কোড নয়!")
             else:
-                # ৮. লজিক্যালি নিচে সেভ হওয়া (সেশন স্টেটে জমা রাখা)
+                # লজিক্যাল আপডেট ও বেলুন
                 st.session_state.deployed_codes.add(code_hash)
-                # ৬. সাকসেস বেলুন
                 st.success(f"✅ {file_option} updated logically!")
                 st.balloons()
-                
-        # আপডেট হওয়া কোডগুলোর হিস্ট্রি নিচে দেখাবে (Logical Stack)
+        
+        # অপ্টিমাইজেশন স্ট্যাটাস
+        st.success("Optimization Complete!")
+        
+        # ডেপ্লয়মেন্ট হিস্ট্রি (Logical Stack)
         if st.session_state.deployed_codes:
             st.markdown("---")
             st.subheader("📜 Deployment History")
             st.info(f"Total Unique Updates: {len(st.session_state.deployed_codes)}")
-        st.header("Developer Console")
-        # ৫. ভুল কোড ইনপুট চেক (Error Handling)
-        dev_code = st.text_area("Paste Update Code Here", height=200)
-        if st.button("🚀 Save & Deploy Code"):
-            if "import" not in dev_code and "def" not in dev_code:
-                st.error("❌ Error: Invalid Code Structure! Please check your syntax.")
-            else:
-                # ৬. সেভ হলে বেলুন উড়বে
-                st.success("✅ Code Saved Successfully!")
-                st.balloons()
-
-        st.success("Optimization Complete!")
