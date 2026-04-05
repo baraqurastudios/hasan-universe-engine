@@ -9,7 +9,7 @@ class DBManager:
         self.create_tables()
 
     def create_tables(self):
-        # টেবিল স্ট্রাকচার (তোর metadata এবং intent ট্র্যাকিং সহ)
+        # ১. ইউজার প্রোফাইল ও লিড ট্র্যাকিং টেবিল
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 user_id TEXT PRIMARY KEY,
@@ -21,19 +21,27 @@ class DBManager:
                 updated_at TIMESTAMP
             )
         ''')
+
+        # ২. এআই মেমোরি টেবিল (Self-Learning & Admin Approval System)
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS brain_memory (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                question TEXT UNIQUE,
+                answer TEXT,
+                is_verified INTEGER DEFAULT 0, 
+                created_at TIMESTAMP
+            )
+        ''')
         self.conn.commit()
 
     def get_user(self, user_id):
-        # ডাটাবেস থেকে ইউজারের বর্তমান অবস্থা জানা
         self.cursor.execute("SELECT score, status FROM users WHERE user_id = ?", (user_id,))
         row = self.cursor.fetchone()
         if row:
             return {'score': row[0], 'status': row[1]}
-        # ডাটা না থাকলে ডিফল্ট (যাতে engine.py ক্র্যাশ না করে)
         return {'score': 0, 'status': 'Cold'}
 
     def save_lead(self, user_id, name, phone, score=100, status="Hot"):
-        """ফোন নম্বর পাওয়া গেলে সরাসরি হট লিড হিসেবে সেভ বা আপডেট করা"""
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         try:
             self.cursor.execute('''
@@ -46,7 +54,6 @@ class DBManager:
                     updated_at=excluded.updated_at
             ''', (user_id, name, phone, score, status, now))
         except sqlite3.IntegrityError:
-            # যদি ফোন নম্বর অন্য কোনো আইডির সাথে অলরেডি থাকে
             self.cursor.execute('''
                 UPDATE users SET score=?, status=?, updated_at=?
                 WHERE phone=?
@@ -54,10 +61,7 @@ class DBManager:
         self.conn.commit()
 
     def update_user_score(self, user_id, score, status, intent="unknown"):
-        """ইউজারের স্কোর এবং ইনটেন্ট আপডেট করা (New Logic)"""
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        # INSERT OR REPLACE লজিক যাতে নতুন ইউজার হলেও ক্র্যাশ না করে
         self.cursor.execute('''
             INSERT INTO users (user_id, score, status, last_intent, updated_at)
             VALUES (?, ?, ?, ?, ?)
@@ -68,6 +72,26 @@ class DBManager:
                 updated_at=excluded.updated_at
         ''', (user_id, score, status, intent, now))
         self.conn.commit()
+
+    # --- নতুন মেথড (Self-Learning এর জন্য) ---
+
+    def get_verified_answer(self, question):
+        """শুধুমাত্র অ্যাডমিন দ্বারা অ্যাপ্রুভড উত্তর খুঁজে বের করা"""
+        self.cursor.execute("SELECT answer FROM brain_memory WHERE question = ? AND is_verified = 1", (question,))
+        row = self.cursor.fetchone()
+        return row[0] if row else None
+
+    def save_pending_memory(self, question, answer):
+        """নতুন কিছু শিখলে সেটা পেন্ডিং হিসেবে সেভ করা"""
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        try:
+            self.cursor.execute('''
+                INSERT OR IGNORE INTO brain_memory (question, answer, created_at)
+                VALUES (?, ?, ?)
+            ''', (question, answer, now))
+            self.conn.commit()
+        except Exception:
+            pass
 
     def close(self):
         self.conn.close()
