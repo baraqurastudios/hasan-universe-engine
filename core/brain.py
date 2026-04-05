@@ -14,9 +14,8 @@ class BaraQuraBrain:
         CRITICAL RULES:
         1. Short Message: সর্বোচ্চ ২-৩ লাইন। 
         2. One Question: প্রতি মেসেজে মাত্র ১টি প্রশ্ন।
-        3. Truth Boundary: নিজের থেকে কোনো অফার বা ফিচার বানাবে না।
-        4. Mirroring: ইউজারের টোন এবং ইমোজি ফলো করো।
-        5. Internal JSON: উত্তরের শুরুতে অবশ্যই নিচের JSON ফরম্যাটটি দিবে:
+        3. Mirroring: ইউজারের টোন এবং ইমোজি ফলো করো।
+        4. Internal JSON: উত্তরের শুরুতে অবশ্যই নিচের JSON ফরম্যাটটি দিবে:
         {
          "type": "cheap/smart/impulse",
          "mood": "curious/angry/skeptical/excited",
@@ -35,13 +34,12 @@ class BaraQuraBrain:
             return f"Error: {str(e)}"
 
     def parse_ai_response(self, raw_response):
-        # Regex দিয়ে JSON এবং টেক্সট আলাদা করা (The Leak-Proof Fix)
+        # Leak-Proof JSON Extraction
         json_match = re.search(r'\{.*?\}', raw_response, re.DOTALL)
         if json_match:
             try:
                 json_data = json.loads(json_match.group(0))
                 clean_text = raw_response.replace(json_match.group(0), "").strip()
-                # অপ্রয়োজনীয় মার্কডাউন রিমুভ করা
                 clean_text = clean_text.replace("```json", "").replace("```", "").strip()
                 return json_data, clean_text
             except:
