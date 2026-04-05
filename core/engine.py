@@ -4,10 +4,11 @@ import random
 class BaraQuraEngine:
     def __init__(self, db_manager):
         self.db = db_manager
+        # তোর পুরনো কি-ওয়ার্ড লিস্ট
         self.greetings = ['hi', 'hello', 'hey', 'সালাম', 'আদাব', 'কেউ আছেন']
         self.order_keywords = ['দাম', 'প্রাইস', 'price', 'কত', 'order', 'অর্ডার', 'কিনতে চাই']
         
-        # Sales Scoring Logic (তোর Jarvis V10 থেকে নেওয়া)
+        # তোর সেই বিখ্যাত Sales Scoring Logic
         self.intent_scores = {
             "greeting": 5,
             "pricing": 20,
@@ -15,13 +16,13 @@ class BaraQuraEngine:
             "phone_shared": 100
         }
 
-    # ১. নাম সুন্দর করা (Human Feel)
+    # ১. নাম ফরম্যাটিং (তোর পুরনো লজিক)
     def format_name(self, full_name):
         if not full_name: return "বন্ধু"
         name = full_name.strip().split()[0]
         return name.capitalize()
 
-    # ২. ইনটেন্ট ডিটেকশন (Priority Based)
+    # ২. স্মার্ট ইনটেন্ট ডিটেকশন
     def detect_intent(self, msg):
         msg = msg.lower()
         if any(x in msg for x in self.order_keywords): return "pricing"
@@ -29,8 +30,9 @@ class BaraQuraEngine:
         if any(x in msg for x in self.greetings): return "greeting"
         return "unknown"
 
-    # ৩. ফোন নম্বর ডিটেকশন
+    # ৩. ফোন নম্বর ডিটেকশন (Regular Expression)
     def extract_phone(self, msg):
+        # বাংলাদেশী নম্বর ডিটেক্ট করার প্যাটার্ন
         phone_pattern = r'(?:\+88|88)?(01[3-9]\d{8})'
         match = re.search(phone_pattern, msg)
         return match.group(0) if match else None
@@ -40,29 +42,30 @@ class BaraQuraEngine:
         msg = user_message.lower()
         user_name = self.format_name(raw_name)
         
-        # ডাটাবেস থেকে ইউজারের বর্তমান অবস্থা জেনে নেওয়া
-        user_data = self.db.get_user(user_id) # আমরা সকালে এই ফাংশনটি DB-তে বানাবো
+        # ডাটাবেস থেকে বর্তমান ডাটা নেওয়া (Old + New Merge)
+        user_data = self.db.get_user(user_id) 
         current_score = user_data['score'] if user_data else 0
 
-        # ফোন নম্বর ক্যাপচার (Highest Priority)
+        # ফোন নম্বর ডিটেক্ট হলে সরাসরি Hot Lead
         phone = self.extract_phone(msg)
         if phone:
-            self.db.save_lead(user_id, raw_name, phone, score=100, status="Hot")
+            self.db.save_lead(user_id, raw_name, phone) # সরাসরি Hot Lead হিসেবে সেভ হবে
             return f"🔥 ধন্যবাদ {user_name}! আপনার নম্বর ({phone}) পেয়েছি। আমাদের সেলস টিম দ্রুত কল দিবে।"
 
-        # ইনটেন্ট এবং স্কোরিং
+        # ইনটেন্ট এবং স্কোরিং লজিক
         intent = self.detect_intent(msg)
-        new_score = current_score + self.intent_scores.get(intent, 0)
+        score_to_add = self.intent_scores.get(intent, 0)
+        new_score = current_score + score_to_add
         
-        # স্টেজ নির্ধারণ (Cold/Warm/Hot)
+        # স্টেজ নির্ধারণ (তোর V10 Logic)
         stage = "Cold"
         if new_score >= 30: stage = "Warm"
         if new_score >= 80: stage = "Hot"
         
-        # ডাটাবেস আপডেট (Status & Score)
-        self.db.update_user_score(user_id, new_score, stage, intent)
+        # ডাটাবেস আপডেট (Score এবং Status)
+        self.db.update_user_score(user_id, new_score, stage)
 
-        # ৫. স্মার্ট রিপ্লাই লজিক
+        # ৫. রিপ্লাই লজিক (তোর পুরনো স্টাইল)
         if intent == "greeting":
             return f"হ্যালো {user_name}! 😊 BaraQura AI-তে স্বাগতম। আপনি কি আমাদের প্রোডাক্টের প্রাইস বা অফার সম্পর্কে জানতে চান?"
 
