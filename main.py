@@ -1,109 +1,171 @@
 import streamlit as st
 import os
 import time
+import random
+from datetime import datetime
 from dotenv import load_dotenv
 from database.db_manager import DBManager
 from core.engine import BaraQuraEngine
 
-# ১. এনভায়রনমেন্ট ও ডাটাবেস লোড
+# ১. এনভায়রনমেন্ট ও সেশন সেটআপ
 load_dotenv()
 db = DBManager()
 
-# --- ২. আল্ট্রা সিকিউরিটি (Black Hole + Rhythm + Case-Sensitive Meem) ---
+if 'authenticated' not in st.session_state: st.session_state.authenticated = False
+if 'attempts' not in st.session_state: st.session_state.attempts = 0
+if 'start_time' not in st.session_state: st.session_state.start_time = time.time()
+if 'system_status' not in st.session_state: st.session_state.system_status = "ACTIVE"
+if 'sleep_until' not in st.session_state: st.session_state.sleep_until = 0
+
+# --- ২. আল্ট্রা সিকিউরিটি লজিক (The Loop & Black Hole) ---
 def check_access():
-    if st.session_state.get('system_status') == "KILLED":
-        st.error("🌌 SYSTEM ABSORBED BY BLACK HOLE.")
-        revive_key = st.text_input("Enter Emergency Master Key (Meen#8.10) to Revive", type="password")
-        if st.button("Revive Engine"):
-            if revive_key == "Meen#8.10":
-                st.session_state.system_status = "ACTIVE"
-                st.session_state.attempts = 0
-                st.rerun()
+    # ক. স্লিপিং মোড চেক
+    current_time = time.time()
+    if st.session_state.sleep_until > current_time:
+        remaining = int(st.session_state.sleep_until - current_time)
+        st.warning(f"💤 System is in SLEEP MODE. Re-activating in {remaining} seconds...")
         st.stop()
 
-    if 'attempts' not in st.session_state: st.session_state.attempts = 0
-    if 'authenticated' not in st.session_state: st.session_state.authenticated = False
-    if 'press_times' not in st.session_state: st.session_state.press_times = []
-
-    if not st.session_state.get('authenticated', False):
-        st.title("🛡️ BaraQura Universe Access")
+    # খ. ব্ল্যাক হোল ও রিভাইভ লজিক (৩টির মধ্যে যেকোনো ২টা সঠিক হতে হবে)
+    if st.session_state.system_status == "KILLED":
+        st.error("🌌 SYSTEM ABSORBED BY BLACK HOLE.")
+        st.subheader("Black Hole Recovery (Provide any 2 correct keys)")
+        rk1 = st.text_input("Leader Key (Revive)", type="password")
+        rk2 = st.text_input("Strong Key (Revive)", type="password")
+        rk3 = st.text_input("Special Token (Revive)", type="password")
         
-        # রিদম ইনপুট
-        if st.button("🔴 TAP RHYTHM HERE"):
-            st.session_state.press_times.append(time.time())
-            st.toast("Tap recorded")
-
-        key_input = st.text_input(f"Master Key (Attempts: {st.session_state.attempts}/3)", type="password")
-
-        # রিদম লজিক
-        taps = st.session_state.press_times
-        intervals = [taps[i] - taps[i-1] for i in range(1, len(taps))]
-        rhythm_granted = False
-        if len(taps) == 3: # Mobile 2-1
-            if intervals[0] < 0.5 and intervals[1] > 1.0: rhythm_granted = True
-        elif len(taps) == 6: # Laptop 3-2-1
-            if all(i < 0.5 for i in intervals[:2]) and all(i > 1.0 for i in intervals[2:5]): rhythm_granted = True
-
-        # ম্যাজিক ওয়ার্ড লজিক
-        magic_needed = (len(taps) > 0 and not rhythm_granted) or st.session_state.attempts >= 3
-        magic_input = st.text_input("Confirm Magic Word (Meem)", type="password") if magic_needed else ""
-
-        if st.button("Verify & Unlock"):
-            if st.session_state.attempts >= 3 and not rhythm_granted:
-                st.session_state.system_status = "KILLED"
-                st.rerun()
+        if st.button("Attempt Revival"):
+            correct_count = 0
+            if rk1 == "V8_UNIVERSE_GOD_2026": correct_count += 1
+            if rk2 == "Meen#8.10": correct_count += 1
+            if rk3 == "Meem": correct_count += 1
             
-            if (rhythm_granted and key_input == "Meen#8.10") or (key_input == "V8_UNIVERSE_GOD_2026" and (not magic_needed or magic_input == "Meem")):
-                st.session_state.authenticated = True
+            if correct_count >= 2:
+                st.session_state.system_status = "ACTIVE"
+                st.session_state.attempts = 0
+                st.success("Engine Revived! Restarting...")
                 st.rerun()
             else:
+                st.error("Revival Failed. Black Hole is expanding.")
+        st.stop()
+
+    # গ. ৩-স্টেপ সিকিউরিটি লুপ (নো রিদম)
+    if not st.session_state.authenticated:
+        st.title("🛡️ BaraQura Universe Access")
+        
+        # হ্যাকার অ্যালার্ট (রেড অ্যালার্ট)
+        if st.session_state.attempts >= 2:
+            st.markdown("<h2 style='color:red; text-align:center;'>🚨 HACKER ALERT: UNAUTHORIZED ACCESS! 🚨</h2>", unsafe_content_allowed=True)
+
+        # স্টেপ অনুযায়ী ইনপুট
+        step = st.session_state.attempts + 1
+        st.info(f"Identity Verification: Step {step} of 3")
+        
+        leader_key = st.text_input("Enter Leader Key", type="password")
+        special_token = st.text_input("Enter Special Token", type="password")
+        
+        # ৩ নম্বর স্টেপে স্ট্রং কি প্রয়োজন
+        strong_key = ""
+        if step == 3:
+            strong_key = st.text_input("Enter Strong Key", type="password")
+
+        if st.button("Verify Identity"):
+            # ভেরিফিকেশন লজিক
+            is_valid = False
+            if step == 1 and leader_key == "V8_UNIVERSE_GOD_2026" and special_token == "Meem":
+                is_valid = True
+            elif step == 2 and leader_key == "V8_UNIVERSE_GOD_2026" and special_token == "Meem":
+                is_valid = True
+            elif step == 3 and special_token == "Meem" and strong_key == "Meen#8.10":
+                is_valid = True
+
+            if is_valid:
+                if step == 3:
+                    st.session_state.authenticated = True
+                    st.balloons()
+                    st.rerun()
+                else:
+                    st.session_state.attempts += 1
+                    st.success(f"Step {step} Verified. Proceeding to next loop...")
+                    st.rerun()
+            else:
                 st.session_state.attempts += 1
-                st.session_state.press_times = []
+                if st.session_state.attempts >= 3:
+                    st.session_state.system_status = "KILLED"
+                st.error("Access Denied! Intrusion Logged.")
+                st.rerun()
         st.stop()
 
 check_access()
 
-# --- ৩. মেইন অ্যাপ সেটআপ ---
-st.set_page_config(page_title="BaraQura V10 Engine", layout="wide")
+# --- ৩. মেইন অ্যাপ ড্যাশবোর্ড ---
+st.set_page_config(page_title="BaraQura V10 Final", layout="wide")
 engine = BaraQuraEngine(db, os.getenv("GEMINI_API_KEY"))
 
-st.sidebar.title("🛡️ BaraQura Control Panel")
-menu = st.sidebar.radio("নেভিগেশন", ["🤖 চ্যাট টেস্ট", "📈 লিড ড্যাশবোর্ড", "🧠 এআই মেমোরি", "💻 Developer Console"])
+# সেশন টাইমার হিসাব
+elapsed_time = int(time.time() - st.session_state.start_time)
+mins, secs = divmod(elapsed_time, 60)
+
+# কাস্টমার কাউন্ট
+db.cursor.execute("SELECT COUNT(*) FROM users")
+customer_count = db.cursor.fetchone()[0]
+
+# --- সাইডবার কন্ট্রোল সেন্টার ---
+st.sidebar.title("🛡️ BaraQura Master Control")
+
+# সিস্টেম পালস ও লোড ব্রেকডাউন
+with st.sidebar.expander("📡 System Pulse & Live Status", expanded=True):
+    st.write(f"**Status:** {st.session_state.system_status}")
+    st.write(f"**Active Time:** {mins}m {secs}s")
+    st.write(f"**Total Conversations:** {customer_count}")
+    
+    # লোড ব্রেকডাউন
+    base_load = 5 + (customer_count * 2) # কাস্টমার বাড়লে লোড বাড়বে
+    st.write(f"**System Load:** {base_load}%")
+    st.progress(min(base_load, 100))
+    st.caption(f"Breakdown: AI Brain (5%) + Active Chats ({customer_count * 2}%)")
+    
+    if st.session_state.attempts >= 2:
+        st.error("🚨 RED ALERT: UNKNOWN USER DETECTED!")
+
+# স্লিপিং মোড সেটআপ
+with st.sidebar.expander("🌙 Sleep Mode Setup"):
+    sleep_mins = st.number_input("Set Sleep Time (Minutes)", min_value=1, value=5)
+    if st.button("Activate Sleep Mode"):
+        st.session_state.sleep_until = time.time() + (sleep_mins * 60)
+        st.rerun()
+
+menu = st.sidebar.radio("Navigation", ["🤖 চ্যাট টেস্ট", "📈 লিড ড্যাশবোর্ড", "💻 Developer Console"])
+
+if st.sidebar.button("🚪 Logout & Exit", use_container_width=True):
+    st.session_state.authenticated = False
+    st.rerun()
 
 # --- ৪. ফিচার ইমপ্লিমেন্টেশন ---
-
 if menu == "🤖 চ্যাট টেস্ট":
-    st.header("Selling Machine AI Test")
-    user_id = st.text_input("User ID", "test_user_01")
-    
-    # অটো নাম লজিক
-    db.cursor.execute("SELECT name FROM users WHERE user_id = ?", (user_id,))
-    res = db.cursor.fetchone()
-    auto_name = res[0] if res else "Customer"
-    user_name = st.text_input("User Name", auto_name)
-
+    st.header("Selling Machine AI")
+    user_id = st.text_input("User ID", "user_101")
     user_msg = st.text_area("Message")
     if st.button("Send Message"):
-        response = engine.generate_response(user_id, user_name, user_msg)
-        st.info(f"**BaraQura AI:** {response}")
-        # নতুন ইউজার হলে নাম সেভ করা (যাতে পরে অটো আসে)
-        if user_name != "Customer":
-            db.cursor.execute("INSERT OR REPLACE INTO users (user_id, name) VALUES (?, ?)", (user_id, user_name))
-            db.conn.commit()
+        response = engine.generate_response(user_id, "Master", user_msg)
+        st.info(f"AI: {response}")
+        st.balloons()
 
 elif menu == "💻 Developer Console":
-    st.header("Developer Console: Live File Editor")
-    
-    all_files = []
-    for root, dirs, files in os.walk("."):
-        for file in files:
-            if file.endswith((".py", ".env", ".txt")):
-                all_files.append(os.path.join(root, file))
-    
-    target_file = st.selectbox("ফাইল সিলেক্ট কর:", all_files)
-    
+    st.header("Developer Console")
+    all_files = [f for f in os.listdir(".") if f.endswith((".py", ".env"))]
+    target_file = st.selectbox("Select File", all_files)
     if target_file:
-        with open(target_file, "r", encoding="utf-8") as f:
+        with open(target_file, "r") as f: content = f.read()
+        edited = st.text_area("Edit Code", value=content, height=400)
+        if st.button("💾 Save & Update"):
+            try:
+                compile(edited, target_file, 'exec') # ৫ নম্বর পয়েন্ট: ভুল কোড নিবে না
+                with open(target_file, "w") as f: f.write(edited)
+                st.balloons()
+                st.success("Successfully Updated!")
+            except Exception as e:
+                st.error(f"Syntax Error: {e}")
             code_content = f.read()
         
         edited_code = st.text_area(f"Editing: {target_file}", value=code_content, height=500)
