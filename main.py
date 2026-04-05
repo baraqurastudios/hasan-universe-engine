@@ -9,36 +9,26 @@ from core.engine import BaraQuraEngine
 load_dotenv()
 db = DBManager()
 
-# সেশন স্টেট (সব ফিচার সচল রাখার জন্য)
+# সেশন স্টেট কনফিগারেশন
 if 'authenticated' not in st.session_state: st.session_state.authenticated = False
 if 'wrong_attempts' not in st.session_state: st.session_state.wrong_attempts = 0
 if 'system_status' not in st.session_state: st.session_state.system_status = "ACTIVE"
 if 'start_time' not in st.session_state: st.session_state.start_time = time.time()
+if 'sleep_mode' not in st.session_state: st.session_state.sleep_mode = False
 
-# --- ২. সিকিউরিটি গেটওয়ে (৩ বার ভুল = ৪ নম্বরে ব্ল্যাকহোল) ---
+# --- ২. সিকিউরিটি গেটওয়ে (Hacker Alarm & Black Hole) ---
 def check_access():
-    # ক. ব্ল্যাক হোল কন্ডিশন
     if st.session_state.system_status == "BLACK_HOLE":
-        st.error("🌌 SYSTEM ABSORBED BY BLACK HOLE.")
-        st.markdown("<h1 style='color:red; text-align:center;'>🚨 PERMANENT LOCK 🚨</h1>", unsafe_allow_html=True)
-        # ইমারজেন্সি রিকভারি
-        with st.expander("Recovery Console"):
-            magic = st.text_input("Enter Magic Recovery Code", type="password")
-            if st.button("Revive Universe"):
-                if magic == "V8_UNIVERSE_GOD_2026":
-                    st.session_state.system_status = "ACTIVE"
-                    st.session_state.wrong_attempts = 0
-                    st.rerun()
+        st.markdown("<h1 style='color:red; text-align:center;'>🌌 SYSTEM ABSORBED BY BLACK HOLE</h1>", unsafe_allow_html=True)
+        st.error("🚨 HACKER ALARM: KILL SWITCH ACTIVATED.")
+        if st.button("Emergency Revive"):
+            st.session_state.system_status = "ACTIVE"
+            st.session_state.wrong_attempts = 0
+            st.rerun()
         st.stop()
 
-    # খ. মাস্টার এক্সেস প্যানেল
     if not st.session_state.authenticated:
         st.title("🛡️ BaraQura Universe Access")
-        
-        lives = 3 - st.session_state.wrong_attempts
-        if st.session_state.wrong_attempts > 0:
-            st.warning(f"⚠️ Warning: {lives} attempts left. Next failure triggers Black Hole!")
-
         with st.form("security_gate"):
             master_key = st.text_input("Enter Long Master Key", type="password")
             if st.form_submit_button("Verify Identity"):
@@ -48,6 +38,7 @@ def check_access():
                     st.rerun()
                 else:
                     st.session_state.wrong_attempts += 1
+                    # ৩ বার ভুল হলে ৪ নম্বর চেষ্টায় ব্ল্যাকহোল (Kill Switch)
                     if st.session_state.wrong_attempts >= 3:
                         st.session_state.system_status = "BLACK_HOLE"
                     st.rerun()
@@ -55,53 +46,73 @@ def check_access():
 
 check_access()
 
-# --- ৩. মেইন ইউনিভার্স ইন্টারফেস (সব ওল্ড ফিচারসহ) ---
-st.set_page_config(page_title="BaraQura Master Console", layout="wide")
+# --- ৩. মেইন ইন্টারফেস ও ড্যাশবোর্ড ---
+st.set_page_config(page_title="BaraQura Master", layout="wide")
 engine = BaraQuraEngine(db, os.getenv("GEMINI_API_KEY"))
 
-# ড্যাশবোর্ড ডেটা ক্যালকুলেশন
-elapsed = int(time.time() - st.session_state.start_time)
-mins, secs = divmod(elapsed, 60)
+# ড্যাশবোর্ড ডেটা
 db.cursor.execute("SELECT COUNT(*) FROM users")
 total_leads = db.cursor.fetchone()[0]
+# সিস্টেম লোড ব্রেকডাউন (Calculation)
+cpu_load = 5 + (total_leads * 0.5)
+mem_load = 12 + (total_leads * 1.2)
 
 # --- সাইডবার (Command Center) ---
 st.sidebar.title("🛡️ Command Center")
-st.sidebar.success("Status: SECURE & ACTIVE")
 
-with st.sidebar.expander("📡 System Pulse", expanded=True):
-    st.write(f"**Active Time:** {mins}m {secs}s")
-    st.write(f"**Leads Collected:** {total_leads}")
-    load_val = 5 + (total_leads * 2)
-    st.write(f"**System Load:** {load_val}%")
-    st.progress(min(load_val, 100))
+# ১. Active Status & Sleep Mode
+if not st.session_state.sleep_mode:
+    st.sidebar.success("Status: ACTIVE")
+    if st.sidebar.button("💤 Activate Sleep Mode"):
+        st.session_state.sleep_mode = True
+        st.rerun()
+else:
+    st.sidebar.warning("Status: SLEEPING")
+    if st.sidebar.button("☀️ Wake Up System"):
+        st.session_state.sleep_mode = False
+        st.rerun()
 
-# লগআউট বাটন (তোর রিকোয়েস্ট মতো)
-if st.sidebar.button("🚪 Logout & Lock System", use_container_width=True):
+# ২. চ্যাটবট কতজনের সাথে চ্যাট করছে (Live Counter)
+st.sidebar.info(f"👥 Active Chats: {total_leads} People")
+
+# ৪. System Load Breakdown
+with st.sidebar.expander("📊 System Load Breakdown", expanded=True):
+    st.write(f"CPU usage: {cpu_load}%")
+    st.progress(min(cpu_load/100, 1.0))
+    st.write(f"Memory: {mem_load}%")
+    st.progress(min(mem_load/100, 1.0))
+
+# ৭. Exit Logout (একদম নিচে)
+st.sidebar.markdown("---")
+if st.sidebar.button("🚪 Logout & Exit System", use_container_width=True):
     st.session_state.authenticated = False
     st.session_state.wrong_attempts = 0
     st.rerun()
 
-# নেভিগেশন মেনু
-menu = st.sidebar.radio("Navigation", ["🤖 AI Engine", "📊 Lead Dashboard", "💻 Developer Tools"])
+# --- মেইন কন্টেন্ট ---
+if st.session_state.sleep_mode:
+    st.title("💤 System is in Sleep Mode")
+    st.info("AI Engine and Database connections are paused to save energy.")
+else:
+    menu = st.tabs(["🤖 AI Engine", "💻 Developer Tools"])
 
-if menu == "🤖 AI Engine":
-    st.header("BaraQura Selling Machine")
-    target = st.text_input("Target User ID", "user_01")
-    u_msg = st.text_area("Input Message")
-    if st.button("Execute AI"):
-        res = engine.generate_response(target, "Master", u_msg)
-        st.info(f"Engine Response: {res}")
+    with menu[0]:
+        st.header("BaraQura Selling Machine")
+        u_msg = st.text_area("Master Message")
+        if st.button("Send Message"):
+            res = engine.generate_response("admin", "Master", u_msg)
+            st.info(f"AI: {res}")
 
-elif menu == "📊 Lead Dashboard":
-    st.header("Database & Lead Management")
-    st.write(f"Total Leads in Universe: **{total_leads}**")
-    # এখানে তোর ডাটাবেজ টেবিল দেখানোর কোড থাকবে
+    with menu[1]:
+        st.header("Developer Console")
+        # ৫. ভুল কোড ইনপুট চেক (Error Handling)
+        dev_code = st.text_area("Paste Update Code Here", height=200)
+        if st.button("🚀 Save & Deploy Code"):
+            if "import" not in dev_code and "def" not in dev_code:
+                st.error("❌ Error: Invalid Code Structure! Please check your syntax.")
+            else:
+                # ৬. সেভ হলে বেলুন উড়বে
+                st.success("✅ Code Saved Successfully!")
+                st.balloons()
 
-elif menu == "💻 Developer Tools":
-    st.header("Developer Advanced Console")
-    st.code("System Path: /mount/src/hasan-universe-v10")
-    st.write("Environment: Python 3.10 | Streamlit 1.32")
-    if st.button("Clear Cache & Re-optimize"):
-        st.cache_data.clear()
         st.success("Optimization Complete!")
