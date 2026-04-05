@@ -1,109 +1,54 @@
 import streamlit as st
 import os
 import time
-from dotenv import load_dotenv
-from database.db_manager import DBManager
-from core.engine import BaraQuraEngine
 
-# ১. কোর সেটআপ
-load_dotenv()
-db = DBManager()
+# ১. সেশন সেটআপ (একদম সিম্পল)
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+if 'step' not in st.session_state:
+    st.session_state.step = 1
 
-# সেশন স্টেট শক্তভাবে হ্যান্ডল করা
-if 'authenticated' not in st.session_state: st.session_state.authenticated = False
-if 'auth_step' not in st.session_state: st.session_state.auth_step = 1
-if 'wrong_count' not in st.session_state: st.session_state.wrong_count = 0
-if 'system_status' not in st.session_state: st.session_state.system_status = "ACTIVE"
-if 'start_time' not in st.session_state: st.session_state.start_time = time.time()
+# --- ২. সিকিউরিটি চেক ---
+if not st.session_state.authenticated:
+    st.title("🛡️ BaraQura Universe Access")
+    
+    curr = st.session_state.step
+    st.info(f"Step {curr} of 3")
 
-# --- ২. সিকিউরিটি গেটওয়ে ---
-def check_access():
-    # ব্ল্যাক হোল রিভাইভ
-    if st.session_state.system_status == "KILLED":
-        st.error("🌌 SYSTEM ABSORBED BY BLACK HOLE.")
-        with st.form("revive_form"):
-            rk1 = st.text_input("Leader Key", type="password")
-            rk2 = st.text_input("Strong Key", type="password")
-            rk3 = st.text_input("Special Token", type="password")
-            if st.form_submit_button("Revive"):
-                c = 0
-                if rk1.strip() == "V8_UNIVERSE_GOD_2026": c += 1
-                if rk2.strip() == "Meem#8.10": c += 1
-                if rk3.strip() == "Meem": c += 1
-                if c >= 2:
-                    st.session_state.system_status = "ACTIVE"
-                    st.session_state.auth_step = 1
-                    st.session_state.wrong_count = 0
-                    st.rerun()
-        st.stop()
+    # ফর্মের ঝামেলা এড়িয়ে সরাসরি ইনপুট
+    if curr < 3:
+        key_in = st.text_input("Leader Key", type="password", key=f"lk_{curr}")
+        tok_in = st.text_input("Special Token", type="password", key=f"st_{curr}")
+    else:
+        key_in = st.text_input("Strong Key", type="password", key="sk_final")
+        tok_in = st.text_input("Special Token", type="password", key="st_final")
 
-    # ৩-ধাপের ভেরিফিকেশন
-    if not st.session_state.authenticated:
-        st.title("🛡️ BaraQura Universe Access")
-        current = st.session_state.auth_step
-        st.info(f"Identity Verification: Step {current} of 3")
+    if st.button("Verify & Proceed"):
+        # ইনপুট ক্লিন করা
+        k = key_in.strip()
+        t = tok_in.strip()
 
-        with st.form(key=f"gate_v10_final_{current}"):
-            if current < 3:
-                key_in = st.text_input("Enter Leader Key", type="password")
-                tok_in = st.text_input("Enter Special Token", type="password")
+        if curr < 3:
+            if k == "V8_UNIVERSE_GOD_2026" and t == "Meem":
+                st.session_state.step += 1
+                st.rerun()
             else:
-                key_in = st.text_input("Enter Strong Key", type="password")
-                tok_in = st.text_input("Enter Special Token", type="password")
-            
-            if st.form_submit_button("Verify & Proceed"):
-                is_ok = False
-                key_clean = key_in.strip()
-                tok_clean = tok_in.strip()
-
-                if current < 3:
-                    if key_clean == "V8_UNIVERSE_GOD_2026" and tok_clean == "Meem":
-                        is_ok = True
-                else:
-                    if key_clean == "Meem#8.10" and tok_clean == "Meem":
-                        is_ok = True
-
-                if is_ok:
-                    if current == 3:
-                        st.session_state.authenticated = True
-                        st.balloons()
-                    else:
-                        st.session_state.auth_step += 1
-                    st.rerun()
-                else:
-                    st.session_state.wrong_count += 1
-                    if st.session_state.wrong_count >= 3:
-                        st.session_state.system_status = "KILLED"
-                    st.error("Invalid Input!")
-                    st.rerun()
-        st.stop()
-
-check_access()
+                st.error("ভুল হয়েছে! বানান চেক কর।")
+        else:
+            if k == "Meem#8.10" and t == "Meem":
+                st.session_state.authenticated = True
+                st.balloons()
+                st.rerun()
+            else:
+                st.error("Strong Key মেলেনি!")
+    st.stop()
 
 # --- ৩. মেইন ড্যাশবোর্ড ---
-st.set_page_config(page_title="BaraQura V10", layout="wide")
-st.header("Welcome back, Master.")
-st.sidebar.title("🛡️ Master Control")
-db.cursor.execute("SELECT COUNT(*) FROM users")
-count = db.cursor.fetchone()[0]
-st.sidebar.metric("System Load", f"{5 + (count * 2)}%")
-
-if st.sidebar.button("Logout"):
+st.success("স্বাগতম মাস্টার! আপনি এখন ইউনিভার্সে আছেন।")
+if st.button("Logout"):
     st.session_state.authenticated = False
-    st.session_state.auth_step = 1
+    st.session_state.step = 1
     st.rerun()
-    st.session_state.attempts = 0
-    st.rerun()
-
-menu = st.sidebar.radio("Navigation", ["🤖 চ্যাট টেস্ট", "📈 ড্যাশবোর্ড", "💻 Developer Console"])
-
-# চ্যাট টেস্ট ও অন্যান্য ফিচার আগের মতোই থাকবে...
-if menu == "🤖 চ্যাট টেস্ট":
-    st.header("BaraQura AI Chat")
-    u_id = st.text_input("User ID", "test_01")
-    msg = st.text_area("Message")
-    if st.button("Send"):
-        res = engine.generate_response(u_id, "Master", msg)
         st.info(f"AI: {res}")
         st.balloons()
     st.sidebar.title("🛡️ BaraQura Master Control")
