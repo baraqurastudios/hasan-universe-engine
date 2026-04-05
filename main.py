@@ -2,60 +2,64 @@ import streamlit as st
 from database.db_manager import DBManager
 from core.engine import BaraQuraEngine
 
-# ১. সিস্টেম লেআউট এবং ক্যাশ (Cloud Performance এর জন্য)
-@st.cache_resource
-def load_v10_system():
-    db = DBManager()
-    engine = BaraQuraEngine(db)
-    return db, engine
+# ১. প্রাথমিক সেটআপ
+st.set_page_config(page_title="BaraQura V10 Engine", layout="wide")
 
-db, engine = load_v10_system()
+# এপিআই কি এবং ডাটাবেস ইনিশিয়ালাইজেশন
+GEMINI_API_KEY = "AIzaSyCe_E4nSKKNfky_9cgKQMLwMf5EdGJHpy0"
+db = DBManager()
+engine = BaraQuraEngine(db, GEMINI_API_KEY)
 
-# ২. পেজ কনফিগারেশন
-st.set_page_config(page_title="BaraQura V10", layout="wide")
-st.title("🛡️ BaraQura V10 Universe Engine")
+# --- সাইডবার মেনু ---
+st.sidebar.title("🛡️ BaraQura Control Panel")
+menu = st.sidebar.radio("নেভিগেশন", ["চ্যাট টেস্ট", "লিড ড্যাশবোর্ড", "এআই মেমোরি রিভিউ"])
 
-# --- গুরুত্বপূর্ণ পরিবর্তন: ইউজারের তথ্য লুপের বাইরে রাখা ---
-user_id = "shakibul_v10_001" 
-full_name = "Md. Shakibul Hasan" 
-
-# ৩. সাইডবার স্ট্যাটাস (লাইভ আপডেট হবে)
-with st.sidebar:
-    st.success("System: Online")
-    st.divider()
-    st.subheader("📊 Live Lead Tracking")
-    # ডাটাবেস থেকে রিয়েলটাইম ডাটা আনা
-    current_status = db.get_user(user_id)
-    if current_status:
-        st.write(f"**User:** {full_name}")
-        st.info(f"**Score:** {current_status['score']}")
-        st.warning(f"**Status:** {current_status['status']}")
-    else:
-        st.write("No active lead detected.")
-
-# ৪. চ্যাট হিস্ট্রি ম্যানেজমেন্ট
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-# ৫. চ্যাট মেসেজগুলো স্ক্রিনে দেখানো
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-
-# ৬. ইউজার ইনপুট বক্স
-if prompt := st.chat_input("এআই এর সাথে কথা বলুন..."):
-    # ইউজারের মেসেজ সেশনে সেভ করা
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    # V10 ইঞ্জিনের মাধ্যমে রেসপন্স তৈরি (তোর পুরো নাম পাঠানো হচ্ছে)
-    response = engine.generate_response(user_id, full_name, prompt)
+# ২. চ্যাট টেস্ট সেকশন (Testing the Brain)
+if menu == "চ্যাট টেস্ট":
+    st.header("🤖 AI Chatbot Test")
     
-    # এআই রিপ্লাই দেখানো এবং সেভ করা
-    with st.chat_message("assistant"):
-        st.markdown(response)
-    st.session_state.messages.append({"role": "assistant", "content": response})
+    with st.form("chat_form"):
+        user_id = st.text_input("User ID (e.g. facebook_123)", "test_user_01")
+        user_name = st.text_input("User Name", "Shakibul Hasan")
+        user_msg = st.text_area("Message")
+        submit = st.form_submit_button("Send Message")
 
-    # পেজ রিফ্রেশ করা যাতে সাইডবার স্কোর সাথে সাথে আপডেট হয়
-    st.rerun()
+    if submit and user_msg:
+        response = engine.generate_response(user_id, user_name, user_msg)
+        st.info(f"**BaraQura AI:** {response}")
+        st.success("রেসপন্স জেনারেট হয়েছে এবং মেমোরি আপডেট করা হয়েছে।")
+
+# ৩. লিড ড্যাশবোর্ড (তোর আগের সেলস ট্র্যাকিং)
+elif menu == "লিড ড্যাশবোর্ড":
+    st.header("📈 Sales Leads & Scoring")
+    db.cursor.execute("SELECT * FROM users ORDER BY score DESC")
+    leads = db.cursor.fetchall()
+    
+    if leads:
+        st.table(leads)
+    else:
+        st.warning("এখনো কোনো লিড জমা হয়নি।")
+
+# ৪. এআই মেমোরি রিভিউ (The Learning Loop 🛡️)
+elif menu == "এআই মেমোরি রিভিউ":
+    st.header("🧠 AI Memory & Learning Control")
+    st.write("এআই নতুন যা শিখেছে তা এখানে রিভিউ কর। তুই 'Approve' করলে তবেই সে অন্য কাস্টমারকে এটি বলবে।")
+    
+    db.cursor.execute("SELECT id, question, answer FROM brain_memory WHERE is_verified = 0")
+    pending_items = db.cursor.fetchall()
+    
+    if not pending_items:
+        st.balloons()
+        st.success("সব পরিষ্কার! এআই নতুন কিছু শেখার অপেক্ষায় আছে।")
+    
+    for item in pending_items:
+        with st.expander(f"প্রশ্ন: {item[1]}"):
+            st.write(f"**এআই এর প্রস্তাবিত উত্তর:** {item[2]}")
+            if st.button(f"Approve ID: {item[0]}", key=f"btn_{item[0]}"):
+                db.cursor.execute("UPDATE brain_memory SET is_verified = 1 WHERE id = ?", (item[0],))
+                db.conn.commit()
+                st.success("এটি এখন মেমোরিতে সেভ হয়েছে!")
+                st.rerun()
+
+# ৫. ডাটাবেস কানেকশন ক্লোজ (সেফটি)
+# db.close() # স্ট্রিমলিটে এটি লুপে না চালানোই ভালো
