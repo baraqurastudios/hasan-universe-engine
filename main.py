@@ -59,4 +59,69 @@ def check_access():
                 # কন্ডিশন: মেইন কি অথবা ইমারজেন্সি কি মিলতে হবে + ম্যাজিক ওয়ার্ড কনফার্ম হতে হবে
                 valid_key = (master_key_input == "V8_UNIVERSE_GOD_2026" or master_key_input == "Meen#8.10")
                 if valid_key and magic_confirm.lower() == "meem":
-                    if count == 3 or count
+                    if count == 3 or count == 6:
+                        st.success("Welcome, Master Shakibul. God Mode Active.")
+                        st.session_state.authenticated = True
+                        time.sleep(1)
+                        st.rerun()
+                    else:
+                        st.error("Rhythm Mismatch! Intrusion alert.")
+                else:
+                    st.error("Access Denied! Incorrect Key or Magic Word.")
+                    st.session_state.press_times = []
+        
+        with col2:
+            if st.button("💀 ACTIVATE KILL SWITCH"):
+                st.session_state.system_status = "KILLED"
+                st.rerun()
+        st.stop()
+
+# সিকিউরিটি রান
+check_access()
+
+# --- ৩. মেইন ইঞ্জিন সেটআপ (Old Features) ---
+st.set_page_config(page_title="BaraQura V10 Engine", layout="wide")
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+db = DBManager()
+engine = BaraQuraEngine(db, GEMINI_API_KEY)
+
+# সাইডবার নেভিগেশন
+st.sidebar.title("🛡️ BaraQura Control Panel")
+menu = st.sidebar.radio("নেভিগেশন", ["চ্যাট টেস্ট", "লিড ড্যাশবোর্ড", "এআই মেমোরি রিভিউ"])
+
+# ৪. ফিচার ইমপ্লিমেন্টেশন
+if menu == "চ্যাট টেস্ট":
+    st.header("🤖 AI Chatbot Test (Selling Machine)")
+    with st.form("chat_form"):
+        user_id = st.text_input("User ID", "test_user_01")
+        user_name = st.text_input("User Name", "Customer")
+        user_msg = st.text_area("Message")
+        submit = st.form_submit_button("Send Message")
+
+    if submit and user_msg:
+        response = engine.generate_response(user_id, user_name, user_msg)
+        st.info(f"**BaraQura AI:** {response}")
+        st.success("রেসপন্স জেনারেট হয়েছে।")
+
+elif menu == "লিড ড্যাশবোর্ড":
+    st.header("📈 Sales Leads & Scoring")
+    db.cursor.execute("SELECT * FROM users ORDER BY score DESC")
+    leads = db.cursor.fetchall()
+    if leads: st.table(leads)
+    else: st.warning("ডেটা নেই।")
+
+elif menu == "এআই মেমোরি রিভিউ":
+    st.header("🧠 AI Learning Loop")
+    db.cursor.execute("SELECT id, question, answer FROM brain_memory WHERE is_verified = 0")
+    pending_items = db.cursor.fetchall()
+    
+    if not pending_items: st.success("সব ভেরিফাইড!")
+    
+    for item in pending_items:
+        with st.expander(f"Q: {item[1]}"):
+            st.write(f"Proposed A: {item[2]}")
+            if st.button(f"Approve ID: {item[0]}", key=f"btn_{item[0]}"):
+                db.cursor.execute("UPDATE brain_memory SET is_verified = 1 WHERE id = ?", (item[0],))
+                db.conn.commit()
+                st.rerun()
