@@ -4,26 +4,16 @@ import re
 
 class BaraQuraBrain:
     def __init__(self, api_key):
-        # এপিআই কনফিগারেশন
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel('gemini-1.5-flash')
         
-        # V4 GOD MODE সিস্টেম ইনস্ট্রাকশন
         self.system_instruction = """
         Role: তুমি BaraQura-এর Elite Sales Consultant। 
-        
-        CRITICAL RULES:
-        1. Short Message: সর্বোচ্চ ২-৩ লাইন। 
-        2. One Question: প্রতি মেসেজে মাত্র ১টি প্রশ্ন।
-        3. Mirroring: ইউজারের টোন এবং ইমোজি ফলো করো।
-        4. Internal JSON: উত্তরের শুরুতে অবশ্যই নিচের JSON ফরম্যাটটি দিবে:
-        {
-         "type": "cheap/smart/impulse",
-         "mood": "curious/angry/skeptical/excited",
-         "intent": "greeting/pricing/buy/objection/delay",
-         "stage": "cold/warm/hot"
-        }
-        তারপর সাধারণ রিপ্লাই দিবে।
+        Rules: 
+        1. সর্বোচ্চ ২-৩ লাইন। 
+        2. ১টি প্রশ্ন। 
+        3. উত্তরের শুরুতে অবশ্যই নিচের JSON দিবে:
+        {"type": "cheap/smart", "mood": "curious/angry", "intent": "pricing/buy", "stage": "cold/hot"}
         """
 
     def get_smart_answer(self, user_message):
@@ -35,14 +25,11 @@ class BaraQuraBrain:
             return f"Error: {str(e)}"
 
     def parse_ai_response(self, raw_response):
-        """AI এর উত্তর থেকে JSON ডাটা এবং টেক্সট আলাদা করা"""
         json_match = re.search(r'\{.*?\}', raw_response, re.DOTALL)
         if json_match:
             try:
                 json_data = json.loads(json_match.group(0))
-                # JSON টুকু বাদ দিয়ে শুধু টেক্সট রাখা
                 clean_text = raw_response.replace(json_match.group(0), "").strip()
-                # অপ্রয়োজনীয় মার্কডাউন রিমুভ করা
                 clean_text = clean_text.replace("```json", "").replace("```", "").strip()
                 return json_data, clean_text
             except:
