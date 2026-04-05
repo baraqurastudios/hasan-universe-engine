@@ -5,19 +5,20 @@ from dotenv import load_dotenv
 from database.db_manager import DBManager
 from core.engine import BaraQuraEngine
 
-# ১. এনভায়রনমেন্ট ও সেশন লোড
+# ১. কোর সেটআপ
 load_dotenv()
 db = DBManager()
 
-# সেশন স্টেট ইনিশিয়ালাইজেশন (Strict Mode)
+# সেশন স্টেট শক্তভাবে হ্যান্ডল করা
 if 'authenticated' not in st.session_state: st.session_state.authenticated = False
 if 'auth_step' not in st.session_state: st.session_state.auth_step = 1
 if 'wrong_count' not in st.session_state: st.session_state.wrong_count = 0
 if 'system_status' not in st.session_state: st.session_state.system_status = "ACTIVE"
+if 'start_time' not in st.session_state: st.session_state.start_time = time.time()
 
-# --- ২. সিকিউরিটি গেটওয়ে (The Fixed Loop) ---
+# --- ২. সিকিউরিটি গেটওয়ে ---
 def check_access():
-    # ক. ব্ল্যাক হোল রিভাইভ
+    # ব্ল্যাক হোল রিভাইভ
     if st.session_state.system_status == "KILLED":
         st.error("🌌 SYSTEM ABSORBED BY BLACK HOLE.")
         with st.form("revive_form"):
@@ -25,7 +26,6 @@ def check_access():
             rk2 = st.text_input("Strong Key", type="password")
             rk3 = st.text_input("Special Token", type="password")
             if st.form_submit_button("Revive"):
-                # বানানে ভুল হওয়ার সুযোগ নেই এখানেও
                 c = 0
                 if rk1.strip() == "V8_UNIVERSE_GOD_2026": c += 1
                 if rk2.strip() == "Meem#8.10": c += 1
@@ -37,15 +37,13 @@ def check_access():
                     st.rerun()
         st.stop()
 
-    # খ. ৩-ধাপের ভেরিফিকেশন
+    # ৩-ধাপের ভেরিফিকেশন
     if not st.session_state.authenticated:
         st.title("🛡️ BaraQura Universe Access")
-        
         current = st.session_state.auth_step
         st.info(f"Identity Verification: Step {current} of 3")
 
-        # প্রতিটি স্টেপের জন্য আলাদা ইউনিক ফর্ম
-        with st.form(key=f"gate_v10_{current}"):
+        with st.form(key=f"gate_v10_final_{current}"):
             if current < 3:
                 key_in = st.text_input("Enter Leader Key", type="password")
                 tok_in = st.text_input("Enter Special Token", type="password")
@@ -55,7 +53,6 @@ def check_access():
             
             if st.form_submit_button("Verify & Proceed"):
                 is_ok = False
-                # ক্লিনিং ইনপুট (Extra safety against spaces)
                 key_clean = key_in.strip()
                 tok_clean = tok_in.strip()
 
@@ -75,20 +72,18 @@ def check_access():
                     st.rerun()
                 else:
                     st.session_state.wrong_count += 1
-                    if st.session_state.wrong_attempts >= 3: # ভুল সংখ্যা ৩ হলে ব্ল্যাক হোল
+                    if st.session_state.wrong_count >= 3:
                         st.session_state.system_status = "KILLED"
-                    st.error("Invalid Input! Check for spaces or caps.")
+                    st.error("Invalid Input!")
                     st.rerun()
         st.stop()
 
 check_access()
 
-# --- ৩. মেইন ড্যাশবোর্ড (Old UI Features) ---
-st.set_page_config(page_title="BaraQura Universe", layout="wide")
-engine = BaraQuraEngine(db, os.getenv("GEMINI_API_KEY"))
-
-st.sidebar.title("🛡️ BaraQura Master")
-# আগের স্ট্যাটাস লজিক...
+# --- ৩. মেইন ড্যাশবোর্ড ---
+st.set_page_config(page_title="BaraQura V10", layout="wide")
+st.header("Welcome back, Master.")
+st.sidebar.title("🛡️ Master Control")
 db.cursor.execute("SELECT COUNT(*) FROM users")
 count = db.cursor.fetchone()[0]
 st.sidebar.metric("System Load", f"{5 + (count * 2)}%")
@@ -97,13 +92,6 @@ if st.sidebar.button("Logout"):
     st.session_state.authenticated = False
     st.session_state.auth_step = 1
     st.rerun()
-
-st.header("Welcome back, Master.")
-        st.session_state.sleep_until = time.time() + (sleep_mins * 60)
-        st.rerun()
-
-if st.sidebar.button("🚪 Logout & Exit", use_container_width=True):
-    st.session_state.authenticated = False
     st.session_state.attempts = 0
     st.rerun()
 
