@@ -18,14 +18,12 @@ if 'sleep_until' not in st.session_state: st.session_state.sleep_until = 0
 
 # --- ২. আল্ট্রা সিকিউরিটি লজিক (The Loop & Black Hole) ---
 def check_access():
-    # ক. স্লিপিং মোড চেক
     current_time = time.time()
     if st.session_state.sleep_until > current_time:
         remaining = int(st.session_state.sleep_until - current_time)
         st.warning(f"💤 System is in SLEEP MODE. Re-activating in {remaining} seconds...")
         st.stop()
 
-    # খ. ব্ল্যাক হোল ও রিভাইভ লজিক (৩টির মধ্যে যেকোনো ২টা সঠিক হতে হবে)
     if st.session_state.system_status == "KILLED":
         st.error("🌌 SYSTEM ABSORBED BY BLACK HOLE.")
         st.subheader("Black Hole Recovery (Provide any 2 correct keys)")
@@ -38,42 +36,42 @@ def check_access():
             if rk1 == "V8_UNIVERSE_GOD_2026": correct_count += 1
             if rk2 == "Meen#8.10": correct_count += 1
             if rk3 == "Meem": correct_count += 1
-            
             if correct_count >= 2:
                 st.session_state.system_status = "ACTIVE"
                 st.session_state.attempts = 0
-                st.success("Engine Revived! Restarting...")
+                st.success("Engine Revived!")
                 st.rerun()
             else:
-                st.error("Revival Failed. Black Hole is expanding.")
+                st.error("Revival Failed.")
         st.stop()
 
-    # গ. ৩-স্টেপ সিকিউরিটি লুপ (Fixed Error)
     if not st.session_state.authenticated:
         st.title("🛡️ BaraQura Universe Access")
         
-        # হ্যাকার অ্যালার্ট (রেড অ্যালার্ট) - FIXED: unsafe_allow_html=True
         if st.session_state.attempts >= 2:
             st.markdown("<h2 style='color:red; text-align:center;'>🚨 HACKER ALERT: UNAUTHORIZED ACCESS! 🚨</h2>", unsafe_allow_html=True)
 
         step = st.session_state.attempts + 1
         st.info(f"Identity Verification: Step {step} of 3")
         
-        leader_key = st.text_input("Enter Leader Key", type="password")
-        special_token = st.text_input("Enter Special Token", type="password")
-        
+        # --- ২টি বক্সের লজিক (Fixed) ---
+        leader_key = ""
         strong_key = ""
-        if step == 3:
+        
+        if step == 1 or step == 2:
+            leader_key = st.text_input("Enter Leader Key", type="password")
+            special_token = st.text_input("Enter Special Token", type="password")
+        elif step == 3:
             strong_key = st.text_input("Enter Strong Key", type="password")
+            special_token = st.text_input("Enter Special Token", type="password")
 
         if st.button("Verify Identity"):
             is_valid = False
-            # লজিক চেক
             if step == 1 and leader_key == "V8_UNIVERSE_GOD_2026" and special_token == "Meem":
                 is_valid = True
             elif step == 2 and leader_key == "V8_UNIVERSE_GOD_2026" and special_token == "Meem":
                 is_valid = True
-            elif step == 3 and special_token == "Meem" and strong_key == "Meen#8.10":
+            elif step == 3 and strong_key == "Meen#8.10" and special_token == "Meem":
                 is_valid = True
 
             if is_valid:
@@ -83,7 +81,7 @@ def check_access():
                     st.rerun()
                 else:
                     st.session_state.attempts += 1
-                    st.success(f"Step {step} Verified. Proceeding...")
+                    st.success(f"Step {step} Verified. Next Loop...")
                     st.rerun()
             else:
                 st.session_state.attempts += 1
@@ -95,15 +93,62 @@ def check_access():
 
 check_access()
 
-# --- ৩. মেইন অ্যাপ ড্যাশবোর্ড ---
+# --- ৩. মেইন অ্যাপ ড্যাশবোর্ড (অপরিবর্তিত) ---
 st.set_page_config(page_title="BaraQura V10 Final", layout="wide")
 engine = BaraQuraEngine(db, os.getenv("GEMINI_API_KEY"))
 
-# সেশন টাইমার ও কাস্টমার কাউন্ট
 elapsed_time = int(time.time() - st.session_state.start_time)
 mins, secs = divmod(elapsed_time, 60)
 db.cursor.execute("SELECT COUNT(*) FROM users")
 customer_count = db.cursor.fetchone()[0]
+
+st.sidebar.title("🛡️ BaraQura Master Control")
+
+with st.sidebar.expander("📡 System Pulse & Live Status", expanded=True):
+    st.write(f"**Status:** {st.session_state.system_status}")
+    st.write(f"**Active Time:** {mins}m {secs}s")
+    st.write(f"**Conversations:** {customer_count}")
+    base_load = 5 + (customer_count * 2)
+    st.write(f"**System Load:** {base_load}%")
+    st.progress(min(base_load, 100))
+
+with st.sidebar.expander("🌙 Sleep Mode Setup"):
+    sleep_mins = st.number_input("Sleep Time (Mins)", min_value=1, value=5)
+    if st.button("Activate Sleep"):
+        st.session_state.sleep_until = time.time() + (sleep_mins * 60)
+        st.rerun()
+
+menu = st.sidebar.radio("Navigation", ["🤖 চ্যাট টেস্ট", "📈 লিড ড্যাশবোর্ড", "💻 Developer Console"])
+
+if st.sidebar.button("🚪 Logout & Exit", use_container_width=True):
+    st.session_state.authenticated = False
+    st.rerun()
+
+# --- ৪. ফিচার ইমপ্লিমেন্টেশন ---
+if menu == "🤖 চ্যাট টেস্ট":
+    st.header("Selling Machine AI")
+    user_id = st.text_input("User ID", "user_101")
+    user_msg = st.text_area("Message")
+    if st.button("Send Message"):
+        response = engine.generate_response(user_id, "Master", user_msg)
+        st.info(f"AI: {response}")
+        st.balloons()
+
+elif menu == "💻 Developer Console":
+    st.header("Developer Console")
+    all_files = [f for f in os.listdir(".") if f.endswith((".py", ".env"))]
+    target_file = st.selectbox("Select File", all_files)
+    if target_file:
+        with open(target_file, "r") as f: content = f.read()
+        edited = st.text_area("Edit Code", value=content, height=400)
+        if st.button("💾 Save & Update"):
+            try:
+                compile(edited, target_file, 'exec')
+                with open(target_file, "w") as f: f.write(edited)
+                st.balloons()
+                st.success("Successfully Updated!")
+            except Exception as e:
+                st.error(f"Syntax Error: {e}")
 
 # --- সাইডবার কন্ট্রোল সেন্টার ---
 st.sidebar.title("🛡️ BaraQura Master Control")
