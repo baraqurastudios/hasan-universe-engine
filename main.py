@@ -8,90 +8,106 @@ from core.engine import BaraQuraEngine
 # ১. এনভায়রনমেন্ট লোড করা
 load_dotenv()
 
-# --- ২. ব্ল্যাক হোল সিকিউরিটি (Triple-Lock Verification) ---
+# --- ২. আল্ট্রা সিকিউরিটি (Black Hole + Rhythm + Case-Sensitive Meem) ---
 def check_access():
-    # এমারজেন্সি রিভাইভ লজিক (শুধুমাত্র Meen#8.10 দিয়ে সম্ভব)
+    # ব্ল্যাক হোল চেক (যদি সিস্টেম আগে থেকেই KILLED বা ব্ল্যাক হোল-এ থাকে)
     if st.session_state.get('system_status') == "KILLED":
-        st.error("⚠️ SYSTEM TERMINATED BY MASTER. ENGINE IS DEAD.")
+        st.error("⚠️ SYSTEM TERMINATED BY MASTER. ENGINE IS ABSORBED BY BLACK HOLE.")
         revive_key = st.text_input("Enter Emergency Master Key (Meen#8.10) to Revive", type="password")
         if st.button("Revive Engine"):
             if revive_key == "Meen#8.10":
                 st.session_state.system_status = "ACTIVE"
+                st.session_state.attempts = 0
                 st.success("Engine Revived! Restarting...")
                 st.rerun()
         st.stop()
 
+    # সেশন স্টেট ইনিশিয়ালাইজেশন
+    if 'attempts' not in st.session_state:
+        st.session_state.attempts = 0
+    if 'authenticated' not in st.session_state:
+        st.session_state.authenticated = False
+    if 'press_times' not in st.session_state:
+        st.session_state.press_times = []
+
     if not st.session_state.get('authenticated', False):
         st.title("🛡️ BaraQura Universe Access")
         
-        if 'press_times' not in st.session_state:
-            st.session_state.press_times = []
-
-        # ধাপ ১: রিদমিক ট্যাপ (শুধুমাত্র ইমারজেন্সি শর্ট-কি এক্টিভেট করার জন্য)
-        st.subheader("Step 1: Rhythm Input")
+        # ধাপ ১: রিদমিক ট্যাপ
+        st.subheader("Step 1: Identity Rhythm")
         if st.button("🔴 TAP RHYTHM HERE"):
             st.session_state.press_times.append(time.time())
             st.toast(f"Input recorded")
 
         # ধাপ ২: অথরাইজেশন ইনপুট
         st.subheader("Step 2: Authorization")
-        key_input = st.text_input("Enter Master Key", type="password")
+        key_input = st.text_input(f"Enter Master Key (Attempts: {st.session_state.attempts}/3)", type="password")
 
-        # রিদম টাইমিং লজিক
+        # রিদম টাইমিং লজিক (তোর নির্দিষ্ট প্যাটার্ন)
         taps = st.session_state.press_times
         intervals = [taps[i] - taps[i-1] for i in range(1, len(taps))]
         
         rhythm_granted = False
-        # মোবাইল: ২ দ্রুত (<০.৫সে), ১ ধীর (>১.০সে)
+        # মোবাইল: ২ দ্রুত (<০.৫সে), ১ ধীর (>১.০সে) -> মোট ৩ ট্যাপ
         if len(taps) == 3:
             if intervals[0] < 0.5 and intervals[1] > 1.0: rhythm_granted = True
-        # ল্যাপটপ: ৩ দ্রুত, ২ ধীর, ১ ধীর
+        # ল্যাপটপ: ৩ দ্রুত, ২ ধীর, ১ ধীর -> মোট ৬ ট্যাপ
         elif len(taps) == 6:
             if all(i < 0.5 for i in intervals[:2]) and all(i > 1.0 for i in intervals[2:5]): rhythm_granted = True
 
-        # আইডেন্টিটি কনফার্মেশন (যদি ছন্দ না মেলে তবেই ম্যাজিক ওয়ার্ড চাবে)
-        magic_word_needed = len(taps) > 0 and not rhythm_granted
+        # আইডেন্টিটি কনফার্মেশন (সন্দেহ হলে বা ৩ বার ভুলের পর "Meem" চাবে)
+        magic_word_needed = (len(taps) > 0 and not rhythm_granted) or st.session_state.attempts >= 3
         magic_input = ""
         if magic_word_needed:
-            st.warning("⚠️ Identity Suspicion! Confirmation Required.")
-            magic_input = st.text_input("Confirm Magic Word (Meem)")
+            st.warning("⚠️ Identity Suspicion! Case-Sensitive Magic Word Required.")
+            magic_input = st.text_input("Confirm Magic Word (Meem)", type="password")
 
         col1, col2 = st.columns(2)
         
         with col1:
             if st.button("Verify & Unlock Engine"):
-                # রুল ১: যদি ছন্দ মেলে, তবে শর্ট কি কাজ করবে
+                # হ্যাকার প্রোটেকশন: ৩ বার ভুল করার পর লজিক
+                if st.session_state.attempts >= 3:
+                    # যদি তুই ছন্দ জানিস, তবেই ৪ নম্বর বার সুযোগ পাবি
+                    if rhythm_granted:
+                        st.warning("Master Rhythm detected. Identity verified for recovery.")
+                    else:
+                        st.session_state.system_status = "KILLED"
+                        st.rerun()
+
+                # রুল ১: যদি ছন্দ মেলে, তবে শর্ট কি (Emergency) কাজ করবে
                 if rhythm_granted and key_input == "Meen#8.10":
                     st.success("Emergency Access Granted!")
                     st.session_state.authenticated = True
                     st.rerun()
                 
-                # রুল ২: লং কি (God Mode) দিয়ে নরমাল এক্সেস
+                # রুল ২: লং কি (God Mode)
                 elif key_input == "V8_UNIVERSE_GOD_2026":
-                    # সন্দেহ থাকলে ম্যাজিক ওয়ার্ড চেক করবে
+                    # যদি ছন্দ না মেলে, বড় হাতের "Meem" চেক করবে
                     if magic_word_needed:
-                        if magic_input.lower() == "meem":
+                        if magic_input == "Meem": # Capital M check
                             st.session_state.authenticated = True
                             st.rerun()
                         else:
+                            st.session_state.attempts += 1
                             st.error("Identity Verification Failed!")
                     else:
                         st.session_state.authenticated = True
                         st.rerun()
                 else:
-                    st.error("Invalid Key or Rhythm Pattern!")
+                    st.session_state.attempts += 1
+                    st.error("Invalid Key or Style!")
                     st.session_state.press_times = []
         
         with col2:
-            # ৩. কিল সুইচ প্রোটেকশন (ম্যাজিক ওয়ার্ড লাগবে না, চাবি লাগবে)
+            # ৩. কিল সুইচ (সরাসরি ব্ল্যাক হোল)
             if st.button("💀 ACTIVATE KILL SWITCH"):
                 if key_input == "V8_UNIVERSE_GOD_2026" or key_input == "Meen#8.10":
                     st.session_state.system_status = "KILLED"
                     st.session_state.authenticated = False
-                    st.warning("SYSTEM KILLED BY MASTER!")
                     st.rerun()
                 else:
-                    st.error("Master Key Required for Kill Switch!")
+                    st.error("Master Verification Required to Kill System!")
         st.stop()
 
 # সিকিউরিটি রান
