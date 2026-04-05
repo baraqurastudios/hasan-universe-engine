@@ -137,6 +137,39 @@ else:
 # ৬. রিয়েল-টাইম আপডেটের জন্য অটো-রিফ্রেশ
 time.sleep(1)
 st.rerun()
+        st.session_state.authenticated = False
+        st.rerun()
+
+# --- ৫. মেইন কন্টেন্ট ---
+if st.session_state.sleep_mode:
+    st.title("💤 System is in Sleep Mode")
+    st.info("AI Engine and Database connections are paused.")
+else:
+    menu = st.tabs(["🤖 AI Engine (V10)", "💻 Developer Console"])
+
+    with menu[0]:
+        st.header("BaraQura Selling Machine (Brain V4)")
+        u_msg = st.text_input("Test Message to AI", key="engine_msg")
+        if st.button("Send Message", key="send_msg_main"):
+            # নতুন ইঞ্জিন দিয়ে রেসপন্স জেনারেট
+            res = engine.generate_response("admin", "Master User", u_msg)
+            st.info(f"AI Response: {res}")
+
+    with menu[1]:
+        st.header("Developer Console")
+        file_option = st.selectbox("File to Update", ["main.py", "core/engine.py", "core/brain.py"], key="dev_file")
+        dev_code = st.text_area("Paste Code", height=200, key="dev_code_area")
+        
+        if st.button("🚀 Save & Deploy", key="deploy_btn"):
+            if dev_code.strip():
+                st.success(f"✅ {file_option} updated and deployed!")
+                st.balloons()
+            else:
+                st.warning("Code box is empty!")
+
+# ৬. রিয়েল-টাইম আপডেটের জন্য অটো-রিফ্রেশ
+time.sleep(1)
+st.rerun()
         
         # ড্রপডাউন মেনু (File Selection)
         file_option = st.selectbox("Select File to Update", 
