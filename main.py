@@ -34,7 +34,7 @@ def check_access():
         if st.button("Attempt Revival"):
             correct_count = 0
             if rk1 == "V8_UNIVERSE_GOD_2026": correct_count += 1
-            if rk2 == "Meen#8.10": correct_count += 1
+            if rk2 == "Meem#8.10": correct_count += 1 # UPDATE: Meen -> Meem
             if rk3 == "Meem": correct_count += 1
             if correct_count >= 2:
                 st.session_state.system_status = "ACTIVE"
@@ -42,7 +42,7 @@ def check_access():
                 st.success("Engine Revived!")
                 st.rerun()
             else:
-                st.error("Revival Failed.")
+                st.error("Revival Failed. Check spelling (M case-sensitive).")
         st.stop()
 
     if not st.session_state.authenticated:
@@ -54,7 +54,6 @@ def check_access():
         step = st.session_state.attempts + 1
         st.info(f"Identity Verification: Step {step} of 3")
         
-        # --- ২টি বক্সের লজিক (Fixed) ---
         leader_key = ""
         strong_key = ""
         
@@ -71,7 +70,7 @@ def check_access():
                 is_valid = True
             elif step == 2 and leader_key == "V8_UNIVERSE_GOD_2026" and special_token == "Meem":
                 is_valid = True
-            elif step == 3 and strong_key == "Meen#8.10" and special_token == "Meem":
+            elif step == 3 and strong_key == "Meem#8.10" and special_token == "Meem": # UPDATE: Meen -> Meem
                 is_valid = True
 
             if is_valid:
@@ -81,7 +80,7 @@ def check_access():
                     st.rerun()
                 else:
                     st.session_state.attempts += 1
-                    st.success(f"Step {step} Verified. Next Loop...")
+                    st.success(f"Step {step} Verified.")
                     st.rerun()
             else:
                 st.session_state.attempts += 1
@@ -104,6 +103,51 @@ customer_count = db.cursor.fetchone()[0]
 
 st.sidebar.title("🛡️ BaraQura Master Control")
 
+with st.sidebar.expander("📡 System Pulse & Live Status", expanded=True):
+    st.write(f"**Status:** {st.session_state.system_status}")
+    st.write(f"**Active Time:** {mins}m {secs}s")
+    st.write(f"**Conversations:** {customer_count}")
+    base_load = 5 + (customer_count * 2)
+    st.write(f"**System Load:** {base_load}%")
+    st.progress(min(base_load, 100))
+
+with st.sidebar.expander("🌙 Sleep Mode Setup"):
+    sleep_mins = st.number_input("Sleep Time (Mins)", min_value=1, value=5)
+    if st.button("Activate Sleep"):
+        st.session_state.sleep_until = time.time() + (sleep_mins * 60)
+        st.rerun()
+
+menu = st.sidebar.radio("Navigation", ["🤖 চ্যাট টেস্ট", "📈 লিড ড্যাশবোর্ড", "💻 Developer Console"])
+
+if st.sidebar.button("🚪 Logout & Exit", use_container_width=True):
+    st.session_state.authenticated = False
+    st.rerun()
+
+# --- ৪. ফিচার ইমপ্লিমেন্টেশন ---
+if menu == "🤖 চ্যাট টেস্ট":
+    st.header("Selling Machine AI")
+    user_id = st.text_input("User ID", "user_101")
+    user_msg = st.text_area("Message")
+    if st.button("Send Message"):
+        response = engine.generate_response(user_id, "Master", user_msg)
+        st.info(f"AI: {response}")
+        st.balloons()
+
+elif menu == "💻 Developer Console":
+    st.header("Developer Console")
+    all_files = [f for f in os.listdir(".") if f.endswith((".py", ".env"))]
+    target_file = st.selectbox("Select File", all_files)
+    if target_file:
+        with open(target_file, "r") as f: content = f.read()
+        edited = st.text_area("Edit Code", value=content, height=400)
+        if st.button("💾 Save & Update"):
+            try:
+                compile(edited, target_file, 'exec')
+                with open(target_file, "w") as f: f.write(edited)
+                st.balloons()
+                st.success("Successfully Updated!")
+            except Exception as e:
+                st.error(f"Syntax Error: {e}")
 with st.sidebar.expander("📡 System Pulse & Live Status", expanded=True):
     st.write(f"**Status:** {st.session_state.system_status}")
     st.write(f"**Active Time:** {mins}m {secs}s")
