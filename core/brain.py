@@ -4,10 +4,11 @@ import re
 
 class BaraQuraBrain:
     def __init__(self, api_key):
+        # এপিআই কনফিগারেশন
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel('gemini-1.5-flash')
         
-        # V4 GOD MODE সিস্টেম প্রম্পট
+        # V4 GOD MODE সিস্টেম ইনস্ট্রাকশন
         self.system_instruction = """
         Role: তুমি BaraQura-এর Elite Sales Consultant। 
         
@@ -34,12 +35,14 @@ class BaraQuraBrain:
             return f"Error: {str(e)}"
 
     def parse_ai_response(self, raw_response):
-        # Leak-Proof JSON Extraction
+        """AI এর উত্তর থেকে JSON ডাটা এবং টেক্সট আলাদা করা"""
         json_match = re.search(r'\{.*?\}', raw_response, re.DOTALL)
         if json_match:
             try:
                 json_data = json.loads(json_match.group(0))
+                # JSON টুকু বাদ দিয়ে শুধু টেক্সট রাখা
                 clean_text = raw_response.replace(json_match.group(0), "").strip()
+                # অপ্রয়োজনীয় মার্কডাউন রিমুভ করা
                 clean_text = clean_text.replace("```json", "").replace("```", "").strip()
                 return json_data, clean_text
             except:
