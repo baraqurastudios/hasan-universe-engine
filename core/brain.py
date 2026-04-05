@@ -7,12 +7,19 @@ class BaraQuraBrain:
         # এপিআই কী কনফিগারেশন
         genai.configure(api_key=api_key)
         
-        # ৪০৪ এরর ফিক্স করতে 'models/' প্রিফিক্স যোগ করা হয়েছে
+        # ৪0৪ এরর ফিক্স করার জন্য ডাইনামিক মডেল সিলেকশন
         try:
-            self.model = genai.GenerativeModel('models/gemini-1.5-flash')
+            # প্রথমে ফ্ল্যাশ মডেল চেষ্টা করা হবে
+            self.model = genai.GenerativeModel('gemini-1.5-flash')
+            # একটি ছোট টেস্ট রান করে দেখা মডেলটি কাজ করছে কি না
+            self.model.generate_content("test", generation_config={"max_output_tokens": 1})
         except Exception:
-            # ব্যাকআপ হিসেবে জেমিনি প্রো রাখা হলো
-            self.model = genai.GenerativeModel('gemini-pro')
+            try:
+                # কাজ না করলে 'models/' প্রিফিক্স সহ চেষ্টা করা হবে
+                self.model = genai.GenerativeModel('models/gemini-1.5-flash')
+            except Exception:
+                # সবশেষে স্টেবল ভার্সন ব্যবহার করা হবে
+                self.model = genai.GenerativeModel('gemini-pro')
         
         self.system_instruction = """
         Role: তুমি BaraQura-এর Elite Sales Consultant। 
@@ -27,22 +34,21 @@ class BaraQuraBrain:
         try:
             full_prompt = f"{self.system_instruction}\n\nUser Says: {user_message}"
             response = self.model.generate_content(full_prompt)
-            # যদি রেসপন্স খালি থাকে তবে এরর হ্যান্ডেল করবে
-            if not response.text:
-                return "Error: Empty response from AI."
-            return response.text
+            if response and response.text:
+                return response.text
+            return "Error: AI response text is empty."
         except Exception as e:
-            # এখানে তোর স্ক্রিনশটে দেখা যাওয়া এররগুলো ধরা পড়বে
+            # এরর মেসেজটি পরিষ্কারভাবে দেখাবে
             return f"Error: {str(e)}"
 
     def parse_ai_response(self, raw_response):
-        # রেসপন্স থেকে JSON অংশটুকু আলাদা করা
+        # JSON অংশটি খুঁজে বের করা
         json_match = re.search(r'\{.*?\}', raw_response, re.DOTALL)
         if json_match:
             try:
                 json_data = json.loads(json_match.group(0))
-                # টেক্সট থেকে JSON এবং কোড ব্লক পরিষ্কার করা
                 clean_text = raw_response.replace(json_match.group(0), "").strip()
+                # অপ্রয়োজনীয় কোড ব্লক পরিষ্কার করা
                 clean_text = clean_text.replace("```json", "").replace("```", "").strip()
                 return json_data, clean_text
             except:
