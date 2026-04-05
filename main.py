@@ -1,109 +1,118 @@
 import streamlit as st
 import os
 import time
-from datetime import datetime
 from dotenv import load_dotenv
 from database.db_manager import DBManager
 from core.engine import BaraQuraEngine
 
-# ১. প্রাথমিক সেটআপ ও সেশন ম্যানেজমেন্ট
+# ১. কোর সেটআপ
 load_dotenv()
 db = DBManager()
 
+# সেশন স্টেট শক্তভাবে হ্যান্ডল করা (Old + New Combined)
 if 'authenticated' not in st.session_state: st.session_state.authenticated = False
 if 'step' not in st.session_state: st.session_state.step = 1
-if 'start_time' not in st.session_state: st.session_state.start_time = time.time()
-if 'system_status' not in st.session_state: st.session_state.system_status = "ACTIVE"
-if 'sleep_until' not in st.session_state: st.session_state.sleep_until = 0
 if 'wrong_attempts' not in st.session_state: st.session_state.wrong_attempts = 0
+if 'system_status' not in st.session_state: st.session_state.system_status = "ACTIVE"
+if 'start_time' not in st.session_state: st.session_state.start_time = time.time()
 
-# --- ২. সিকিউরিটি গেটওয়ে লজিক (The Final Loop) ---
+# --- ২. সিকিউরিটি গেটওয়ে ---
 def check_access():
-    # ক. স্লিপিং মোড (Hold System)
-    if st.session_state.sleep_until > time.time():
-        remaining = int(st.session_state.sleep_until - time.time())
-        st.warning(f"💤 SYSTEM ON HOLD. Re-activating in {remaining} seconds...")
-        st.stop()
-
-    # খ. ব্ল্যাক হোল রিভাইভ (Recovery)
+    # ব্ল্যাক হোল চেক
     if st.session_state.system_status == "KILLED":
         st.error("🌌 SYSTEM ABSORBED BY BLACK HOLE.")
-        st.subheader("Recovery Console (Need 2/3 Correct Keys)")
-        rk1 = st.text_input("Leader Key (Revive)", type="password", key="rk1")
-        rk2 = st.text_input("Strong Key (Revive)", type="password", key="rk2")
-        rk3 = st.text_input("Special Token (Revive)", type="password", key="rk3")
-        
-        if st.button("Attempt Revival"):
+        st.subheader("Recovery Console")
+        r1 = st.text_input("Leader Key", type="password", key="r1")
+        r2 = st.text_input("Strong Key", type="password", key="r2")
+        r3 = st.text_input("Special Token", type="password", key="r3")
+        if st.button("Revive Engine"):
             correct = 0
-            if rk1 == "V8_UNIVERSE_GOD_2026": correct += 1
-            if rk2 == "Meem#8.10": correct += 1
-            if rk3 == "Meem": correct += 1
+            if r1 == "V8_UNIVERSE_GOD_2026": correct += 1
+            if r2 == "Meem#8.10": correct += 1
+            if r3 == "Meem": correct += 1
             if correct >= 2:
                 st.session_state.system_status = "ACTIVE"
                 st.session_state.step = 1
                 st.session_state.wrong_attempts = 0
-                st.success("Engine Revived! Restarting...")
-                time.sleep(1)
                 st.rerun()
-            else:
-                st.error("Revival Failed. Try Again.")
         st.stop()
 
-    # গ. ৩-স্টেপ ডাইনামিক সিকিউরিটি লুপ (Fixed)
+    # ৩-স্টেপ ভেরিফিকেশন (FIXED LOGIC)
     if not st.session_state.authenticated:
         st.title("🛡️ BaraQura Universe Access")
         
         if st.session_state.wrong_attempts >= 2:
-            st.markdown("<h2 style='color:red; text-align:center;'>🚨 HACKER ALERT: UNAUTHORIZED ACCESS! 🚨</h2>", unsafe_allow_html=True)
+            st.markdown("<h2 style='color:red; text-align:center;'>🚨 HACKER ALERT! 🚨</h2>", unsafe_allow_html=True)
 
-        current_step = st.session_state.step
-        st.info(f"Identity Verification: Step {current_step} of 3")
+        curr_step = st.session_state.step
+        st.info(f"Identity Verification: Step {curr_step} of 3")
 
-        # ফর্ম ব্যবহার করা হয়েছে যাতে সাবমিট করার আগে ডেটা না হারায়
-        with st.form(key=f"auth_step_{current_step}"):
-            if current_step < 3:
+        # ফর্ম ব্যবহার করা হয়েছে যেন 'Verify' বাটনে চাপ দিলে ডাটা হারিয়ে না যায়
+        with st.form(key=f"gate_form_step_{curr_step}"):
+            if curr_step < 3:
                 l_key = st.text_input("Enter Leader Key", type="password")
-                s_token = st.text_input("Enter Special Token", type="password")
-                s_key = None
+                s_tok = st.text_input("Enter Special Token", type="password")
             else:
-                s_key = st.text_input("Enter Strong Key", type="password")
-                s_token = st.text_input("Enter Special Token", type="password")
-                l_key = None
+                strong = st.text_input("Enter Strong Key", type="password")
+                s_tok = st.text_input("Enter Special Token", type="password")
             
-            submit = st.form_submit_button("Verify & Proceed")
+            submitted = st.form_submit_button("Verify & Proceed")
 
-            if submit:
-                is_valid = False
-                if current_step < 3:
-                    if l_key == "V8_UNIVERSE_GOD_2026" and s_token == "Meem":
-                        is_valid = True
-                else: # Step 3
-                    if s_key == "Meem#8.10" and s_token == "Meem":
-                        is_valid = True
+            if submitted:
+                valid = False
+                # বানান এবং কেস-সেন্সিটিভ চেক (Strict)
+                if curr_step < 3:
+                    if l_key == "V8_UNIVERSE_GOD_2026" and s_tok == "Meem":
+                        valid = True
+                else:
+                    if strong == "Meem#8.10" and s_tok == "Meem":
+                        valid = True
 
-                if is_valid:
-                    if current_step == 3:
+                if valid:
+                    if curr_step == 3:
                         st.session_state.authenticated = True
                         st.balloons()
-                        st.success("Access Granted! Loading Universe...")
-                        time.sleep(1.5)
-                        st.rerun()
                     else:
                         st.session_state.step += 1
-                        st.success(f"Step {current_step} Verified.")
-                        time.sleep(1)
-                        st.rerun()
+                    st.rerun()
                 else:
                     st.session_state.wrong_attempts += 1
                     if st.session_state.wrong_attempts >= 3:
                         st.session_state.system_status = "KILLED"
-                    st.error("Invalid Credentials! Try Again.")
-                    time.sleep(1)
+                    st.error("Access Denied! Check Spelling.")
                     st.rerun()
         st.stop()
 
 check_access()
 
+# --- ৩. ড্যাশবোর্ড (Old Features Kept) ---
+st.set_page_config(page_title="BaraQura Master", layout="wide")
+engine = BaraQuraEngine(db, os.getenv("GEMINI_API_KEY"))
+
+# স্ট্যাটাস ক্যালকুলেশন
+db.cursor.execute("SELECT COUNT(*) FROM users")
+cust_count = db.cursor.fetchone()[0]
+load = 5 + (cust_count * 2)
+
+st.sidebar.title("🛡️ Master Control")
+with st.sidebar.expander("📡 System Status", expanded=True):
+    st.write(f"**Status:** ACTIVE")
+    st.write(f"**Load:** {load}%")
+    st.progress(min(load, 100))
+
+if st.sidebar.button("Logout"):
+    st.session_state.authenticated = False
+    st.session_state.step = 1
+    st.rerun()
+
+menu = st.sidebar.radio("Navigation", ["🤖 চ্যাট টেস্ট", "💻 Developer Console"])
+
+if menu == "🤖 চ্যাট টেস্ট":
+    st.header("Selling Machine AI")
+    u_msg = st.text_area("Message")
+    if st.button("Send"):
+        res = engine.generate_response("test_user", "Master", u_msg)
+        st.info(f"AI: {res}")
 # --- ৩. মেইন ড্যাশবোর্ড (অ্যাপ কন্টেন্ট) ---
 st.set_page_config(page_title="BaraQura V10 Final", layout="wide")
 engine = BaraQuraEngine(db, os.getenv("GEMINI_API_KEY"))
