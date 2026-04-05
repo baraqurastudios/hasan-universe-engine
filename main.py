@@ -1,17 +1,18 @@
 import streamlit as st
-import os
-from dotenv import load_dotenv
+import os # এটি নতুন যোগ করা হয়েছে
+from dotenv import load_dotenv # এটি নতুন যোগ করা হয়েছে
 from database.db_manager import DBManager
 from core.engine import BaraQuraEngine
 
-# .env ফাইল থেকে কনফিগারেশন লোড করা
+# .env ফাইল থেকে ডেটা লোড করার কমান্ড
 load_dotenv()
 
 # ১. প্রাথমিক সেটআপ
 st.set_page_config(page_title="BaraQura V10 Engine", layout="wide")
 
-# এপিআই কি এবং ডাটাবেস ইনিশিয়ালাইজেশন (.env থেকে নেওয়া হচ্ছে)
+# সরাসরি কি না লিখে এখন .env ফাইল থেকে নেওয়া হচ্ছে
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
 db = DBManager()
 engine = BaraQuraEngine(db, GEMINI_API_KEY)
 
@@ -30,7 +31,6 @@ if menu == "চ্যাট টেস্ট":
         submit = st.form_submit_button("Send Message")
 
     if submit and user_msg:
-        # ইঞ্জিনের মাধ্যমে রেসপন্স জেনারেট করা
         response = engine.generate_response(user_id, user_name, user_msg)
         st.info(f"**BaraQura AI:** {response}")
         st.success("রেসপন্স জেনারেট হয়েছে এবং মেমোরি আপডেট করা হয়েছে।")
@@ -38,11 +38,10 @@ if menu == "চ্যাট টেস্ট":
 # ৩. লিড ড্যাশবোর্ড (তোর আগের সেলস ট্র্যাকিং)
 elif menu == "লিড ড্যাশবোর্ড":
     st.header("📈 Sales Leads & Scoring")
-    db.cursor.execute("SELECT user_id, name, phone, status, score, updated_at FROM users ORDER BY score DESC")
+    db.cursor.execute("SELECT * FROM users ORDER BY score DESC")
     leads = db.cursor.fetchall()
     
     if leads:
-        # টেবিল হেডারসহ দেখানো
         st.table(leads)
     else:
         st.warning("এখনো কোনো লিড জমা হয়নি।")
@@ -62,7 +61,6 @@ elif menu == "এআই মেমোরি রিভিউ":
     for item in pending_items:
         with st.expander(f"প্রশ্ন: {item[1]}"):
             st.write(f"**এআই এর প্রস্তাবিত উত্তর:** {item[2]}")
-            # ইউনিক কি (Key) দিয়ে বাটন তৈরি যাতে কনফ্লিক্ট না হয়
             if st.button(f"Approve ID: {item[0]}", key=f"btn_{item[0]}"):
                 db.cursor.execute("UPDATE brain_memory SET is_verified = 1 WHERE id = ?", (item[0],))
                 db.conn.commit()
@@ -70,4 +68,4 @@ elif menu == "এআই মেমোরি রিভিউ":
                 st.rerun()
 
 # ৫. ডাটাবেস কানেকশন ক্লোজ (সেফটি)
-# db.close() # স্ট্রিমলিটে এটি লুপে না চালানোই ভালো
+# db.close()
