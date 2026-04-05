@@ -1,49 +1,49 @@
 import streamlit as st
-import os
 from database.db_manager import DBManager
 from core.engine import BaraQuraEngine
 
-# ১. সিস্টেম ইনিশিয়াল (তোর পুরনো database_sync লজিককেও সম্মান জানানো হয়েছে)
+# ১. সিস্টেম লেআউট এবং ক্যাশ (Cloud Performance এর জন্য)
 @st.cache_resource
-def init_baraqura():
-    # এখানে v10 ডাটাবেস ম্যানেজার ব্যবহার করা হচ্ছে
+def load_v10_system():
     db = DBManager()
     engine = BaraQuraEngine(db)
     return db, engine
 
-db, engine = init_baraqura()
+db, engine = load_v10_system()
 
-# ২. Streamlit UI (এটি না থাকলে ক্লাউডে লোড হবে না)
-st.set_page_config(page_title="BaraQura Universe", page_icon="🛡️")
+# ২. টাইটেল এবং স্ট্যাটাস
+st.set_page_config(page_title="BaraQura V10", layout="wide")
 st.title("🛡️ BaraQura V10 Universe Engine")
-st.info("System Status: Online | Security: Maximum")
+st.sidebar.success("System: Online")
 
-# ৩. সেশন স্টেট (চ্যাট মনে রাখার জন্য)
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
+# ৩. চ্যাট হিস্ট্রি ম্যানেজমেন্ট
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-# ৪. চ্যাট ডিসপ্লে
-for chat in st.session_state.chat_history:
-    with st.chat_message(chat["role"]):
-        st.markdown(chat["content"])
+# ৪. চ্যাট মেসেজ দেখানো
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-# ৫. ইউজার ইনপুট (তোর সেই লোকাল main.py এর লজিক এখন ক্লাউডে)
-if user_input := st.chat_input("Ask BaraQura..."):
-    st.session_state.chat_history.append({"role": "user", "content": user_input})
+# ৫. ইউজার ইনপুট বক্স
+if prompt := st.chat_input("এআই এর সাথে কথা বলুন..."):
+    # ইউজারের মেসেজ
+    st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
-        st.markdown(user_input)
+        st.markdown(prompt)
 
-    # ইঞ্জিন দিয়ে প্রসেস করা
-    # সিমুলেশন আইডি: test_user_fb_001
-    response = engine.generate_response("test_user_fb_001", "MD Hasan Ali", user_input)
+    # V10 ইঞ্জিনের বুদ্ধি ব্যবহার করে উত্তর তৈরি
+    response = engine.generate_response("test_user_001", "MD Hasan Ali", prompt)
     
+    # এআই রিপ্লাই
     with st.chat_message("assistant"):
         st.markdown(response)
-    st.session_state.chat_history.append({"role": "assistant", "content": response})
+    st.session_state.messages.append({"role": "assistant", "content": response})
 
-    # সাইডবারে তোর ডাটাবেস স্কোর দেখানো (যেটা আগে print হতো)
-    status = db.get_user("test_user_fb_001")
+    # সাইডবারে স্কোর মনিটরিং
+    status = db.get_user("test_user_001")
     with st.sidebar:
-        st.title("📊 Lead Monitoring")
-        st.metric("Lead Status", status['status'])
-        st.metric("Interest Score", status['score'])
+        st.divider()
+        st.subheader("📊 Live Lead Tracking")
+        st.write(f"**Score:** {status['score']}")
+        st.write(f"**Status:** {status['status']}")
