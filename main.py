@@ -32,8 +32,13 @@ if prompt := st.chat_input("এআই এর সাথে কথা বলুন
     with st.chat_message("user"):
         st.markdown(prompt)
 
+    # --- গুরুত্বপূর্ণ পরিবর্তন এখানে ---
+    # এখানে আমি তোর নাম "Md. Shakibul Hasan" সেট করে দিয়েছি
+    user_id = "shakibul_001" 
+    full_name = "Md. Shakibul Hasan" 
+
     # V10 ইঞ্জিনের বুদ্ধি ব্যবহার করে উত্তর তৈরি
-    response = engine.generate_response("test_user_001", "MD Hasan Ali", prompt)
+    response = engine.generate_response(user_id, full_name, prompt)
     
     # এআই রিপ্লাই
     with st.chat_message("assistant"):
@@ -41,9 +46,10 @@ if prompt := st.chat_input("এআই এর সাথে কথা বলুন
     st.session_state.messages.append({"role": "assistant", "content": response})
 
     # সাইডবারে স্কোর মনিটরিং
-    status = db.get_user("test_user_001")
+    status = db.get_user(user_id)
     with st.sidebar:
         st.divider()
         st.subheader("📊 Live Lead Tracking")
+        st.write(f"**User:** {full_name}")
         st.write(f"**Score:** {status['score']}")
         st.write(f"**Status:** {status['status']}")
