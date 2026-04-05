@@ -1,41 +1,49 @@
 import google.generativeai as genai
-from datetime import datetime
+import json
+import re
 
 class BaraQuraBrain:
-    def __init__(self, api_key, db_manager):
-        # জেমিনি কনফিগারেশন
+    def __init__(self, api_key):
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel('gemini-1.5-flash')
-        self.db = db_manager
+        
+        # V4 GOD MODE সিস্টেম প্রম্পট
+        self.system_instruction = """
+        Role: তুমি BaraQura-এর Elite Sales Consultant। 
+        
+        CRITICAL RULES:
+        1. Short Message: সর্বোচ্চ ২-৩ লাইন। 
+        2. One Question: প্রতি মেসেজে মাত্র ১টি প্রশ্ন।
+        3. Truth Boundary: নিজের থেকে কোনো অফার বা ফিচার বানাবে না।
+        4. Mirroring: ইউজারের টোন এবং ইমোজি ফলো করো।
+        5. Internal JSON: উত্তরের শুরুতে অবশ্যই নিচের JSON ফরম্যাটটি দিবে:
+        {
+         "type": "cheap/smart/impulse",
+         "mood": "curious/angry/skeptical/excited",
+         "intent": "greeting/pricing/buy/objection/delay",
+         "stage": "cold/warm/hot"
+        }
+        তারপর সাধারণ রিপ্লাই দিবে।
+        """
 
-    def get_smart_answer(self, user_msg):
-        # ১. আগে ভেরিফাইড মেমোরি চেক কর (Level 2: Memory)
-        self.db.cursor.execute("SELECT answer FROM brain_memory WHERE question = ? AND is_verified = 1", (user_msg,))
-        row = self.db.cursor.fetchone()
-        if row:
-            return row[0] # সরাসরি নিজের মেমোরি থেকে উত্তর দিল
-
-        # ২. না পেলে জেমিনির কাছে যাও (Level 3: LLM)
+    def get_smart_answer(self, user_message):
         try:
-            # এআই-কে তোর সিস্টেমের রোল বুঝিয়ে দেওয়া
-            prompt = f"You are the BaraQura Sales AI. Answer briefly in Bengali: {user_msg}"
-            response = self.model.generate_content(prompt)
-            ai_ans = response.text
-
-            # ৩. নতুন তথ্য পেন্ডিং হিসেবে সেভ করা (Self-Learning Loop)
-            self.learn_new_info(user_msg, ai_ans)
-            return ai_ans
+            full_prompt = f"{self.system_instruction}\n\nUser Says: {user_message}"
+            response = self.model.generate_content(full_prompt)
+            return response.text
         except Exception as e:
-            return "আমি বিষয়টি নিয়ে ভাবছি, কিছুক্ষণ পর আবার বলবেন কি?"
+            return f"Error: {str(e)}"
 
-    def learn_new_info(self, q, a):
-        """নতুন প্রশ্ন ও উত্তর ডাটাবেসে সেভ করা (অ্যাপ্রুভালের জন্য)"""
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        try:
-            self.db.cursor.execute(
-                "INSERT OR IGNORE INTO brain_memory (question, answer, created_at) VALUES (?, ?, ?)",
-                (q, a, now)
-            )
-            self.db.conn.commit()
-        except:
-            pass
+    def parse_ai_response(self, raw_response):
+        # Regex দিয়ে JSON এবং টেক্সট আলাদা করা (The Leak-Proof Fix)
+        json_match = re.search(r'\{.*?\}', raw_response, re.DOTALL)
+        if json_match:
+            try:
+                json_data = json.loads(json_match.group(0))
+                clean_text = raw_response.replace(json_match.group(0), "").strip()
+                # অপ্রয়োজনীয় মার্কডাউন রিমুভ করা
+                clean_text = clean_text.replace("```json", "").replace("```", "").strip()
+                return json_data, clean_text
+            except:
+                return None, raw_response
+        return None, raw_response
