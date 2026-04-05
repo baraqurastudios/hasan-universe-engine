@@ -86,7 +86,7 @@ if menu == "🤖 চ্যাট টেস্ট":
     if st.button("Send Message"):
         response = engine.generate_response(user_id, user_name, user_msg)
         st.info(f"**BaraQura AI:** {response}")
-        # নতুন ইউজার হলে নাম সেভ করা
+        # নতুন ইউজার হলে নাম সেভ করা (যাতে পরে অটো আসে)
         if user_name != "Customer":
             db.cursor.execute("INSERT OR REPLACE INTO users (user_id, name) VALUES (?, ?)", (user_id, user_name))
             db.conn.commit()
@@ -94,7 +94,6 @@ if menu == "🤖 চ্যাট টেস্ট":
 elif menu == "💻 Developer Console":
     st.header("Developer Console: Live File Editor")
     
-    # প্রজেক্টের সব ফাইল ড্রপডাউনে আনা
     all_files = []
     for root, dirs, files in os.walk("."):
         for file in files:
@@ -104,6 +103,47 @@ elif menu == "💻 Developer Console":
     target_file = st.selectbox("ফাইল সিলেক্ট কর:", all_files)
     
     if target_file:
+        with open(target_file, "r", encoding="utf-8") as f:
+            code_content = f.read()
+        
+        edited_code = st.text_area(f"Editing: {target_file}", value=code_content, height=500)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("💾 Save & Update"):
+                with open(target_file, "w", encoding="utf-8") as f:
+                    f.write(edited_code)
+                st.success("ফাইল আপডেট হয়েছে!")
+                time.sleep(1)
+                st.rerun()
+        with col2:
+            if st.button("🔍 Check Errors"):
+                try:
+                    compile(edited_code, target_file, 'exec')
+                    st.success("কোড ঠিক আছে!")
+                except Exception as e:
+                    st.error(f"কোডে ভুল আছে: {e}")
+
+# বাকি মেনুগুলো (লিড ড্যাশবোর্ড ও মেমোরি)
+elif menu == "📈 লিড ড্যাশবোর্ড":
+    st.header("📈 Sales Leads & Scoring")
+    db.cursor.execute("SELECT * FROM users ORDER BY score DESC")
+    leads = db.cursor.fetchall()
+    if leads: st.table(leads)
+    else: st.warning("ডেটা নেই।")
+
+elif menu == "🧠 এআই মেমোরি":
+    st.header("🧠 AI Learning Loop")
+    db.cursor.execute("SELECT id, question, answer FROM brain_memory WHERE is_verified = 0")
+    pending_items = db.cursor.fetchall()
+    if not pending_items: st.success("সব ভেরিফাইড!")
+    for item in pending_items:
+        with st.expander(f"Q: {item[1]}"):
+            st.write(f"Proposed A: {item[2]}")
+            if st.button(f"Approve ID: {item[0]}", key=f"btn_{item[0]}"):
+                db.cursor.execute("UPDATE brain_memory SET is_verified = 1 WHERE id = ?", (item[0],))
+                db.conn.commit()
+                st.rerun()
         with open(target_file, "r", encoding="utf-8") as f:
             code_content = f.read()
         
