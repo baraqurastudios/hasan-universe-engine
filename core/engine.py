@@ -1,32 +1,76 @@
 import re
+import random
 
 class BaraQuraEngine:
-    def __init__(self):
-        # বেসিক কিউয়ার্ড লজিক (ভবিষ্যতে এখানে AI মডেল যুক্ত হবে)
-        self.greetings = ['hi', 'hello', 'hey', 'সালাম', 'আদাব']
-        self.order_keywords = ['দাম', 'প্রাইস', 'price', 'কত', 'order', 'অর্ডার']
-
-    def generate_response(self, user_message, user_name):
-        msg = user_message.lower()
+    def __init__(self, db_manager):
+        self.db = db_manager
+        self.greetings = ['hi', 'hello', 'hey', 'সালাম', 'আদাব', 'কেউ আছেন']
+        self.order_keywords = ['দাম', 'প্রাইস', 'price', 'কত', 'order', 'অর্ডার', 'কিনতে চাই']
         
-        # ১. ফোন নম্বর ডিটেকশন (Regex)
+        # Sales Scoring Logic (তোর Jarvis V10 থেকে নেওয়া)
+        self.intent_scores = {
+            "greeting": 5,
+            "pricing": 20,
+            "buy_intent": 50,
+            "phone_shared": 100
+        }
+
+    # ১. নাম সুন্দর করা (Human Feel)
+    def format_name(self, full_name):
+        if not full_name: return "বন্ধু"
+        name = full_name.strip().split()[0]
+        return name.capitalize()
+
+    # ২. ইনটেন্ট ডিটেকশন (Priority Based)
+    def detect_intent(self, msg):
+        msg = msg.lower()
+        if any(x in msg for x in self.order_keywords): return "pricing"
+        if any(x in msg for x in ["কিনব", "অর্ডার", "buy"]): return "buy_intent"
+        if any(x in msg for x in self.greetings): return "greeting"
+        return "unknown"
+
+    # ৩. ফোন নম্বর ডিটেকশন
+    def extract_phone(self, msg):
         phone_pattern = r'(?:\+88|88)?(01[3-9]\d{8})'
-        phone_match = re.search(phone_pattern, msg)
+        match = re.search(phone_pattern, msg)
+        return match.group(0) if match else None
+
+    # ৪. মেইন রেসপন্স জেনারেটর (The Nucleus)
+    def generate_response(self, user_id, raw_name, user_message):
+        msg = user_message.lower()
+        user_name = self.format_name(raw_name)
         
-        if phone_match:
-            phone = phone_match.group(1)
-            return f"ধন্যবাদ {user_name}! আমি আপনার ফোন নম্বর ({phone}) পেয়েছি। আমাদের প্রতিনিধি দ্রুত যোগাযোগ করবে।"
+        # ডাটাবেস থেকে ইউজারের বর্তমান অবস্থা জেনে নেওয়া
+        user_data = self.db.get_user(user_id) # আমরা সকালে এই ফাংশনটি DB-তে বানাবো
+        current_score = user_data['score'] if user_data else 0
 
-        # ২. অর্ডার বা দাম জানতে চাইলে
-        if any(word in msg for word in self.order_keywords):
-            return f"জি {user_name}, আপনি কি আমাদের প্রোডাক্টের দাম জানতে চাচ্ছেন? অনুগ্রহ করে আপনার ফোন নম্বরটি দিন, আমি বিস্তারিত পাঠিয়ে দিচ্ছি।"
+        # ফোন নম্বর ক্যাপচার (Highest Priority)
+        phone = self.extract_phone(msg)
+        if phone:
+            self.db.save_lead(user_id, raw_name, phone, score=100, status="Hot")
+            return f"🔥 ধন্যবাদ {user_name}! আপনার নম্বর ({phone}) পেয়েছি। আমাদের সেলস টিম দ্রুত কল দিবে।"
 
-        # ৩. সাধারণ গ্রিটিংস
-        if any(word in msg for word in self.greetings):
-            return f"হ্যালো {user_name}! আমি BaraQura V8.10। আপনাকে কীভাবে সাহায্য করতে পারি?"
+        # ইনটেন্ট এবং স্কোরিং
+        intent = self.detect_intent(msg)
+        new_score = current_score + self.intent_scores.get(intent, 0)
+        
+        # স্টেজ নির্ধারণ (Cold/Warm/Hot)
+        stage = "Cold"
+        if new_score >= 30: stage = "Warm"
+        if new_score >= 80: stage = "Hot"
+        
+        # ডাটাবেস আপডেট (Status & Score)
+        self.db.update_user_score(user_id, new_score, stage, intent)
 
-        # ৪. ডিফল্ট উত্তর (Fallback)
-        return f"দুঃখিত {user_name}, আমি ঠিক বুঝতে পারিনি। আপনি কি অর্ডার করতে চান?"
+        # ৫. স্মার্ট রিপ্লাই লজিক
+        if intent == "greeting":
+            return f"হ্যালো {user_name}! 😊 BaraQura AI-তে স্বাগতম। আপনি কি আমাদের প্রোডাক্টের প্রাইস বা অফার সম্পর্কে জানতে চান?"
 
-# ইঞ্জিনটি ইনিশিয়ালাইজ করা
-engine = BaraQuraEngine()
+        if intent == "pricing":
+            return f"💰 {user_name}, আপনি সঠিক জিনিস পছন্দ করেছেন! বিস্তারিত প্রাইস লিস্ট এবং আজকের ডিসকাউন্ট পেতে আপনার ফোন নম্বরটি দিন।"
+
+        if stage == "Warm":
+            return f"{user_name}, আপনি কি অর্ডারটি কনফার্ম করতে চান? নম্বর দিলে আমরা প্রসেস শুরু করতে পারি।"
+
+        # ডিফল্ট রিপ্লাই
+        return f"ধন্যবাদ {user_name}। আমি আপনার কথাটি ঠিক বুঝতে পারিনি। আপনি কি অর্ডার বা দাম সম্পর্কে জানতে চাচ্ছেন?"
