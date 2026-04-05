@@ -1,0 +1,25 @@
+def create_tables(self):
+        # পুরোনো ইউজার টেবিল (আগের মতোই থাকবে)
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                user_id TEXT PRIMARY KEY,
+                name TEXT,
+                phone TEXT UNIQUE,
+                status TEXT DEFAULT 'Cold',
+                score INTEGER DEFAULT 0,
+                last_intent TEXT,
+                updated_at TIMESTAMP
+            )
+        ''')
+
+        # নতুন মেমোরি টেবিল (এআই যা শিখবে তা এখানে থাকবে)
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS brain_memory (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                question TEXT UNIQUE,
+                answer TEXT,
+                is_verified INTEGER DEFAULT 0, 
+                created_at TIMESTAMP
+            )
+        ''')
+        self.conn.commit()
