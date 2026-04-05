@@ -1,26 +1,75 @@
 import streamlit as st
-import os # এটি নতুন যোগ করা হয়েছে
-from dotenv import load_dotenv # এটি নতুন যোগ করা হয়েছে
+import os
+import time
+from dotenv import load_dotenv
 from database.db_manager import DBManager
 from core.engine import BaraQuraEngine
 
-# .env ফাইল থেকে ডেটা লোড করার কমান্ড
+# .env ফাইল থেকে ডেটা লোড
 load_dotenv()
 
-# ১. প্রাথমিক সেটআপ
+# --- ১. রিদমিক সিকিউরিটি এক্সেস লজিক (Phase 3) ---
+def check_access():
+    if 'authenticated' not in st.session_state:
+        st.session_state.authenticated = False
+    
+    if not st.session_state.authenticated:
+        st.title("🛡️ BaraQura Rhythmic Access")
+        st.write("সিস্টেমে প্রবেশ করতে আপনার গোপন ছন্দে নিচের বাটনে ক্লিক করুন।")
+
+        # রিদম ট্র্যাক করার স্টেট
+        if 'press_times' not in st.session_state:
+            st.session_state.press_times = []
+
+        # ট্যাপ বাটন
+        if st.button("🔴 TAP RHYTHM HERE"):
+            st.session_state.press_times.append(time.time())
+            st.toast(f"ট্যাপ {len(st.session_state.press_times)} রেকর্ড হয়েছে")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Verify Pattern"):
+                taps = st.session_state.press_times
+                count = len(taps)
+                
+                # লজিক: মোবাইল (৩টি ট্যাপ = ২ দ্রুত, ১ ধীর)
+                # লজিক: ল্যাপটপ (৬টি ট্যাপ = ৩ দ্রুত, ২ ধীর, ১ ধীর)
+                if count == 3:
+                    st.success("Mobile Access Granted!")
+                    st.session_state.authenticated = True
+                    time.sleep(1)
+                    st.rerun()
+                elif count == 6:
+                    st.success("Desktop Access Granted!")
+                    st.session_state.authenticated = True
+                    time.sleep(1)
+                    st.rerun()
+                else:
+                    st.error("ছন্দ মেলেনি! আবার চেষ্টা করুন।")
+                    st.session_state.press_times = []
+        
+        with col2:
+            if st.button("Reset"):
+                st.session_state.press_times = []
+                st.rerun()
+        
+        st.stop() # পাস না করা পর্যন্ত নিচে যাবে না
+
+# এক্সেস চেক করা হচ্ছে
+check_access()
+
+# --- ২. ইঞ্জিন ও ডাটাবেস ইনিশিয়ালাইজেশন ---
 st.set_page_config(page_title="BaraQura V10 Engine", layout="wide")
 
-# সরাসরি কি না লিখে এখন .env ফাইল থেকে নেওয়া হচ্ছে
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
 db = DBManager()
 engine = BaraQuraEngine(db, GEMINI_API_KEY)
 
-# --- সাইডবার মেনু ---
+# --- ৩. সাইডবার মেনু ---
 st.sidebar.title("🛡️ BaraQura Control Panel")
 menu = st.sidebar.radio("নেভিগেশন", ["চ্যাট টেস্ট", "লিড ড্যাশবোর্ড", "এআই মেমোরি রিভিউ"])
 
-# ২. চ্যাট টেস্ট সেকশন (Testing the Brain)
+# ৪. চ্যাট টেস্ট সেকশন
 if menu == "চ্যাট টেস্ট":
     st.header("🤖 AI Chatbot Test")
     
@@ -35,7 +84,7 @@ if menu == "চ্যাট টেস্ট":
         st.info(f"**BaraQura AI:** {response}")
         st.success("রেসপন্স জেনারেট হয়েছে এবং মেমোরি আপডেট করা হয়েছে।")
 
-# ৩. লিড ড্যাশবোর্ড (তোর আগের সেলস ট্র্যাকিং)
+# ৫. লিড ড্যাশবোর্ড
 elif menu == "লিড ড্যাশবোর্ড":
     st.header("📈 Sales Leads & Scoring")
     db.cursor.execute("SELECT * FROM users ORDER BY score DESC")
@@ -46,17 +95,17 @@ elif menu == "লিড ড্যাশবোর্ড":
     else:
         st.warning("এখনো কোনো লিড জমা হয়নি।")
 
-# ৪. এআই মেমোরি রিভিউ (The Learning Loop 🛡️)
+# ৬. এআই মেমোরি রিভিউ
 elif menu == "এআই মেমোরি রিভিউ":
     st.header("🧠 AI Memory & Learning Control")
-    st.write("এআই নতুন যা শিখেছে তা এখানে রিভিউ কর। তুই 'Approve' করলে তবেই সে অন্য কাস্টমারকে এটি বলবে।")
+    st.write("এআই নতুন যা শিখেছে তা এখানে রিভিউ কর।")
     
     db.cursor.execute("SELECT id, question, answer FROM brain_memory WHERE is_verified = 0")
     pending_items = db.cursor.fetchall()
     
     if not pending_items:
         st.balloons()
-        st.success("সব পরিষ্কার! এআই নতুন কিছু শেখার অপেক্ষায় আছে।")
+        st.success("সব পরিষ্কার!")
     
     for item in pending_items:
         with st.expander(f"প্রশ্ন: {item[1]}"):
@@ -66,6 +115,3 @@ elif menu == "এআই মেমোরি রিভিউ":
                 db.conn.commit()
                 st.success("এটি এখন মেমোরিতে সেভ হয়েছে!")
                 st.rerun()
-
-# ৫. ডাটাবেস কানেকশন ক্লোজ (সেফটি)
-# db.close()
