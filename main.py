@@ -15,6 +15,7 @@ if 'wrong_attempts' not in st.session_state: st.session_state.wrong_attempts = 0
 if 'system_status' not in st.session_state: st.session_state.system_status = "ACTIVE"
 if 'start_time' not in st.session_state: st.session_state.start_time = time.time()
 if 'sleep_mode' not in st.session_state: st.session_state.sleep_mode = False
+if 'deployed_codes' not in st.session_state: st.session_state.deployed_codes = set()
 
 # --- ২. সিকিউরিটি গেটওয়ে (Hacker Alarm & Black Hole) ---
 def check_access():
@@ -38,8 +39,7 @@ def check_access():
                     st.rerun()
                 else:
                     st.session_state.wrong_attempts += 1
-                    # ৩ বার ভুল হলে ৪ নম্বর চেষ্টায় ব্ল্যাকহোল (Kill Switch)
-                    if st.session_state.wrong_attempts >= 3:
+                    if st.session_state.wrong_attempts >= 3: # ৩ বার ভুলের পর ৪ নম্বর বারে ব্ল্যাকহোল
                         st.session_state.system_status = "BLACK_HOLE"
                     st.rerun()
         st.stop()
@@ -53,7 +53,6 @@ engine = BaraQuraEngine(db, os.getenv("GEMINI_API_KEY"))
 # ড্যাশবোর্ড ডেটা
 db.cursor.execute("SELECT COUNT(*) FROM users")
 total_leads = db.cursor.fetchone()[0]
-# সিস্টেম লোড ব্রেকডাউন (Calculation)
 cpu_load = 5 + (total_leads * 0.5)
 mem_load = 12 + (total_leads * 1.2)
 
@@ -72,7 +71,7 @@ else:
         st.session_state.sleep_mode = False
         st.rerun()
 
-# ২. চ্যাটবট কতজনের সাথে চ্যাট করছে (Live Counter)
+# ২. চ্যাটবট লাইভ কাউন্টার
 st.sidebar.info(f"👥 Active Chats: {total_leads} People")
 
 # ৪. System Load Breakdown
@@ -82,7 +81,7 @@ with st.sidebar.expander("📊 System Load Breakdown", expanded=True):
     st.write(f"Memory: {mem_load}%")
     st.progress(min(mem_load/100, 1.0))
 
-# ৭. Exit Logout (একদম নিচে)
+# ৭. Exit Logout (নিচে)
 st.sidebar.markdown("---")
 if st.sidebar.button("🚪 Logout & Exit System", use_container_width=True):
     st.session_state.authenticated = False
@@ -92,7 +91,7 @@ if st.sidebar.button("🚪 Logout & Exit System", use_container_width=True):
 # --- মেইন কন্টেন্ট ---
 if st.session_state.sleep_mode:
     st.title("💤 System is in Sleep Mode")
-    st.info("AI Engine and Database connections are paused to save energy.")
+    st.info("AI Engine and Database connections are paused.")
 else:
     menu = st.tabs(["🤖 AI Engine", "💻 Developer Tools"])
 
@@ -104,6 +103,36 @@ else:
             st.info(f"AI: {res}")
 
     with menu[1]:
+        st.header("Developer Console")
+        
+        # ৭. File Dropdown Menu
+        file_option = st.selectbox("Select File to Update", ["main.py", "database/db_manager.py", "core/engine.py", "security/auth.py"])
+        
+        st.write(f"Editing: `{file_option}`")
+        dev_code = st.text_area("Paste Update Code Here", height=250)
+        
+        if st.button("🚀 Save & Deploy Code"):
+            # ৯. ডুপ্লিকেট চেক (একই কোড ২ বার বসবে না)
+            code_hash = hash(dev_code.strip())
+            
+            if not dev_code.strip():
+                st.warning("Please paste some code first!")
+            elif code_hash in st.session_state.deployed_codes:
+                st.error("❌ এই কোডটি ইতিমধ্যে সিস্টেমে আছে। ডুপ্লিকেট কোড গ্রহণ করা হবে না।")
+            elif "import" not in dev_code and "def" not in dev_code:
+                st.error("❌ Syntax Error: এটি সঠিক পাইথন কোড নয়!")
+            else:
+                # ৮. লজিক্যালি নিচে সেভ হওয়া (সেশন স্টেটে জমা রাখা)
+                st.session_state.deployed_codes.add(code_hash)
+                # ৬. সাকসেস বেলুন
+                st.success(f"✅ {file_option} updated logically!")
+                st.balloons()
+                
+        # আপডেট হওয়া কোডগুলোর হিস্ট্রি নিচে দেখাবে (Logical Stack)
+        if st.session_state.deployed_codes:
+            st.markdown("---")
+            st.subheader("📜 Deployment History")
+            st.info(f"Total Unique Updates: {len(st.session_state.deployed_codes)}")
         st.header("Developer Console")
         # ৫. ভুল কোড ইনপুট চেক (Error Handling)
         dev_code = st.text_area("Paste Update Code Here", height=200)
